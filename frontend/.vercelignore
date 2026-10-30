@@ -8,3 +8,9 @@ dist/
 *.local.json
 .vercel/
 *.log
+*.mp4
+/Screen Shot*
+/1111*
+/анимация*
+/original-*
+public/media/
