@@ -1,0 +1,115 @@
+server:
+  port: ${PORT:8080}
+  compression:
+    enabled: true
+    mime-types: text/html,text/xml,text/plain,text/css,text/javascript,application/javascript,application/json
+  shutdown: graceful
+
+spring:
+  application:
+    name: bakeconnect-backend
+
+  threads:
+    virtual:
+      enabled: true
+
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:${DB_PORT:5433}/${DB_NAME:bakeconnect_db}}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      pool-name: BakeConnectHikariCP
+      maximum-pool-size: ${DB_MAX_POOL_SIZE:50}
+      minimum-idle: ${DB_MIN_IDLE:10}
+      idle-timeout: 300000
+      connection-timeout: 5000
+      max-lifetime: 1800000
+      leak-detection-threshold: 20000
+
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        jdbc:
+          batch_size: 25
+          order_inserts: true
+          order_updates: true
+        format_sql: false
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      timeout: 2000ms
+      connect-timeout: 2000ms
+
+  cache:
+    type: redis
+    redis:
+      time-to-live: 600000 # 10 minutes default cache TTL
+      cache-null-values: false
+
+  mail:
+    host: ${MAIL_HOST:localhost}
+    port: ${MAIL_PORT:1025}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: false
+          starttls:
+            enable: false
+
+# App specific properties
+bakeconnect:
+  security:
+    jwt-secret: ${JWT_SECRET:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}
+    jwt-expiration-ms: ${JWT_EXPIRATION_MS:86400000} # 24 hours
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:3001}
+  payment:
+    mode: ${PAYMENT_MODE:dev} # dev, test, staging, or live
+    provider: ${PAYMENT_PROVIDER:MOCK} # MOCK or YOUPI_PG
+    youpi-pg:
+      base-url: ${YOUPI_PG_BASE_URL:http://localhost:7000}
+      merchant-id: ${YOUPI_PG_MERCHANT_ID:00000000-0000-0000-0000-000000000001}
+      api-key: ${YOUPI_PG_API_KEY:mock_key}
+      webhook-secret: ${YOUPI_PG_WEBHOOK_SECRET:mock_webhook_secret_32_bytes_long!}
+      connect-timeout-ms: ${YOUPI_PG_CONNECT_TIMEOUT_MS:5000}
+      read-timeout-ms: ${YOUPI_PG_READ_TIMEOUT_MS:5000}
+  outbox:
+    poll-rate-ms: 3000
+    batch-size: 20
+    max-retries: 5
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics
+  endpoint:
+    health:
+      show-details: when-authorized
+      probes:
+        enabled: true
+  health:
+    mail:
+      enabled: false
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    tags-sorter: alpha
+    operations-sorter: method

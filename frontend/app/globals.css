@@ -1,0 +1,90 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-cream-base: #FFF7EB;
+  --color-cream-surface: #FFFFFF;
+  --color-cream-subtle: #F6EEE3;
+  --color-cream-border: #E2D7C5;
+
+  --color-pale-blue: #D9EAF3;
+  --color-pale-blue-subtle: #EBF4F9;
+
+  --color-bakery-orange: #FF7836;
+  --color-bakery-orange-hover: #E86322;
+
+  --color-chocolate-dark: #342421;
+  --color-chocolate-muted: #614B47;
+  --color-chocolate-faint: #9E8681;
+
+  --color-neutral-surface: #F1ECE4;
+
+  --color-crust-dark: #342421;
+  --color-crust-muted: #614B47;
+  --color-crust-faint: #9E8681;
+
+  --color-berry-jam: #FF7836;
+  --color-berry-hover: #E86322;
+  --color-berry-subtle: #FFF0E8;
+
+  --color-butter-warm: #D4973B;
+  --color-butter-surface: #FEF9EB;
+
+  --color-sea-tide: #548FA8;
+  --color-sea-tide-subtle: #EDF5F9;
+
+  --color-status-success: #286E46;
+  --color-status-success-bg: #EDF7F1;
+  --color-status-warning: #A15C07;
+  --color-status-warning-bg: #FEF6EC;
+  --color-status-error: #B91C1C;
+  --color-status-error-bg: #FEF2F2;
+  --color-status-info: #1D5C96;
+  --color-status-info-bg: #EFF6FC;
+}
+
+body {
+  color: var(--color-chocolate-dark);
+  background-color: var(--color-cream-base);
+  font-family: var(--font-roboto), system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Accessible focus ring */
+:focus-visible {
+  outline: 2px solid var(--color-bakery-orange);
+  outline-offset: 2px;
+}
+
+/* Reduced Motion Hard Gate */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Refined custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-cream-base);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-cream-border);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-crust-faint);
+}

@@ -1,0 +1,72 @@
+services:
+  postgres:
+    image: postgres:18-alpine
+    container_name: bakeconnect-postgres
+    restart: unless-stopped
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_DB: bakeconnect_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d bakeconnect_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: bakeconnect-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    # STRICT CACHE-ONLY REDIS: Disables RDB persistence and AOF
+    command: redis-server --save "" --appendonly no --maxmemory 256mb --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  maildev:
+    image: maildev/maildev:latest
+    container_name: bakeconnect-maildev
+    restart: unless-stopped
+    ports:
+      - "1025:1025"
+      - "1080:1080"
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: bakeconnect-backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    environment:
+      PORT: 8080
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/bakeconnect_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      DB_MAX_POOL_SIZE: 50
+      DB_MIN_IDLE: 10
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      MAIL_HOST: maildev
+      MAIL_PORT: 1025
+      JWT_SECRET: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
+      PAYMENT_PROVIDER: MOCK
+      YOUPI_PG_WEBHOOK_SECRET: mock_webhook_secret_32_bytes_long!
+      CORS_ALLOWED_ORIGINS: http://localhost:3000,http://localhost:3001
+
+volumes:
+  postgres_data:
