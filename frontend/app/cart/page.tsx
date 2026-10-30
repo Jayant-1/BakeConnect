@@ -148,9 +148,9 @@ export default function CartPage() {
 
                 return (
                   <div key={item.productId} className="py-6 flex flex-col sm:flex-row sm:items-center gap-5">
-                    <div className="relative w-20 h-20 rounded-2xl overflow-hidden bg-white flex-shrink-0 border-2 border-[#342421] p-2 flex items-center justify-center">
+                    <div className="relative w-20 h-20 rounded-2xl overflow-hidden bg-[#FFFDF9] flex-shrink-0 border-2 border-[#342421] p-2 flex items-center justify-center">
                       <Image
-                        src={item.product.imageUrl}
+                        src={item.product.imageUrl || '/images/products/fresh-ladi-pav.png'}
                         alt={item.product.name}
                         fill
                         className="object-contain p-1"

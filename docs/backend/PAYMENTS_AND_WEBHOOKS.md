@@ -110,4 +110,109 @@ To operate on a single personal HDFC receiving account:
   - Database-level partial unique index `idx_payment_attempts_active_order` on `order_id` where status is active (`INITIATED`, `QUEUED`, `AWAITING_PAYMENT`, `PROCESSING`).
   - YouPI-PG FIFO checkout queueing returning `queuePosition >= 1` so customers can wait in line without overwhelming the bank SMS correlation window.
 
-For comprehensive operational runbooks and Android pairing instructions, consult [YOUPI_PG_ANDROID_SMS_RUNBOOK.md](file:///mnt/Jayant/Code/Work%20Station/Capstone%20Project/BakeConnect/docs/backend/YOUPI_PG_ANDROID_SMS_RUNBOOK.md).
+---
+
+## 7. Public API Contracts & Frontend Integration Specifications
+
+### 7.1 Initiate Payment Session
+* **Endpoint**: `POST /api/v1/payments/initiate`
+* **Security**: Bearer JWT (`DIRECT_CUSTOMER` or `RETAILER`)
+* **Request Body**:
+```json
+{
+  "orderId": "d9111111-dddd-dddd-dddd-dddddddddddd",
+  "invoiceId": null,
+  "provider": "YOUPI_PG",
+  "idempotencyKey": "idem_7f82b71e901a"
+}
+```
+* **Success Response (`201 Created` / `200 OK`)**:
+```json
+{
+  "success": true,
+  "data": {
+    "paymentAttemptId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+    "idempotencyKey": "idem_7f82b71e901a",
+    "provider": "YOUPI_PG",
+    "providerReference": "YOUPI-TXN-889900",
+    "checkoutUrl": "https://pay.perfectbakerypune.com/checkout/3fa85f64-5717-4562-b3fc-2c963f66afa6",
+    "amount": 525.00,
+    "currency": "INR",
+    "queuePosition": 0,
+    "status": "AWAITING_PAYMENT",
+    "expiresAt": "2026-10-30T16:30:00Z",
+    "receivingAccount": "HDFC_XX1234",
+    "metadata": {
+      "orderNumber": "BC-20261030-9988",
+      "amountPaise": "52500"
+    }
+  },
+  "message": "Payment session initiated successfully"
+}
+```
+
+### 7.2 Poll Payment Status (Frontend Checkout Modal)
+* **Endpoint**: `GET /api/v1/payments/{paymentAttemptId}`
+* **Security**: Bearer JWT (Ownership verified)
+* **Success Response (`200 OK`)**:
+```json
+{
+  "success": true,
+  "data": {
+    "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+    "orderId": "d9111111-dddd-dddd-dddd-dddddddddddd",
+    "orderNumber": "BC-20261030-9988",
+    "provider": "YOUPI_PG",
+    "providerReference": "YOUPI-TXN-889900",
+    "idempotencyKey": "idem_7f82b71e901a",
+    "amount": 525.00,
+    "currency": "INR",
+    "status": "OBSERVED_SUCCESS",
+    "settlementStatus": "NOT_RECONCILED",
+    "queuePosition": 0,
+    "checkoutUrl": "https://pay.perfectbakerypune.com/checkout/3fa85f64-5717-4562-b3fc-2c963f66afa6",
+    "receivingAccount": "HDFC_XX1234",
+    "utr": "123456789012",
+    "verificationLevel": 1,
+    "createdAt": "2026-10-30T16:15:00Z"
+  }
+}
+```
+
+### 7.3 Gateway Webhook Ingestion
+* **Endpoint**: `POST /api/v1/payments/webhook/YOUPI_PG`
+* **Security**: Header `X-Gateway-Signature-V2` (`HMAC-SHA256(secret, "<timestamp>.<rawBodyBytes>")`)
+* **Headers**:
+  - `X-Gateway-Delivery-Id`: `DEL-554433`
+  - `X-Gateway-Timestamp`: `1793358000000`
+  - `X-Gateway-Signature-V2`: `sha256=abcdef123456...`
+* **Request Payload**:
+```json
+{
+  "event": "OBSERVED_SUCCESS",
+  "deliveryId": "DEL-554433",
+  "timestamp": 1793358000000,
+  "paymentId": "YOUPI-TXN-889900",
+  "orderId": "BC-20261030-9988",
+  "attemptId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+  "amount": "525.00",
+  "amountPaise": 52500,
+  "currency": "INR",
+  "method": "UPI",
+  "utr": "123456789012",
+  "verificationTag": "SMS_OBSERVED_HDFC",
+  "verificationLevel": 1,
+  "completedAt": "2026-10-30T16:16:12Z",
+  "settlementState": "NOT_RECONCILED"
+}
+```
+* **Success Response (`200 OK`)**:
+```json
+{
+  "success": true,
+  "message": "Webhook processed successfully"
+}
+```
+
+For operational procedures, Android APK pairing, and bank reconciliation guidelines, consult [YOUPI_PG_ANDROID_SMS_RUNBOOK.md](file:///mnt/Jayant/Code/Work%20Station/Capstone%20Project/BakeConnect/docs/backend/YOUPI_PG_ANDROID_SMS_RUNBOOK.md).
+

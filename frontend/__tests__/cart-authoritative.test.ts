@@ -2,39 +2,39 @@ import { describe, it, expect } from 'vitest';
 import { apiClient } from '../lib/api/client';
 import { MOCK_PRODUCTS } from '../lib/api/mock-data';
 
-describe('Server-Authoritative Cart Calculation & Pricing', () => {
-  const batard = MOCK_PRODUCTS.find((p) => p.id === 'prod-sd-01')!;
-  const croissant = MOCK_PRODUCTS.find((p) => p.id === 'prod-vn-01')!;
+describe('Server-Authoritative Cart Calculation & Pricing (Pune Bakery)', () => {
+  const milkBread = MOCK_PRODUCTS.find((p) => p.slug === 'classic-milk-bread')!;
+  const butterKhari = MOCK_PRODUCTS.find((p) => p.slug === 'pure-butter-khari')!;
 
   it('should compute B2C retail pricing accurately', async () => {
-    // 1 Batard (₹240) + 1 Croissant (₹160) = ₹400
+    // 1 Milk Bread (₹50) + 1 Khari (₹85) = ₹135
     const result = await apiClient.validateCart({
       items: [
-        { productId: batard.id, quantity: 1 },
-        { productId: croissant.id, quantity: 1 },
+        { productId: milkBread.id, quantity: 1 },
+        { productId: butterKhari.id, quantity: 1 },
       ],
       channel: 'B2C',
     });
 
-    expect(result.subtotal).toBe(400);
-    // Subtotal 400 < 500 threshold, so delivery fee of 50 applies
+    expect(result.subtotal).toBe(135);
+    // Subtotal 135 < 500 threshold, so delivery fee of 50 applies
     expect(result.qualifiesForFreeDelivery).toBe(false);
     expect(result.deliveryFee).toBe(50);
-    expect(result.freeDeliveryThresholdRemaining).toBe(100);
+    expect(result.freeDeliveryThresholdRemaining).toBe(365);
 
-    // 5% bakery GST on taxable subtotal (400 * 0.05 = 20)
-    expect(result.taxAmount).toBe(20);
-    expect(result.totalAmount).toBe(400 + 20 + 50); // 470
+    // 5% bakery GST on taxable subtotal (135 * 0.05 = 6.75)
+    expect(result.taxAmount).toBe(6.75);
+    expect(result.totalAmount).toBe(135 + 6.75 + 50); // 191.75
   });
 
   it('should grant free delivery for B2C orders above ₹500', async () => {
-    // 3 Batards (3 * ₹240 = ₹720)
+    // 11 Milk Breads (11 * ₹50 = ₹550)
     const result = await apiClient.validateCart({
-      items: [{ productId: batard.id, quantity: 3 }],
+      items: [{ productId: milkBread.id, quantity: 11 }],
       channel: 'B2C',
     });
 
-    expect(result.subtotal).toBe(720);
+    expect(result.subtotal).toBe(550);
     expect(result.qualifiesForFreeDelivery).toBe(true);
     expect(result.deliveryFee).toBe(0);
     expect(result.freeDeliveryThresholdRemaining).toBe(0);
@@ -42,21 +42,21 @@ describe('Server-Authoritative Cart Calculation & Pricing', () => {
 
   it('should compute B2B wholesale pricing with lower unit costs', async () => {
     // In B2B:
-    // Batard wholesale price is 155 (vs 240 retail)
-    // Croissant wholesale price is 95 (vs 160 retail)
-    // 10 Batards (1550) + 40 Croissants (3800) = 5350
+    // Milk Bread wholesale price is 38 (vs 50 retail). MOQ 8, inc 4 -> 48 pieces
+    // Khari wholesale price is 60 (vs 85 retail). MOQ 12, inc 6 -> 60 pieces
+    // 48 Milk Bread (1824) + 60 Khari (3600) = 5424
     const result = await apiClient.validateCart({
       items: [
-        { productId: batard.id, quantity: 10 },
-        { productId: croissant.id, quantity: 40 },
+        { productId: milkBread.id, quantity: 48 },
+        { productId: butterKhari.id, quantity: 60 },
       ],
       channel: 'B2B',
       orderType: 'BUSINESS',
       businessGst: '27AABCU9603R1ZM',
     });
 
-    expect(result.subtotal).toBe(10 * batard.wholesalePrice + 40 * croissant.wholesalePrice);
-    expect(result.subtotal).toBe(1550 + 3800); // 5350
+    expect(result.subtotal).toBe(48 * milkBread.wholesalePrice + 60 * butterKhari.wholesalePrice);
+    expect(result.subtotal).toBe(1824 + 3600); // 5424
 
     // B2B MOQ threshold is 5,000
     expect(result.isMoqMet).toBe(true);
@@ -68,29 +68,30 @@ describe('Server-Authoritative Cart Calculation & Pricing', () => {
   });
 
   it('should enforce B2B minimum order threshold when subtotal is under ₹5,000', async () => {
-    // Only 2 Batards in B2B: 2 * 155 = 310
+    // 8 Milk Breads in B2B (meets item MOQ 8): 8 * 38 = 304
     const result = await apiClient.validateCart({
-      items: [{ productId: batard.id, quantity: 2 }],
+      items: [{ productId: milkBread.id, quantity: 8 }],
       channel: 'B2B',
     });
 
     expect(result.isMoqMet).toBe(false);
-    expect(result.moqThresholdRemaining).toBe(5000 - 310);
+    expect(result.moqThresholdRemaining).toBe(5000 - 304);
   });
 
   it('should automatically apply wholesale tier discount rule for large volume', async () => {
-    // Over ₹10,000 qualifies for BULK25 (25% off)
+    // Over ₹10,000 qualifies for BULK25 (2.5% off)
+    // 300 Milk Bread (meets MOQ 8, inc 4): 300 * 38 = 11,400
     const result = await apiClient.validateCart({
-      items: [{ productId: batard.id, quantity: 80 }], // 80 * 155 = 12,400
+      items: [{ productId: milkBread.id, quantity: 300 }],
       channel: 'B2B',
     });
 
-    expect(result.subtotal).toBe(12400);
+    expect(result.subtotal).toBe(11400);
     expect(result.appliedDiscount).toBeDefined();
     expect(result.appliedDiscount?.code).toBe('BULK25');
-    expect(result.discountAmount).toBe(310);
-    expect(result.subtotal - result.discountAmount).toBe(12090);
-    expect(result.taxAmount).toBe(604.5);
-    expect(result.totalAmount).toBe(12694.5);
+    expect(result.discountAmount).toBe(285);
+    expect(result.subtotal - result.discountAmount).toBe(11115);
+    expect(result.taxAmount).toBe(555.75);
+    expect(result.totalAmount).toBe(11670.75);
   });
 });

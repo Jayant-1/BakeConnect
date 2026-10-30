@@ -18,8 +18,12 @@ export function ProductCard({ product }: ProductCardProps) {
   const { addItem, channel } = useCart();
   const [isAdded, setIsAdded] = useState(false);
   const [imgSrc, setImgSrc] = useState(
-    product.imageUrl || 'https://images.unsplash.com/photo-1589367920969-ab8e050bbb04'
+    product.imageUrl || '/images/products/fresh-ladi-pav.png'
   );
+
+  React.useEffect(() => {
+    setImgSrc(product.imageUrl || '/images/products/fresh-ladi-pav.png');
+  }, [product.imageUrl]);
 
   const price = channel === 'B2B' ? product.wholesalePrice : product.retailPrice;
   const initialQty = channel === 'B2B' ? product.moq : 1;
@@ -35,6 +39,7 @@ export function ProductCard({ product }: ProductCardProps) {
   const isEggless =
     product.isEggless ||
     product.dietaryTags?.includes('EGGLESS') ||
+    product.dietaryTags?.includes('Eggless') ||
     product.name.toLowerCase().includes('khari') ||
     product.name.toLowerCase().includes('nankhatai') ||
     product.name.toLowerCase().includes('rusk') ||
@@ -49,14 +54,14 @@ export function ProductCard({ product }: ProductCardProps) {
       {/* 1. Product Image Thumbnail */}
       <Link
         href={`/products/${product.slug}`}
-        className="relative w-full aspect-[4/3] bg-white border-b-2 border-[#342421] p-3 flex items-center justify-center overflow-hidden block"
+        className="relative w-full aspect-[4/3] bg-[#FFFDF9] border-b-2 border-[#342421] p-3 flex items-center justify-center overflow-hidden block"
       >
         <Image
           src={imgSrc}
           alt={product.name}
           fill
           onError={() =>
-            setImgSrc('https://images.unsplash.com/photo-1589367920969-ab8e050bbb04')
+            setImgSrc('/images/products/fresh-ladi-pav.png')
           }
           className="object-contain p-2 transition-transform duration-500 group-hover:scale-105"
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"

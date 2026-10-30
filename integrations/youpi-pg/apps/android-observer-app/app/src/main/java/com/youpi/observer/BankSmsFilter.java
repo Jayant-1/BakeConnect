@@ -103,16 +103,16 @@ public class BankSmsFilter {
             return FilterDecision.reject("NON_INSTITUTIONAL_SENDER");
         }
 
-        // 3. Must contain inbound credit intent
-        if (!CREDIT_KEYWORD_PATTERN.matcher(body).find()) {
-            Log.d(TAG, "Dropped SMS without credit keywords from: " + cleanSender);
-            return FilterDecision.reject("NO_CREDIT_KEYWORD");
-        }
-
-        // 4. If explicit debit keywords are present without clear inbound context, drop
+        // 3. If explicit debit keywords are present without clear inbound context, drop immediately
         if (EXPLICIT_DEBIT_PATTERN.matcher(body).find() && !body.toLowerCase().contains("reversed")) {
             Log.d(TAG, "Dropped debit/withdrawal alert from: " + cleanSender);
             return FilterDecision.reject("DEBIT_ALERT_REJECTED");
+        }
+
+        // 4. Must contain inbound credit intent
+        if (!CREDIT_KEYWORD_PATTERN.matcher(body).find()) {
+            Log.d(TAG, "Dropped SMS without credit keywords from: " + cleanSender);
+            return FilterDecision.reject("NO_CREDIT_KEYWORD");
         }
 
         // 5. Extract monetary amount

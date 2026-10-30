@@ -72,7 +72,7 @@ function mapProduct(p: any): Product {
     name: p.name,
     slug: p.slug,
     description: p.description || '',
-    imageUrl: p.imageUrl || 'https://images.unsplash.com/photo-1509440159596-0249088772ff',
+    imageUrl: p.imageUrl || '/images/products/fresh-ladi-pav.png',
     retailPrice: Number(p.retailPrice) || 0,
     wholesalePrice: Number(p.wholesalePrice || (p.retailPrice ? p.retailPrice * 0.75 : 0)),
     unitCost: p.unitCost ? Number(p.unitCost) : undefined,
@@ -126,7 +126,7 @@ function mapOrder(dto: any): Order {
       id: item.id,
       productId: item.productId,
       productName: item.productNameSnapshot || 'Artisan Bakery Item',
-      productImage: 'https://images.unsplash.com/photo-1509440159596-0249088772ff',
+      productImage: '/images/products/fresh-ladi-pav.png',
       quantity: item.quantity,
       unitPrice: Number(item.unitPriceSnapshot || item.unitPrice || 0),
       lineTotal: Number(item.totalPriceSnapshot || (item.unitPrice * item.quantity) || 0),
@@ -314,7 +314,7 @@ export const apiClient = {
               name: 'Bakery Item',
               slug: 'item',
               description: '',
-              imageUrl: 'https://images.unsplash.com/photo-1509440159596-0249088772ff',
+              imageUrl: '/images/products/fresh-ladi-pav.png',
               retailPrice: subtotal / it.quantity,
               wholesalePrice: subtotal / it.quantity,
               unitOfMeasure: 'PIECE',
@@ -341,6 +341,7 @@ export const apiClient = {
             appliedDiscount: data.appliedDiscountDescription
               ? {
                   id: data.appliedDiscountRuleId || 'disc-1',
+                  code: 'BULK25',
                   name: data.appliedDiscountDescription,
                   description: data.appliedDiscountDescription,
                   discountType: 'PERCENTAGE',
@@ -355,8 +356,8 @@ export const apiClient = {
             totalAmount,
             qualifiesForFreeDelivery: payload.channel === 'B2B' || subtotal >= 500,
             freeDeliveryThresholdRemaining: Math.max(0, 500 - subtotal),
-            isMoqMet: data.isValidForCheckout ?? true,
-            moqThresholdRemaining: 0,
+            isMoqMet: (data.isValidForCheckout ?? true) && (payload.channel === 'B2C' || subtotal >= 5000),
+            moqThresholdRemaining: payload.channel === 'B2B' ? Math.max(0, 5000 - subtotal) : 0,
           };
         }
       }

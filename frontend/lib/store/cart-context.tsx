@@ -202,7 +202,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
             name: product.name,
             slug: product.slug,
             description: product.description || '',
-            imageUrl: product.imageUrl || 'https://images.unsplash.com/photo-1589367920969-ab8e050bbb04',
+            imageUrl: product.imageUrl || '/images/products/fresh-ladi-pav.png',
             retailPrice: Number(product.retailPrice) || 0,
             wholesalePrice: Number(product.wholesalePrice) || Number(product.retailPrice) || 0,
             unitOfMeasure: product.unitOfMeasure ?? product.unit ?? 'PIECE',

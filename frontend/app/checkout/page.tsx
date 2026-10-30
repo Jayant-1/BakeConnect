@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useCart } from '../../lib/store/cart-context';
 import { useAuth } from '../../lib/store/auth-context';
 import { StorefrontLayout } from '../../components/layout/storefront-layout';
@@ -509,16 +510,27 @@ export default function CheckoutPage() {
               Order Review ({items.length} Items)
             </h2>
 
-            <div className="max-h-60 overflow-y-auto divide-y-2 divide-[#342421]/10 text-xs">
+            <div className="max-h-64 overflow-y-auto divide-y-2 divide-[#342421]/10 text-xs">
               {items.map((item) => (
-                <div key={item.productId} className="py-2.5 flex justify-between items-center">
-                  <div className="truncate pr-2">
-                    <div className="font-bold text-[#342421] truncate">{item.product.name}</div>
-                    <div className="text-[#342421]/60">
-                      Qty: {item.quantity} × {formatCurrency(channel === 'B2B' ? item.product.wholesalePrice : item.product.retailPrice)}
+                <div key={item.productId} className="py-2.5 flex justify-between items-center gap-3">
+                  <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                    <div className="relative w-10 h-10 rounded-xl overflow-hidden bg-[#FFFDF9] border border-[#342421]/20 flex-shrink-0 flex items-center justify-center p-0.5">
+                      <Image
+                        src={item.product.imageUrl || '/images/products/fresh-ladi-pav.png'}
+                        alt={item.product.name}
+                        fill
+                        className="object-contain p-0.5"
+                        sizes="40px"
+                      />
+                    </div>
+                    <div className="truncate pr-1">
+                      <div className="font-bold text-[#342421] truncate">{item.product.name}</div>
+                      <div className="text-[#342421]/60">
+                        Qty: {item.quantity} × {formatCurrency(channel === 'B2B' ? item.product.wholesalePrice : item.product.retailPrice)}
+                      </div>
                     </div>
                   </div>
-                  <div className="font-bold text-[#342421]">
+                  <div className="font-bold text-[#342421] flex-shrink-0">
                     {formatCurrency((channel === 'B2B' ? item.product.wholesalePrice : item.product.retailPrice) * item.quantity)}
                   </div>
                 </div>

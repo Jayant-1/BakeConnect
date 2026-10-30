@@ -75,7 +75,7 @@ export default function ProductDetailPage() {
         const prod = await apiClient.getProduct(slug);
         setProduct(prod);
         if (prod) {
-          setImgSrc(prod.imageUrl || 'https://images.unsplash.com/photo-1589367920969-ab8e050bbb04');
+          setImgSrc(prod.imageUrl || '/images/products/fresh-ladi-pav.png');
           setQuantity(channel === 'B2B' ? prod.moq : 1);
         }
       } catch (err) {
@@ -120,6 +120,7 @@ export default function ProductDetailPage() {
   const isEggless =
     product.isEggless ||
     product.dietaryTags?.includes('EGGLESS') ||
+    product.dietaryTags?.includes('Eggless') ||
     product.name.toLowerCase().includes('khari') ||
     product.name.toLowerCase().includes('nankhatai') ||
     product.name.toLowerCase().includes('rusk') ||
@@ -170,21 +171,21 @@ export default function ProductDetailPage() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
           {/* Left Column: Product Photography & Sensory Highlights (7 cols) */}
           <div className="lg:col-span-7 space-y-4">
-            <div className="relative aspect-[4/3] rounded-3xl overflow-hidden bg-white border-2 border-[#342421] shadow-[5px_5px_0px_#342421] p-6 flex items-center justify-center">
+            <div className="relative aspect-[4/3] rounded-3xl overflow-hidden bg-[#FFFDF9] border-2 border-[#342421] shadow-[5px_5px_0px_#342421] p-6 flex items-center justify-center">
               <Image
                 src={imgSrc}
                 alt={product.name}
                 fill
                 priority
                 onError={() =>
-                  setImgSrc('https://images.unsplash.com/photo-1589367920969-ab8e050bbb04')
+                  setImgSrc('/images/products/fresh-ladi-pav.png')
                 }
-                className="object-contain p-4"
+                className="object-contain p-4 transition-transform duration-500 hover:scale-105"
                 sizes="(max-width: 1024px) 100vw, 58vw"
               />
 
               {/* Dietary Green/Amber Dot Pill */}
-              <div className="absolute top-4 left-4 flex items-center gap-2 px-3 py-1.5 rounded-full bg-white border-2 border-[#342421] text-xs font-bold shadow-[2px_2px_0px_#342421]">
+              <div className="absolute top-4 left-4 z-10 flex items-center gap-2 px-3 py-1.5 rounded-full bg-white border-2 border-[#342421] text-xs font-bold shadow-[2px_2px_0px_#342421]">
                 <div
                   className={`border-2 ${
                     isEggless ? 'border-emerald-700 bg-white' : 'border-amber-800 bg-white'
