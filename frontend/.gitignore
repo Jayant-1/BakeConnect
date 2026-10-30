@@ -8,3 +8,5 @@ dist/
 *.local.json
 .vercel/
 *.log
+.vercel
+.env*

@@ -64,3 +64,5 @@ Thumbs.db
 # Coverage & Tests
 coverage/
 .tmp_apk_build/
+.vercel
+.env*
