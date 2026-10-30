@@ -129,8 +129,13 @@ public class PaymentService {
      */
     public PaymentSessionResponse initiatePayment(PaymentInitiateRequest request, UUID currentUserId, UserRole role) {
         // 1. Transactional reservation: intent is committed before network call
-        PaymentInitiationPersistenceService.ReservationResult res = persistenceService.reserveInitiationIntent(
-                request, currentUserId, role, paymentProviderFactory);
+        PaymentInitiationPersistenceService.ReservationResult res;
+        try {
+            res = persistenceService.reserveInitiationIntent(
+                    request, currentUserId, role, paymentProviderFactory);
+        } catch (PaymentInitiationPersistenceService.ConcurrentActiveAttemptException e) {
+            res = persistenceService.fetchActiveAttempt(e.getOrderId());
+        }
 
         PaymentAttempt attempt = res.attempt();
 
@@ -162,12 +167,12 @@ public class PaymentService {
             try {
                 PaymentSessionRequest sessionReq = new PaymentSessionRequest(
                         attempt.getOrder().getId(),
-                        attempt.getOrder().getOrderNumber(),
+                        res.orderNumber() != null ? res.orderNumber() : attempt.getOrder().getOrderNumber(),
                         attempt.getAmount(),
                         "INR",
                         attempt.getIdempotencyKey(),
-                        attempt.getUser() != null ? attempt.getUser().getEmail() : null,
-                        attempt.getUser() != null ? attempt.getUser().getPhone() : null
+                        res.userEmail(),
+                        res.userPhone()
                 );
                 PaymentSessionResult recovered = provider.initiatePaymentSession(sessionReq);
                 attempt = persistenceService.recoverUncertainAttempt(attempt.getId(), recovered);
@@ -207,12 +212,12 @@ public class PaymentService {
         // 2. Make bounded gateway network call — ZERO DATABASE LOCKS HELD!
         PaymentSessionRequest sessionReq = new PaymentSessionRequest(
                 res.order().getId(),
-                res.order().getOrderNumber(),
+                res.orderNumber() != null ? res.orderNumber() : res.order().getOrderNumber(),
                 res.paymentAmount(),
                 "INR",
                 request.getIdempotencyKey(),
-                res.order().getUser() != null ? res.order().getUser().getEmail() : null,
-                res.order().getUser() != null ? res.order().getUser().getPhone() : null
+                res.userEmail(),
+                res.userPhone()
         );
 
         PaymentSessionResult sessionResult;

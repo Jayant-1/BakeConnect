@@ -118,11 +118,15 @@ public class PaymentPostgresIntegrationTest {
                 bankReconciliationRecordRepository.findByPaymentAttemptId(attempt.getId())
                         .ifPresent(bankReconciliationRecordRepository::delete);
             }
+            webhookEventInboxRepository.findAll().stream()
+                    .filter(inbox -> testOrder.getId().equals(inbox.getOrderId()))
+                    .forEach(webhookEventInboxRepository::delete);
+
             paymentAttemptRepository.deleteAll(attempts);
-            orderRepository.delete(testOrder);
+            orderRepository.findById(testOrder.getId()).ifPresent(orderRepository::delete);
         }
         if (testUser != null) {
-            userRepository.delete(testUser);
+            userRepository.findById(testUser.getId()).ifPresent(userRepository::delete);
         }
     }
 
@@ -259,7 +263,7 @@ public class PaymentPostgresIntegrationTest {
                     "verificationLevel": 2
                 }
                 """);
-        paymentService.processWebhook("YOUPI_PG", "DEL-OBS-1", "sig1", "sig2",
+        paymentService.processWebhook("YOUPI_PG", "DEL-OBS-" + UUID.randomUUID(), "sig1", "sig2",
                 String.valueOf(System.currentTimeMillis()), observedPayload.getBytes(StandardCharsets.UTF_8));
 
         PaymentAttempt afterObserved = paymentAttemptRepository.findById(session.paymentAttemptId()).orElseThrow();
@@ -282,7 +286,7 @@ public class PaymentPostgresIntegrationTest {
                     "utr": "123456789012"
                 }
                 """);
-        paymentService.processWebhook("YOUPI_PG", "DEL-REC-1", "sig1", "sig2",
+        paymentService.processWebhook("YOUPI_PG", "DEL-REC-" + UUID.randomUUID(), "sig1", "sig2",
                 String.valueOf(System.currentTimeMillis()), reconciledPayload.getBytes(StandardCharsets.UTF_8));
 
         PaymentAttempt afterReconciled = paymentAttemptRepository.findById(session.paymentAttemptId()).orElseThrow();
@@ -326,7 +330,7 @@ public class PaymentPostgresIntegrationTest {
                     "utr": "999888777111"
                 }
                 """);
-        paymentService.processWebhook("YOUPI_PG", "DEL-LATE-1", "sig1", "sig2",
+        paymentService.processWebhook("YOUPI_PG", "DEL-LATE-" + UUID.randomUUID(), "sig1", "sig2",
                 String.valueOf(System.currentTimeMillis()), latePayload.getBytes(StandardCharsets.UTF_8));
 
         PaymentAttempt afterLateCredit = paymentAttemptRepository.findById(session.paymentAttemptId()).orElseThrow();
@@ -368,7 +372,7 @@ public class PaymentPostgresIntegrationTest {
                     "utr": "888777666555"
                 }
                 """);
-        paymentService.processWebhook("YOUPI_PG", "DEL-RACE-1", "sig1", "sig2",
+        paymentService.processWebhook("YOUPI_PG", "DEL-RACE-" + UUID.randomUUID(), "sig1", "sig2",
                 String.valueOf(System.currentTimeMillis()), fastWebhook.getBytes(StandardCharsets.UTF_8));
 
         // Later, the initiation thread finishes and calls completeInitiation:

@@ -81,13 +81,15 @@ public class PaymentInitiationPersistenceService {
             Order order,
             Invoice invoice,
             BigDecimal paymentAmount,
+            String orderNumber,
             String userEmail,
             String userPhone
     ) {
         public ReservationResult(PaymentAttempt attempt, ReservationOutcome outcome, Order order, Invoice invoice, BigDecimal paymentAmount) {
             this(attempt, outcome, order, invoice, paymentAmount,
-                    order != null && order.getUser() != null ? order.getUser().getEmail() : null,
-                    order != null && order.getUser() != null ? order.getUser().getPhone() : null);
+                    order != null ? order.getOrderNumber() : (attempt != null && attempt.getOrder() != null ? attempt.getOrder().getOrderNumber() : null),
+                    order != null && order.getUser() != null ? order.getUser().getEmail() : (attempt != null && attempt.getUser() != null ? attempt.getUser().getEmail() : null),
+                    order != null && order.getUser() != null ? order.getUser().getPhone() : (attempt != null && attempt.getUser() != null ? attempt.getUser().getPhone() : null));
         }
     }
 
@@ -320,10 +322,32 @@ public class PaymentInitiationPersistenceService {
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true)
-    public PaymentAttempt fetchActiveAttempt(UUID orderId) {
-        return paymentAttemptRepository
+    public ReservationResult fetchActiveAttempt(UUID orderId) {
+        PaymentAttempt active = paymentAttemptRepository
                 .findFirstByOrderIdAndStatusIn(orderId, ACTIVE_STATUSES)
                 .orElseThrow(() -> new ConflictException("Concurrent checkout attempt in progress. Please retry."));
+
+        String orderNumber = active.getOrder() != null ? active.getOrder().getOrderNumber() : null;
+        String userEmail = null;
+        String userPhone = null;
+        if (active.getUser() != null) {
+            userEmail = active.getUser().getEmail();
+            userPhone = active.getUser().getPhone();
+        } else if (active.getOrder() != null && active.getOrder().getUser() != null) {
+            userEmail = active.getOrder().getUser().getEmail();
+            userPhone = active.getOrder().getUser().getPhone();
+        }
+
+        return new ReservationResult(
+                active,
+                ReservationOutcome.EXISTING_ACTIVE,
+                active.getOrder(),
+                active.getInvoice(),
+                active.getAmount(),
+                orderNumber,
+                userEmail,
+                userPhone
+        );
     }
 
     public String computeFingerprint(UUID orderId, UUID invoiceId, String provider, BigDecimal amount) {
