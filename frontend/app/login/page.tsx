@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '../../lib/store/auth-context';
-import { Lock, Mail, ArrowRight, AlertCircle, Eye, EyeOff, ShieldCheck } from 'lucide-react';
+import { Lock, Mail, ArrowRight, AlertCircle, Eye, EyeOff, Sparkles, Check } from 'lucide-react';
 
 function LoginForm() {
   const router = useRouter();
@@ -19,6 +19,17 @@ function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [filledRole, setFilledRole] = useState<string | null>(null);
+
+  const handleQuickFill = (quickEmail: string, quickPass: string, roleName: string) => {
+    setEmail(quickEmail);
+    setPassword(quickPass);
+    setError(null);
+    setFilledRole(roleName);
+    setTimeout(() => {
+      setFilledRole(null);
+    }, 2500);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -84,6 +95,37 @@ function LoginForm() {
               <span>{error}</span>
             </div>
           )}
+
+          {/* Minimal Quick Login Bar */}
+          <div className="mb-6 flex items-center justify-between p-2.5 px-3.5 rounded-2xl bg-white border border-[#342421]/20 shadow-xs">
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-bold text-[#342421]/70 flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-[#FF7836]" />
+                Quick Login:
+              </span>
+              {filledRole && (
+                <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                  ✓ {filledRole} filled
+                </span>
+              )}
+            </div>
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => handleQuickFill('customer1@bakeconnect.com', 'Password@123', 'Customer')}
+                className="px-3 py-1 rounded-xl text-[11px] font-bold text-[#342421] bg-[#FFF7EB] hover:bg-[#FF7836] hover:text-white border border-[#342421]/20 transition-all active:scale-95"
+              >
+                Customer
+              </button>
+              <button
+                type="button"
+                onClick={() => handleQuickFill('retailer1@bakeconnect.com', 'Password@123', 'Shopkeeper')}
+                className="px-3 py-1 rounded-xl text-[11px] font-bold text-[#342421] bg-[#D9EAF3] hover:bg-[#342421] hover:text-white border border-[#342421]/20 transition-all active:scale-95"
+              >
+                Shopkeeper
+              </button>
+            </div>
+          </div>
 
           <form className="space-y-5" onSubmit={handleSubmit}>
             <div>

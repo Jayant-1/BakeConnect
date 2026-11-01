@@ -17,11 +17,18 @@ export function startSmsObserver(port = null, options = {}) {
   return new Promise(resolve => {
     const instance = rawServer.listen(finalPort, bindHost, () => {
       console.log(`[SMS Observer] Service listening on port ${finalPort}`);
+      service.start();
+      if (process.env.ENABLE_GOOGLE_MESSAGES_SERVER === 'true' || process.env.ENABLE_LEGACY_CHROME_OBSERVERS === 'true') {
+        observerServer.automator.autoEnsureConnection().catch(err => {
+          console.error('[SMS Observer] autoEnsureConnection initial error:', err.message);
+        });
+      }
       resolve({
         service,
         port: finalPort,
         close: () => new Promise(cb => {
           service.stop();
+          observerServer.automator.stop();
           instance.close(cb);
         })
       });

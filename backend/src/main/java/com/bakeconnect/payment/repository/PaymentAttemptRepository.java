@@ -47,4 +47,25 @@ public interface PaymentAttemptRepository extends JpaRepository<PaymentAttempt, 
     BigDecimal sumObservedUnreconciledAmount();
 
     long countByStatus(PaymentAttemptStatus status);
+
+    @Query("SELECT pa.amount FROM PaymentAttempt pa WHERE pa.status IN :statuses AND (pa.receivingAccount = :receivingAccount OR :receivingAccount IS NULL OR pa.receivingAccount IS NULL) AND pa.amount >= :minAmount AND pa.amount <= :maxAmount")
+    List<BigDecimal> findActiveAmounts(
+            @Param("receivingAccount") String receivingAccount,
+            @Param("statuses") Collection<PaymentAttemptStatus> statuses,
+            @Param("minAmount") BigDecimal minAmount,
+            @Param("maxAmount") BigDecimal maxAmount
+    );
+
+    @Query("SELECT COUNT(pa) FROM PaymentAttempt pa WHERE pa.user.id = :userId AND pa.status IN :statuses")
+    long countActiveAttemptsByUser(
+            @Param("userId") UUID userId,
+            @Param("statuses") Collection<PaymentAttemptStatus> statuses
+    );
+
+    @org.springframework.data.jpa.repository.Modifying
+    @Query("UPDATE PaymentAttempt pa SET pa.status = com.bakeconnect.payment.entity.PaymentAttemptStatus.EXPIRED, pa.updatedAt = CURRENT_TIMESTAMP WHERE pa.status IN :activeStatuses AND pa.expiresAt IS NOT NULL AND pa.expiresAt < :now")
+    int sweepExpiredAttempts(
+            @Param("activeStatuses") Collection<PaymentAttemptStatus> activeStatuses,
+            @Param("now") java.time.Instant now
+    );
 }

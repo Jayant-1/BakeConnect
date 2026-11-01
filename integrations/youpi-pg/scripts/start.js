@@ -19,6 +19,10 @@ try {
   }
 } catch {}
 
+if (process.env.ENABLE_GOOGLE_MESSAGES_SERVER === undefined) {
+  process.env.ENABLE_GOOGLE_MESSAGES_SERVER = 'true';
+}
+
 // Authoritative runtime mode enforcement (start.js takes absolute precedence).
 //
 // Production is the default and the ONLY mode that requires a Cloudflare domain: nothing
@@ -114,9 +118,7 @@ console.log('----------------------------------------------------');
 console.log('OBSERVATION CHANNELS:');
 console.log('• Android SMS Observer: Native APK -> Public Payment API');
 console.log('• Gmail API Observer:   OAuth2 API -> Public Payment API');
-console.log(runInLocalhostMode
-  ? '• Legacy Chrome CDP:    ENABLED in localhost mode'
-  : '• Legacy Chrome CDP:    DISABLED in production');
+console.log('• Google Messages Web:  AUTONOMOUS HEADLESS OBSERVER (Pair Once)');
 console.log('====================================================');
 console.log('Press Ctrl+C to stop all services gracefully.');
 

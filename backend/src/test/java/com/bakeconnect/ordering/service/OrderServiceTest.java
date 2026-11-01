@@ -3,6 +3,7 @@ package com.bakeconnect.ordering.service;
 import com.bakeconnect.cart.dto.CartItemRequest;
 import com.bakeconnect.catalog.entity.Category;
 import com.bakeconnect.catalog.entity.Product;
+import com.bakeconnect.catalog.repository.DiscountRuleRepository;
 import com.bakeconnect.catalog.repository.ProductRepository;
 import com.bakeconnect.common.exception.BusinessRuleException;
 import com.bakeconnect.identity.entity.Address;
@@ -65,6 +66,9 @@ class OrderServiceTest {
 
     @Mock
     private com.bakeconnect.notification.service.StaffNotificationService staffNotificationService;
+
+    @Mock
+    private DiscountRuleRepository discountRuleRepository;
 
     @InjectMocks
     private OrderService orderService;
@@ -430,5 +434,35 @@ class OrderServiceTest {
         assertEquals(new BigDecimal("100.00"), response.subtotalAmount());
         assertEquals(new BigDecimal("5.00"), response.taxAmount());
         assertEquals(new BigDecimal("105.00"), response.totalAmount());
+    }
+
+    @Test
+    void createOrder_Success_QazwsxCouponReducesBaseToOneRupee() {
+        when(userRepository.findById(b2cUser.getId())).thenReturn(Optional.of(b2cUser));
+        when(addressRepository.findById(address.getId())).thenReturn(Optional.of(address));
+        when(productRepository.findByIdWithPessimisticLock(product.getId())).thenReturn(Optional.of(product));
+        when(orderRepository.save(any(Order.class))).thenAnswer(inv -> {
+            Order o = inv.getArgument(0);
+            o.setId(UUID.randomUUID());
+            return o;
+        });
+
+        OrderCreateRequest request = new OrderCreateRequest(
+                List.of(new CartItemRequest(product.getId(), 2)),
+                OrderType.PERSONAL,
+                DeliveryType.DELIVERY,
+                address.getId(),
+                null,
+                null,
+                null,
+                "qazwsx"
+        );
+
+        OrderResponseDto response = orderService.createOrder(b2cUser.getId(), request);
+        assertNotNull(response);
+        assertEquals(new BigDecimal("200.00"), response.subtotalAmount());
+        assertEquals(new BigDecimal("199.00"), response.discountAmount());
+        assertEquals(new BigDecimal("0.00"), response.taxAmount());
+        assertEquals(new BigDecimal("1.00"), response.totalAmount());
     }
 }

@@ -26,5 +26,18 @@ public record OrderCreateRequest(
 
         String businessName,
 
-        String notes
-) {}
+        String notes,
+        String couponCode
+) {
+    public OrderCreateRequest(
+            List<CartItemRequest> items,
+            OrderType orderType,
+            DeliveryType deliveryType,
+            UUID deliveryAddressId,
+            String businessGst,
+            String businessName,
+            String notes
+    ) {
+        this(items, orderType, deliveryType, deliveryAddressId, businessGst, businessName, notes, null);
+    }
+}

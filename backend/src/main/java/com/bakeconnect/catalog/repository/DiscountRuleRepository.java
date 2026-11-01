@@ -14,4 +14,6 @@ public interface DiscountRuleRepository extends JpaRepository<DiscountRule, UUID
     List<DiscountRule> findByActiveTrueOrderByPriorityDesc();
 
     Optional<DiscountRule> findByCodeAndActiveTrue(String code);
+
+    Optional<DiscountRule> findByCodeIgnoreCaseAndActiveTrue(String code);
 }

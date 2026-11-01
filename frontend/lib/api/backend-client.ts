@@ -12,6 +12,7 @@ import {
   Invoice,
   BillingSummary,
   PaymentAttempt,
+  PaymentSession,
   ReorderSuggestion,
   UserRole,
   PaymentTerms,
@@ -201,6 +202,7 @@ export const backendClient = {
     businessGst?: string;
     businessName?: string;
     notes?: string;
+    couponCode?: string;
   }): Promise<Order> {
     return request('/api/v1/orders', {
       method: 'POST',
@@ -260,15 +262,40 @@ export const backendClient = {
     invoiceId?: string;
     provider?: string;
     idempotencyKey?: string;
-  }): Promise<PaymentAttempt> {
-    return request('/api/v1/payments/initiate', {
+  }): Promise<PaymentSession> {
+    const res = await request<any>('/api/v1/payments/initiate', {
       method: 'POST',
       body: JSON.stringify(data),
     });
+    return {
+      ...res,
+      id: res.paymentAttemptId || res.id,
+      paymentAttemptId: res.paymentAttemptId || res.id,
+      checkoutUrl: res.paymentUrl || res.checkoutUrl,
+      paymentUrl: res.paymentUrl || res.checkoutUrl,
+    };
   },
 
   async getPaymentStatus(paymentAttemptId: string): Promise<PaymentAttempt> {
-    return request(`/api/v1/payments/${paymentAttemptId}`);
+    const res = await request<any>(`/api/v1/payments/${paymentAttemptId}`);
+    return {
+      ...res,
+      id: res.id || res.paymentAttemptId,
+      paymentAttemptId: res.id || res.paymentAttemptId,
+      checkoutUrl: res.checkoutUrl || res.paymentUrl,
+      paymentUrl: res.checkoutUrl || res.paymentUrl,
+    };
+  },
+
+  async cancelPaymentAttempt(paymentAttemptId: string): Promise<PaymentAttempt> {
+    const res = await request<any>(`/api/v1/payments/${paymentAttemptId}/cancel`, {
+      method: 'POST',
+    });
+    return {
+      ...res,
+      id: res.id || res.paymentAttemptId,
+      paymentAttemptId: res.id || res.paymentAttemptId,
+    };
   },
 
   // Admin APIs

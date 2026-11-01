@@ -203,8 +203,9 @@ class PaymentServiceTest {
         assertThat(response).isNotNull();
         assertThat(response.idempotencyKey()).isEqualTo("IDEMP-KEY-001");
         assertThat(response.providerReference()).isEqualTo("YOUPI-TXN-123");
-        assertThat(response.paymentUrl()).contains("YOUPI-TXN-123");
-        assertThat(response.amount()).isEqualByComparingTo("525.00");
+        assertThat(response.baseAmount()).isEqualByComparingTo("525.00");
+        assertThat(response.platformFee()).isGreaterThan(BigDecimal.ZERO);
+        assertThat(response.amount()).isEqualTo(response.baseAmount().add(response.platformFee()));
         assertThat(response.status()).isEqualTo(PaymentAttemptStatus.AWAITING_PAYMENT);
     }
 

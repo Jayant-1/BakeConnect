@@ -57,8 +57,12 @@ FROM base AS runner
 ENV NODE_ENV=production
 ENV YOUPI_MODE=production
 ENV YOUPI_BIND_HOST=0.0.0.0
-
 WORKDIR /app
+
+# Install Chromium and fonts for headless browser automation (Google Messages observer)
+RUN apk add --no-cache chromium nss freetype harfbuzz ttf-freefont ca-certificates
+ENV CHROME_BIN=/usr/bin/chromium-browser
+ENV CHROMIUM_BIN=/usr/bin/chromium-browser
 
 # Harden runtime image: strip unused package managers and CLI build tools to minimize attack surface and vulnerabilities
 RUN rm -rf /usr/local/lib/node_modules/npm \

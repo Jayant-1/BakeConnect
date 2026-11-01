@@ -18,43 +18,36 @@ import {
   AlertCircle,
   Building,
 } from 'lucide-react';
+import { UpiPaymentModal } from '../../../components/payment/upi-payment-modal';
 
 export default function RetailerInvoicesPage() {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [profile, setProfile] = useState<RetailerProfile | null>(null);
   const [isProcessingId, setIsProcessingId] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [selectedInvoiceForPayment, setSelectedInvoiceForPayment] = useState<Invoice | null>(null);
+
+  const loadData = async () => {
+    try {
+      const [invs, userProfile] = await Promise.all([
+        apiClient.getRetailerInvoices(),
+        apiClient.getCurrentUser('RETAILER'),
+      ]);
+      setInvoices(invs);
+      if (userProfile.retailerProfile) setProfile(userProfile.retailerProfile);
+    } catch (err) {
+      console.error('Failed to load invoices:', err);
+    }
+  };
 
   useEffect(() => {
-    async function loadData() {
-      try {
-        const [invs, userProfile] = await Promise.all([
-          apiClient.getRetailerInvoices(),
-          apiClient.getCurrentUser('RETAILER'),
-        ]);
-        setInvoices(invs);
-        if (userProfile.retailerProfile) setProfile(userProfile.retailerProfile);
-      } catch (err) {
-        console.error('Failed to load invoices:', err);
-      }
-    }
     loadData();
   }, []);
 
   const totalOutstanding = invoices.reduce((sum, inv) => sum + inv.outstandingBalance, 0);
 
-  const handlePayInvoice = async (invoiceId: string) => {
-    setIsProcessingId(invoiceId);
-    setSuccessMessage(null);
-    try {
-      const updated = await apiClient.payInvoice(invoiceId);
-      setInvoices((prev) => prev.map((i) => (i.id === invoiceId ? updated : i)));
-      setSuccessMessage(`Invoice ${updated.invoiceNumber} successfully settled via YouPI-PG.`);
-    } catch (err) {
-      console.error('Invoice payment failed:', err);
-    } finally {
-      setIsProcessingId(null);
-    }
+  const handlePayInvoice = (inv: Invoice) => {
+    setSelectedInvoiceForPayment(inv);
   };
 
   return (
@@ -175,8 +168,7 @@ export default function RetailerInvoicesPage() {
                       <Button
                         variant="primary"
                         size="sm"
-                        onClick={() => handlePayInvoice(inv.id)}
-                        isLoading={isProcessingId === inv.id}
+                        onClick={() => handlePayInvoice(inv)}
                         className="rounded-full px-3 text-xs"
                       >
                         <CreditCard className="w-3.5 h-3.5 mr-1" />
@@ -200,6 +192,23 @@ export default function RetailerInvoicesPage() {
           </table>
         </div>
       </div>
+
+      {selectedInvoiceForPayment && (
+        <UpiPaymentModal
+          isOpen={!!selectedInvoiceForPayment}
+          onClose={() => setSelectedInvoiceForPayment(null)}
+          orderId={selectedInvoiceForPayment.orderId}
+          orderNumber={selectedInvoiceForPayment.orderNumber}
+          invoiceId={selectedInvoiceForPayment.id}
+          baseAmount={selectedInvoiceForPayment.outstandingBalance}
+          onPaymentSuccess={async () => {
+            const paidInvNum = selectedInvoiceForPayment.invoiceNumber;
+            setSelectedInvoiceForPayment(null);
+            setSuccessMessage(`Invoice ${paidInvNum} successfully settled via UPI.`);
+            await loadData();
+          }}
+        />
+      )}
     </div>
   );
 }

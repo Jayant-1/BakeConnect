@@ -45,13 +45,17 @@ export class SmsObserverService {
     const parsed = BankSmsParser.parse(sms);
     if (!parsed) return null;
 
-    if (!this.receivingAccountId) return null;
-
     let targetAccountId = this.receivingAccountId;
-    try {
-      const activeAcct = await this.resolveActiveReceivingAccount();
-      if (activeAcct) targetAccountId = activeAcct;
-    } catch {}
+    if (!targetAccountId) {
+      try {
+        const activeAcct = await this.resolveActiveReceivingAccount();
+        if (activeAcct) targetAccountId = activeAcct;
+      } catch {}
+    }
+    if (!targetAccountId) {
+      console.warn('[SMS Observer] No target receiving account configured or active.');
+      return null;
+    }
 
     const sender = sms.sender || 'BANK-ALERT';
 

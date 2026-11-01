@@ -94,4 +94,20 @@ describe('Server-Authoritative Cart Calculation & Pricing (Pune Bakery)', () => 
     expect(result.taxAmount).toBe(555.75);
     expect(result.totalAmount).toBe(11670.75);
   });
+
+  it('should apply special qazwsx live test coupon and cap base order total at ₹1.00', async () => {
+    // 2 Milk Breads (2 * ₹50 = ₹100)
+    const result = await apiClient.validateCart({
+      items: [{ productId: milkBread.id, quantity: 2 }],
+      channel: 'B2C',
+      couponCode: 'qazwsx',
+    });
+
+    expect(result.subtotal).toBe(100);
+    expect(result.appliedDiscount).toBeDefined();
+    expect(result.appliedDiscount?.code).toBe('qazwsx');
+    expect(result.discountAmount).toBe(99);
+    expect(result.taxAmount).toBe(0);
+    expect(result.totalAmount).toBe(1.00);
+  });
 });

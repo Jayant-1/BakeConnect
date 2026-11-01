@@ -90,7 +90,18 @@ export type OrderStatus =
   | 'DELIVERED'
   | 'CANCELLED';
 
-export type PaymentStatus = 'PENDING' | 'PAID' | 'FAILED' | 'REFUNDED';
+export type PaymentStatus =
+  | 'PENDING'
+  | 'INITIATED'
+  | 'AWAITING_PAYMENT'
+  | 'PROCESSING'
+  | 'OBSERVED_SUCCESS'
+  | 'COMPLETED'
+  | 'PAID'
+  | 'FAILED'
+  | 'REFUNDED'
+  | 'EXPIRED'
+  | 'CANCELLED';
 
 export type PaymentMethod = 'YOUPI_PG' | 'CREDIT_CYCLE' | 'COD';
 
@@ -159,7 +170,7 @@ export interface DiscountRule {
   name: string;
   code?: string;
   description: string;
-  discountType: 'PERCENTAGE' | 'FIXED';
+  discountType: 'PERCENTAGE' | 'FIXED' | 'FIXED_FINAL_TOTAL';
   discountValue: number;
   minOrderThreshold: number;
   channelEligibility: 'ALL' | 'B2C_ONLY' | 'B2B_ONLY';

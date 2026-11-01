@@ -51,6 +51,17 @@ public class PaymentController {
         return ResponseEntity.ok(ApiResponse.success(attempt));
     }
 
+    @PostMapping("/{paymentAttemptId}/cancel")
+    @SecurityRequirement(name = "BearerAuth")
+    @Operation(summary = "Cancel an active payment attempt to immediately release its fractional reservation slot")
+    public ResponseEntity<ApiResponse<PaymentAttemptDto>> cancelPaymentAttempt(
+            @PathVariable UUID paymentAttemptId,
+            @AuthenticationPrincipal SecurityUser currentUser) {
+        PaymentAttemptDto attempt = paymentService.cancelPaymentAttempt(
+                paymentAttemptId, currentUser.getId(), currentUser.getRole());
+        return ResponseEntity.ok(ApiResponse.success(attempt, "Payment attempt cancelled successfully"));
+    }
+
     @GetMapping("/order/{orderId}")
     @SecurityRequirement(name = "BearerAuth")
     @Operation(summary = "Get payment attempts for an order (IDOR protected)")

@@ -256,7 +256,7 @@ export class ProcessManager extends EventEmitter {
   async startAll() {
     const observerChannel = (process.env.YOUPI_OBSERVER_CHANNEL || 'ALL').toUpperCase();
     for (const svc of this.services) {
-      if (svc.legacy && process.env.ENABLE_LEGACY_CHROME_OBSERVERS !== 'true') {
+      if (svc.legacy && process.env.ENABLE_LEGACY_CHROME_OBSERVERS !== 'true' && process.env.ENABLE_GOOGLE_MESSAGES_SERVER !== 'true') {
         continue;
       }
       if (svc.id === 'gmail-observer' && observerChannel === 'SMS_ONLY') {

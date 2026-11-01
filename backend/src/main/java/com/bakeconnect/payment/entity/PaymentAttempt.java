@@ -37,6 +37,12 @@ public class PaymentAttempt {
     @Column(name = "idempotency_key", nullable = false, unique = true)
     private String idempotencyKey;
 
+    @Column(name = "base_amount", nullable = false, precision = 12, scale = 2)
+    private BigDecimal baseAmount;
+
+    @Column(name = "platform_fee", nullable = false, precision = 12, scale = 2)
+    private BigDecimal platformFee = BigDecimal.ZERO;
+
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal amount;
 
@@ -85,12 +91,19 @@ public class PaymentAttempt {
 
     public PaymentAttempt(Order order, Invoice invoice, String provider, String idempotencyKey,
                           BigDecimal amount, String currency) {
+        this(order, invoice, provider, idempotencyKey, amount, BigDecimal.ZERO, amount, currency);
+    }
+
+    public PaymentAttempt(Order order, Invoice invoice, String provider, String idempotencyKey,
+                          BigDecimal baseAmount, BigDecimal platformFee, BigDecimal amount, String currency) {
         this.order = order;
         this.invoice = invoice;
         this.user = order != null ? order.getUser() : null;
         this.provider = provider;
         this.idempotencyKey = idempotencyKey;
-        this.amount = amount;
+        this.baseAmount = baseAmount != null ? baseAmount : amount;
+        this.platformFee = platformFee != null ? platformFee : BigDecimal.ZERO;
+        this.amount = amount != null ? amount : this.baseAmount.add(this.platformFee);
         this.currency = (currency != null && !currency.isBlank()) ? currency : "INR";
         this.status = PaymentAttemptStatus.INITIATED;
         this.settlementStatus = PaymentSettlementStatus.NOT_RECONCILED;
@@ -128,6 +141,12 @@ public class PaymentAttempt {
 
     public String getIdempotencyKey() { return idempotencyKey; }
     public void setIdempotencyKey(String idempotencyKey) { this.idempotencyKey = idempotencyKey; }
+
+    public BigDecimal getBaseAmount() { return baseAmount; }
+    public void setBaseAmount(BigDecimal baseAmount) { this.baseAmount = baseAmount; }
+
+    public BigDecimal getPlatformFee() { return platformFee; }
+    public void setPlatformFee(BigDecimal platformFee) { this.platformFee = platformFee; }
 
     public BigDecimal getAmount() { return amount; }
     public void setAmount(BigDecimal amount) { this.amount = amount; }

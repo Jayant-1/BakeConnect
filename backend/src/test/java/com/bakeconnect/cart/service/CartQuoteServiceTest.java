@@ -127,4 +127,20 @@ class CartQuoteServiceTest {
         assertEquals(new BigDecimal("6.00"), response.taxAmount());
         assertEquals(new BigDecimal("126.00"), response.totalAmount());
     }
+
+    @Test
+    void shouldApplyQazwsxCouponToReduceBaseTotalToOneRupee() {
+        when(productRepository.findById(productId)).thenReturn(Optional.of(testCroissant));
+
+        // Subtotal = 1 * 120.00 = 120.00
+        CartQuoteRequest request = new CartQuoteRequest(List.of(new CartItemRequest(productId, 1)), "qazwsx");
+        CartQuoteResponse response = cartQuoteService.calculateQuote(request, UserRole.DIRECT_CUSTOMER);
+
+        assertTrue(response.isValidForCheckout());
+        assertEquals(new BigDecimal("120.00"), response.subtotal());
+        assertEquals(new BigDecimal("119.00"), response.discountAmount());
+        assertEquals(new BigDecimal("0.00"), response.taxAmount());
+        assertEquals(new BigDecimal("1.00"), response.totalAmount());
+        assertTrue(response.appliedDiscountDescription().contains("qazwsx"));
+    }
 }

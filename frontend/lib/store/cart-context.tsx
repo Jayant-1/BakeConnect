@@ -47,6 +47,8 @@ export interface CartContextType {
   validation: any | null; // Compatibility with legacy validation consumers
   isValidating: boolean;
   itemCount: number;
+  couponCode: string | null;
+  applyCoupon: (code: string | null) => Promise<{ success: boolean; message: string }>;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -58,6 +60,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
   const mandatedChannel: 'B2C' | 'B2B' = role === 'RETAILER' ? 'B2B' : 'B2C';
   const [channel, setChannelState] = useState<'B2C' | 'B2B'>(mandatedChannel);
+  const [couponCode, setCouponCode] = useState<string | null>(null);
   const [quote, setQuote] = useState<CartQuote | null>(null);
   const [isValidating, setIsValidating] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
@@ -83,6 +86,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         } else {
           setItems([]);
         }
+        if (parsed.couponCode) {
+          setCouponCode(parsed.couponCode);
+        }
         if (role === 'RETAILER') {
           setChannelState('B2B');
         } else if (role === 'DIRECT_CUSTOMER') {
@@ -92,10 +98,12 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         }
       } else {
         setItems([]);
+        setCouponCode(null);
         setChannelState(role === 'RETAILER' ? 'B2B' : 'B2C');
       }
     } catch {
       setItems([]);
+      setCouponCode(null);
     } finally {
       setIsLoaded(true);
     }
@@ -105,6 +113,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const handleLogout = () => {
       setItems([]);
+      setCouponCode(null);
       setQuote(null);
     };
 
@@ -126,11 +135,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!isLoaded) return;
     try {
-      localStorage.setItem(storageKey, JSON.stringify({ items, channel }));
+      localStorage.setItem(storageKey, JSON.stringify({ items, channel, couponCode }));
     } catch {
       // Ignore localStorage write errors
     }
-  }, [items, channel, isLoaded, storageKey]);
+  }, [items, channel, couponCode, isLoaded, storageKey]);
 
   // Revalidate cart authoritatively with Backend Quotation API whenever items change
   useEffect(() => {
@@ -146,7 +155,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       setIsValidating(true);
       try {
         const serverQuote = await backendClient.getQuote(
-          items.map((i) => ({ productId: i.productId, quantity: i.quantity }))
+          items.map((i) => ({ productId: i.productId, quantity: i.quantity })),
+          couponCode || undefined
         );
         if (isMounted) {
           setQuote(serverQuote);
@@ -166,7 +176,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       isMounted = false;
       clearTimeout(timer);
     };
-  }, [items, channel, isLoaded]);
+  }, [items, channel, couponCode, isLoaded]);
 
   const setChannel = (newChannel: 'B2C' | 'B2B') => {
     if (role === 'RETAILER') {
@@ -242,12 +252,58 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const clearCart = () => {
     setItems([]);
     setQuote(null);
+    setCouponCode(null);
     try {
       localStorage.removeItem(storageKey);
     } catch {
       // Ignore
     }
   };
+
+  const applyCoupon = useCallback(
+    async (code: string | null): Promise<{ success: boolean; message: string }> => {
+      const clean = code?.trim() || null;
+      if (!clean) {
+        setCouponCode(null);
+        return { success: true, message: 'Coupon removed.' };
+      }
+
+      setIsValidating(true);
+      try {
+        const serverQuote = await backendClient.getQuote(
+          items.map((i) => ({ productId: i.productId, quantity: i.quantity })),
+          clean
+        );
+        setQuote(serverQuote);
+        if (serverQuote.discountAmount > 0 || serverQuote.appliedDiscountDescription) {
+          setCouponCode(clean);
+          return {
+            success: true,
+            message: serverQuote.appliedDiscountDescription || `Coupon '${clean}' applied successfully!`,
+          };
+        } else if (serverQuote.validationErrors && serverQuote.validationErrors.length > 0) {
+          return {
+            success: false,
+            message: serverQuote.validationErrors[0],
+          };
+        } else {
+          setCouponCode(clean);
+          return {
+            success: true,
+            message: `Coupon '${clean}' applied.`,
+          };
+        }
+      } catch (err: any) {
+        return {
+          success: false,
+          message: err?.message || 'Failed to validate coupon code.',
+        };
+      } finally {
+        setIsValidating(false);
+      }
+    },
+    [items]
+  );
 
   const setIsCartOpen = useCallback((open: boolean) => {
     if (open) {
@@ -264,7 +320,13 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         isValid: quote.isValidForCheckout,
         subtotal: quote.subtotal,
         discount: quote.discountAmount,
+        discountAmount: quote.discountAmount,
+        appliedDiscount: quote.appliedDiscountDescription
+          ? { name: quote.appliedDiscountDescription }
+          : null,
         tax: quote.taxAmount,
+        taxAmount: quote.taxAmount,
+        deliveryFee: 0,
         totalAmount: quote.totalAmount,
         moqViolations: quote.validationErrors.map((msg) => ({
           productId: '',
@@ -290,7 +352,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       isValid: true,
       subtotal,
       discount: 0,
+      discountAmount: 0,
+      appliedDiscount: null,
       tax,
+      taxAmount: tax,
+      deliveryFee: 0,
       totalAmount: subtotal + tax,
       moqViolations: [],
       stockViolations: [],
@@ -314,6 +380,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         validation,
         isValidating,
         itemCount,
+        couponCode,
+        applyCoupon,
       }}
     >
       {children}

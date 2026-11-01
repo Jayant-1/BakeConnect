@@ -16,6 +16,8 @@ public class PaymentAttemptDto {
     private String provider;
     private String providerReference;
     private String idempotencyKey;
+    private BigDecimal baseAmount;
+    private BigDecimal platformFee;
     private BigDecimal amount;
     private String currency;
     private PaymentAttemptStatus status;
@@ -44,6 +46,8 @@ public class PaymentAttemptDto {
         dto.setProvider(attempt.getProvider());
         dto.setProviderReference(attempt.getProviderReference());
         dto.setIdempotencyKey(attempt.getIdempotencyKey());
+        dto.setBaseAmount(attempt.getBaseAmount());
+        dto.setPlatformFee(attempt.getPlatformFee());
         dto.setAmount(attempt.getAmount());
         dto.setCurrency(attempt.getCurrency());
         dto.setStatus(attempt.getStatus());
@@ -97,6 +101,12 @@ public class PaymentAttemptDto {
 
     public String getIdempotencyKey() { return idempotencyKey; }
     public void setIdempotencyKey(String idempotencyKey) { this.idempotencyKey = idempotencyKey; }
+
+    public BigDecimal getBaseAmount() { return baseAmount; }
+    public void setBaseAmount(BigDecimal baseAmount) { this.baseAmount = baseAmount; }
+
+    public BigDecimal getPlatformFee() { return platformFee; }
+    public void setPlatformFee(BigDecimal platformFee) { this.platformFee = platformFee; }
 
     public BigDecimal getAmount() { return amount; }
     public void setAmount(BigDecimal amount) { this.amount = amount; }

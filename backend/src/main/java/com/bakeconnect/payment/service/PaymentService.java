@@ -148,6 +148,8 @@ public class PaymentService {
                     attempt.getProvider(),
                     attempt.getProviderReference(),
                     attempt.getCheckoutUrl(), // Real URL, never fake!
+                    attempt.getBaseAmount() != null ? attempt.getBaseAmount() : attempt.getAmount(),
+                    attempt.getPlatformFee() != null ? attempt.getPlatformFee() : BigDecimal.ZERO,
                     attempt.getAmount(),
                     attempt.getCurrency(),
                     attempt.getStatus(),
@@ -182,6 +184,8 @@ public class PaymentService {
                         attempt.getProvider(),
                         attempt.getProviderReference(),
                         attempt.getCheckoutUrl(),
+                        attempt.getBaseAmount() != null ? attempt.getBaseAmount() : attempt.getAmount(),
+                        attempt.getPlatformFee() != null ? attempt.getPlatformFee() : BigDecimal.ZERO,
                         attempt.getAmount(),
                         attempt.getCurrency(),
                         attempt.getStatus(),
@@ -198,6 +202,8 @@ public class PaymentService {
                         attempt.getProvider(),
                         attempt.getProviderReference(),
                         null,
+                        attempt.getBaseAmount() != null ? attempt.getBaseAmount() : attempt.getAmount(),
+                        attempt.getPlatformFee() != null ? attempt.getPlatformFee() : BigDecimal.ZERO,
                         attempt.getAmount(),
                         attempt.getCurrency(),
                         PaymentAttemptStatus.UNCERTAIN_INITIATION,
@@ -238,6 +244,8 @@ public class PaymentService {
                 completedAttempt.getProvider(),
                 completedAttempt.getProviderReference(),
                 sessionResult.paymentUrl(),
+                completedAttempt.getBaseAmount() != null ? completedAttempt.getBaseAmount() : completedAttempt.getAmount(),
+                completedAttempt.getPlatformFee() != null ? completedAttempt.getPlatformFee() : BigDecimal.ZERO,
                 completedAttempt.getAmount(),
                 completedAttempt.getCurrency(),
                 completedAttempt.getStatus(),
@@ -258,6 +266,27 @@ public class PaymentService {
         if (role != UserRole.BAKERY_ADMIN && role != UserRole.BAKERY_MANAGER &&
                 !attempt.getOrder().getUser().getId().equals(currentUserId)) {
             throw new ForbiddenException("Access denied: You cannot view payment attempts for another user's order");
+        }
+
+        return PaymentAttemptDto.fromEntity(attempt);
+    }
+
+    @Transactional
+    public PaymentAttemptDto cancelPaymentAttempt(UUID attemptId, UUID currentUserId, UserRole role) {
+        PaymentAttempt attempt = paymentAttemptRepository.findById(attemptId)
+                .orElseThrow(() -> new ResourceNotFoundException("PaymentAttempt", "id", attemptId));
+
+        if (role != UserRole.BAKERY_ADMIN && role != UserRole.BAKERY_MANAGER &&
+                attempt.getUser() != null && !attempt.getUser().getId().equals(currentUserId)) {
+            throw new ForbiddenException("Access denied: You cannot cancel another user's payment attempt");
+        }
+
+        if (attempt.getStatus() == PaymentAttemptStatus.INITIATED ||
+                attempt.getStatus() == PaymentAttemptStatus.AWAITING_PAYMENT ||
+                attempt.getStatus() == PaymentAttemptStatus.QUEUED) {
+            attempt.setStatus(PaymentAttemptStatus.CANCELLED);
+            attempt = paymentAttemptRepository.saveAndFlush(attempt);
+            log.info("Payment attempt {} explicitly cancelled by user {}. Reservation slot released.", attemptId, currentUserId);
         }
 
         return PaymentAttemptDto.fromEntity(attempt);

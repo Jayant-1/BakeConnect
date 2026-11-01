@@ -16,13 +16,30 @@ export type OrderStatus =
   | 'DECLINED'
   | 'CANCELLED';
 
+export type PaymentAttemptStatus =
+  | 'INITIATED'
+  | 'AWAITING_PAYMENT'
+  | 'PROCESSING'
+  | 'OBSERVED_SUCCESS'
+  | 'COMPLETED'
+  | 'FAILED'
+  | 'EXPIRED'
+  | 'CANCELLED'
+  | 'UNCERTAIN_INITIATION';
+
 export type PaymentStatus =
   | 'PENDING'
   | 'INITIATED'
+  | 'AWAITING_PAYMENT'
+  | 'PROCESSING'
+  | 'OBSERVED_SUCCESS'
+  | 'COMPLETED'
+  | 'PAID'
   | 'SUCCESS'
   | 'FAILED'
   | 'REFUNDED'
-  | 'EXPIRED';
+  | 'EXPIRED'
+  | 'CANCELLED';
 
 export type RetailerApprovalStatus = 'PENDING_APPROVAL' | 'APPROVED' | 'REJECTED' | 'SUSPENDED';
 
@@ -216,16 +233,49 @@ export interface BillingSummary {
   overdueInvoicesCount: number;
 }
 
+export interface PaymentSession {
+  paymentAttemptId: string;
+  id?: string;
+  orderId?: string;
+  orderNumber?: string;
+  invoiceId?: string | null;
+  idempotencyKey?: string;
+  provider: string;
+  providerReference?: string;
+  paymentUrl?: string | null;
+  checkoutUrl?: string | null;
+  baseAmount?: number;
+  platformFee?: number;
+  amount: number;
+  currency: string;
+  status: PaymentAttemptStatus | PaymentStatus;
+  queuePosition?: number;
+  expiresAt?: string | null;
+  customerMessage?: string | null;
+  retryEligible?: boolean;
+}
+
 export interface PaymentAttempt {
   id: string;
+  paymentAttemptId?: string;
   orderId: string;
+  orderNumber?: string;
   invoiceId?: string | null;
+  baseAmount?: number;
+  platformFee?: number;
   amount: number;
   currency: string;
   provider: string;
-  status: PaymentStatus;
+  status: PaymentAttemptStatus | PaymentStatus;
   transactionRef?: string | null;
   redirectUrl?: string | null;
+  checkoutUrl?: string | null;
+  paymentUrl?: string | null;
+  queuePosition?: number;
+  expiresAt?: string | null;
+  utr?: string | null;
+  customerExplanation?: string | null;
+  retryEligible?: boolean;
 }
 
 export interface ReorderSuggestion {

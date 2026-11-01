@@ -47,16 +47,29 @@ public class PaymentInitiationPersistenceService {
     private final OrderRepository orderRepository;
     private final InvoiceRepository invoiceRepository;
     private final ObjectMapper objectMapper;
+    private final PaiseAllocationService paiseAllocationService;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public PaymentInitiationPersistenceService(
+            PaymentAttemptRepository paymentAttemptRepository,
+            OrderRepository orderRepository,
+            InvoiceRepository invoiceRepository,
+            ObjectMapper objectMapper,
+            PaiseAllocationService paiseAllocationService) {
+        this.paymentAttemptRepository = paymentAttemptRepository;
+        this.orderRepository = orderRepository;
+        this.invoiceRepository = invoiceRepository;
+        this.objectMapper = objectMapper;
+        this.paiseAllocationService = paiseAllocationService;
+    }
 
     public PaymentInitiationPersistenceService(
             PaymentAttemptRepository paymentAttemptRepository,
             OrderRepository orderRepository,
             InvoiceRepository invoiceRepository,
             ObjectMapper objectMapper) {
-        this.paymentAttemptRepository = paymentAttemptRepository;
-        this.orderRepository = orderRepository;
-        this.invoiceRepository = invoiceRepository;
-        this.objectMapper = objectMapper;
+        this(paymentAttemptRepository, orderRepository, invoiceRepository, objectMapper,
+                new PaiseAllocationService(paymentAttemptRepository, "HDFC_XX1234"));
     }
 
     public enum ReservationOutcome {
@@ -185,26 +198,54 @@ public class PaymentInitiationPersistenceService {
             throw new BusinessRuleException("UPI payments are temporarily paused because banking observers are offline. Please choose Cash on Delivery or retry shortly.");
         }
 
-        // 6. Persist Initiation Intent BEFORE calling gateway
-        PaymentAttempt newAttempt = new PaymentAttempt(
-                order,
-                invoice,
-                providerName,
-                request.getIdempotencyKey(),
-                paymentAmount,
-                "INR"
-        );
-        newAttempt.setUser(order.getUser());
-        newAttempt.setRequestFingerprint(requestFingerprint);
-        newAttempt.setStatus(PaymentAttemptStatus.INITIATED);
+        // 6. Dynamic Paise Allocation & Intent Persistence with Retry on Offset Collision
+        int maxRetries = 3;
+        for (int attemptNum = 1; attemptNum <= maxRetries; attemptNum++) {
+            PaiseAllocationService.AllocatedPaise allocated = paiseAllocationService.allocatePaise(
+                    order.getUser() != null ? order.getUser().getId() : currentUserId,
+                    null,
+                    paymentAmount
+            );
 
-        try {
-            PaymentAttempt saved = paymentAttemptRepository.saveAndFlush(newAttempt);
-            return new ReservationResult(saved, ReservationOutcome.NEW_INTENT, order, invoice, paymentAmount);
-        } catch (DataIntegrityViolationException e) {
-            log.warn("Database constraint caught concurrent active attempt race on order {}. Raising ConcurrentActiveAttemptException.", order.getId());
-            throw new ConcurrentActiveAttemptException(order.getId());
+            BigDecimal totalPayable = allocated.totalAmount();
+            BigDecimal platformFee = allocated.platformFee();
+            String receivingAccount = allocated.receivingAccount();
+
+            PaymentAttempt newAttempt = new PaymentAttempt(
+                    order,
+                    invoice,
+                    providerName,
+                    request.getIdempotencyKey(),
+                    paymentAmount,
+                    platformFee,
+                    totalPayable,
+                    "INR"
+            );
+            newAttempt.setUser(order.getUser());
+            newAttempt.setReceivingAccount(receivingAccount);
+            newAttempt.setRequestFingerprint(requestFingerprint);
+            newAttempt.setStatus(PaymentAttemptStatus.INITIATED);
+            newAttempt.setExpiresAt(Instant.now().plusSeconds(600));
+
+            try {
+                PaymentAttempt saved = paymentAttemptRepository.saveAndFlush(newAttempt);
+                return new ReservationResult(saved, ReservationOutcome.NEW_INTENT, order, invoice, totalPayable);
+            } catch (DataIntegrityViolationException e) {
+                String msg = e.getMessage() != null ? e.getMessage().toLowerCase() : "";
+                if (attemptNum < maxRetries && (msg.contains("uq_payment_attempts_active_account_amount") || msg.contains("receiving_account, amount") || msg.contains("(receiving_account, amount)"))) {
+                    log.warn("Paise offset collision on amount {} for account {}. Retrying allocation (attempt {}/{}).",
+                            totalPayable, receivingAccount, attemptNum, maxRetries);
+                    continue;
+                }
+                if (msg.contains("uq_payment_attempts_active_order") || msg.contains("(order_id)")) {
+                    log.warn("Database constraint caught concurrent active attempt race on order {}. Raising ConcurrentActiveAttemptException.", order.getId());
+                    throw new ConcurrentActiveAttemptException(order.getId());
+                }
+                log.warn("Database constraint caught concurrent active attempt race on order {}. Raising ConcurrentActiveAttemptException.", order.getId());
+                throw new ConcurrentActiveAttemptException(order.getId());
+            }
         }
+        throw new ConcurrentActiveAttemptException(order.getId());
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
@@ -299,26 +340,54 @@ public class PaymentInitiationPersistenceService {
 
         String requestFingerprint = computeFingerprint(order.getId(), invoice != null ? invoice.getId() : null, provider.getProviderName(), paymentAmount);
 
-        // 6. Persist Initiation Intent BEFORE calling gateway
-        PaymentAttempt newAttempt = new PaymentAttempt(
-                order,
-                invoice,
-                provider.getProviderName(),
-                request.getIdempotencyKey(),
-                paymentAmount,
-                "INR"
-        );
-        newAttempt.setUser(order.getUser());
-        newAttempt.setRequestFingerprint(requestFingerprint);
-        newAttempt.setStatus(PaymentAttemptStatus.INITIATED);
+        // 6. Dynamic Paise Allocation & Intent Persistence with Retry on Offset Collision
+        int maxRetries = 3;
+        for (int attemptNum = 1; attemptNum <= maxRetries; attemptNum++) {
+            PaiseAllocationService.AllocatedPaise allocated = paiseAllocationService.allocatePaise(
+                    order.getUser() != null ? order.getUser().getId() : currentUserId,
+                    null,
+                    paymentAmount
+            );
 
-        try {
-            PaymentAttempt saved = paymentAttemptRepository.saveAndFlush(newAttempt);
-            return new ReservationResult(saved, ReservationOutcome.NEW_INTENT, order, invoice, paymentAmount);
-        } catch (DataIntegrityViolationException e) {
-            log.warn("Database constraint caught concurrent active attempt race on order {}. Raising ConcurrentActiveAttemptException.", order.getId());
-            throw new ConcurrentActiveAttemptException(order.getId());
+            BigDecimal totalPayable = allocated.totalAmount();
+            BigDecimal platformFee = allocated.platformFee();
+            String receivingAccount = allocated.receivingAccount();
+
+            PaymentAttempt newAttempt = new PaymentAttempt(
+                    order,
+                    invoice,
+                    provider.getProviderName(),
+                    request.getIdempotencyKey(),
+                    paymentAmount,
+                    platformFee,
+                    totalPayable,
+                    "INR"
+            );
+            newAttempt.setUser(order.getUser());
+            newAttempt.setReceivingAccount(receivingAccount);
+            newAttempt.setRequestFingerprint(requestFingerprint);
+            newAttempt.setStatus(PaymentAttemptStatus.INITIATED);
+            newAttempt.setExpiresAt(Instant.now().plusSeconds(600));
+
+            try {
+                PaymentAttempt saved = paymentAttemptRepository.saveAndFlush(newAttempt);
+                return new ReservationResult(saved, ReservationOutcome.NEW_INTENT, order, invoice, totalPayable);
+            } catch (DataIntegrityViolationException e) {
+                String msg = e.getMessage() != null ? e.getMessage().toLowerCase() : "";
+                if (attemptNum < maxRetries && (msg.contains("uq_payment_attempts_active_account_amount") || msg.contains("receiving_account, amount") || msg.contains("(receiving_account, amount)"))) {
+                    log.warn("Paise offset collision on amount {} for account {}. Retrying allocation (attempt {}/{}).",
+                            totalPayable, receivingAccount, attemptNum, maxRetries);
+                    continue;
+                }
+                if (msg.contains("uq_payment_attempts_active_order") || msg.contains("(order_id)")) {
+                    log.warn("Database constraint caught concurrent active attempt race on order {}. Raising ConcurrentActiveAttemptException.", order.getId());
+                    throw new ConcurrentActiveAttemptException(order.getId());
+                }
+                log.warn("Database constraint caught concurrent active attempt race on order {}. Raising ConcurrentActiveAttemptException.", order.getId());
+                throw new ConcurrentActiveAttemptException(order.getId());
+            }
         }
+        throw new ConcurrentActiveAttemptException(order.getId());
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true)

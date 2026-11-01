@@ -12,6 +12,7 @@ import {
   CheckCircle2,
   Clock,
   AlertCircle,
+  CreditCard,
   Truck,
   Package,
   Printer,
@@ -24,6 +25,7 @@ import {
 } from 'lucide-react';
 
 import { StorefrontLayout } from '../../../components/layout/storefront-layout';
+import { UpiPaymentModal } from '../../../components/payment/upi-payment-modal';
 
 export default function OrderTrackingPage() {
   const params = useParams();
@@ -32,6 +34,16 @@ export default function OrderTrackingPage() {
   const [order, setOrder] = useState<Order | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const search = new URLSearchParams(window.location.search);
+      if (search.get('pay') === 'true') {
+        setIsPaymentModalOpen(true);
+      }
+    }
+  }, []);
 
   const fetchOrder = async () => {
     if (!orderId) return;
@@ -153,6 +165,40 @@ export default function OrderTrackingPage() {
           </Button>
         </div>
       </div>
+
+      {/* Payment Required Action Alert for UPI Orders */}
+      {order.paymentStatus !== 'PAID' && order.paymentMethod === 'YOUPI_PG' && (
+        <div className="mb-8 p-6 rounded-3xl bg-[#FFF7EB] border-2 border-[#342421] shadow-[4px_4px_0px_#342421] flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-in fade-in">
+          <div className="flex items-start gap-3.5">
+            <div className="w-10 h-10 rounded-full bg-[#FF7836] text-white border-2 border-[#342421] shadow-[2px_2px_0px_#342421] flex items-center justify-center shrink-0">
+              <CreditCard className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="font-display text-lg uppercase font-bold text-[#342421]">
+                  UPI Payment Awaiting Confirmation
+                </h3>
+                <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 text-[10px] font-bold border border-amber-300">
+                  Action Required
+                </span>
+              </div>
+              <p className="text-xs text-[#342421]/70 mt-1 max-w-xl">
+                Scan the dynamic verification QR code with any UPI app to confirm your order. Includes a nominal verification fee for instant bank matching.
+              </p>
+            </div>
+          </div>
+
+          <Button
+            variant="primary"
+            size="default"
+            onClick={() => setIsPaymentModalOpen(true)}
+            className="rounded-full px-5 py-2.5 font-bold shadow-[3px_3px_0px_#342421] shrink-0 flex items-center gap-2"
+          >
+            <CreditCard className="w-4 h-4" />
+            <span>Pay via UPI ({formatCurrency(order.totalAmount)})</span>
+          </Button>
+        </div>
+      )}
 
       {/* Delayed Notice Alert (if applicable) */}
       {order.status === 'DELAYED' && (
@@ -302,17 +348,28 @@ export default function OrderTrackingPage() {
                 {order.paymentMethod === 'CREDIT_CYCLE' ? 'Net-15 Invoice Cycle' : 'UPI'}
               </span>
             </div>
-            <div className="flex justify-between">
+            <div className="flex justify-between items-center">
               <span className="text-crust-muted">Payment Status:</span>
-              <span
-                className={`font-bold ${
-                  order.paymentStatus === 'PAID'
-                    ? 'text-status-success'
-                    : 'text-status-warning'
-                }`}
-              >
-                {order.paymentStatus}
-              </span>
+              <div className="flex items-center gap-2">
+                <span
+                  className={`font-bold ${
+                    order.paymentStatus === 'PAID'
+                      ? 'text-status-success'
+                      : 'text-status-warning'
+                  }`}
+                >
+                  {order.paymentStatus}
+                </span>
+                {order.paymentStatus !== 'PAID' && order.paymentMethod === 'YOUPI_PG' && (
+                  <button
+                    type="button"
+                    onClick={() => setIsPaymentModalOpen(true)}
+                    className="text-[11px] text-[#FF7836] hover:underline font-bold"
+                  >
+                    Pay Now
+                  </button>
+                )}
+              </div>
             </div>
             {order.businessGst && (
               <div className="flex justify-between pt-1">
@@ -331,6 +388,18 @@ export default function OrderTrackingPage() {
         </div>
       </div>
       </div>
+
+      <UpiPaymentModal
+        isOpen={isPaymentModalOpen}
+        onClose={() => setIsPaymentModalOpen(false)}
+        orderId={order.id}
+        orderNumber={order.orderNumber}
+        baseAmount={order.totalAmount}
+        onPaymentSuccess={() => {
+          setIsPaymentModalOpen(false);
+          fetchOrder();
+        }}
+      />
     </StorefrontLayout>
   );
 }

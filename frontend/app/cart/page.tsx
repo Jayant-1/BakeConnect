@@ -32,10 +32,18 @@ export default function CartPage() {
     clearCart,
     validation,
     isValidating,
+    couponCode,
+    applyCoupon,
   } = useCart();
 
-  const [promoCode, setPromoCode] = useState('');
+  const [promoCode, setPromoCode] = useState(couponCode || '');
   const [promoMessage, setPromoMessage] = useState<{ text: string; isError: boolean } | null>(null);
+
+  React.useEffect(() => {
+    if (couponCode) {
+      setPromoCode(couponCode);
+    }
+  }, [couponCode]);
 
   const subtotal =
     validation?.subtotal ??
@@ -47,29 +55,12 @@ export default function CartPage() {
   const isMoqMet = channel === 'B2B' ? subtotal >= 5000 : true;
   const moqThresholdRemaining = channel === 'B2B' ? Math.max(0, 5000 - subtotal) : 0;
 
-  const handleApplyPromo = (e: React.FormEvent) => {
+  const handleApplyPromo = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!promoCode.trim()) return;
 
-    if (promoCode.trim().toUpperCase() === 'BULK25') {
-      if (channel !== 'B2B') {
-        setPromoMessage({ text: 'Invalid promo code for this basket.', isError: true });
-      } else if (subtotal < 10000) {
-        setPromoMessage({ text: 'BULK25 requires an order subtotal of at least ₹10,000.', isError: true });
-      } else {
-        setPromoMessage({ text: 'Promo BULK25 applied successfully!', isError: false });
-      }
-    } else if (promoCode.trim().toUpperCase() === 'MORNING10') {
-      if (channel !== 'B2C') {
-        setPromoMessage({ text: 'Invalid promo code for this basket.', isError: true });
-      } else if (subtotal < 600) {
-        setPromoMessage({ text: 'MORNING10 requires a minimum subtotal of ₹600.', isError: true });
-      } else {
-        setPromoMessage({ text: 'Promo MORNING10 applied successfully!', isError: false });
-      }
-    } else {
-      setPromoMessage({ text: 'Invalid promo code. Please check and try again.', isError: true });
-    }
+    const res = await applyCoupon(promoCode);
+    setPromoMessage({ text: res.message, isError: !res.success });
   };
 
   if (items.length === 0) {
@@ -228,23 +219,53 @@ export default function CartPage() {
 
             {/* Promo Code Form */}
             <form onSubmit={handleApplyPromo} className="space-y-2">
-              <label className="text-xs font-bold uppercase tracking-wider text-[#342421] block">
-                Promotional Code
-              </label>
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-bold uppercase tracking-wider text-[#342421]">
+                  Promotional / Test Code
+                </label>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPromoCode('qazwsx');
+                    applyCoupon('qazwsx').then((res) => {
+                      setPromoMessage({ text: res.message, isError: !res.success });
+                    });
+                  }}
+                  className="text-[11px] font-bold text-[#FF7836] hover:text-[#e06325] flex items-center gap-1 cursor-pointer"
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  Apply &quot;qazwsx&quot; (₹1 Test)
+                </button>
+              </div>
               <div className="flex gap-2">
                 <input
                   type="text"
                   value={promoCode}
                   onChange={(e) => setPromoCode(e.target.value)}
-                  placeholder={channel === 'B2B' ? 'e.g. BULK25' : 'e.g. MORNING10'}
+                  placeholder="e.g. qazwsx"
                   className="flex-1 px-4 py-2 rounded-full border-2 border-[#342421] bg-white text-xs font-bold text-[#342421] placeholder:text-[#342421]/40 uppercase focus:outline-hidden focus:ring-2 focus:ring-[#FF7836]"
                 />
                 <button
                   type="submit"
-                  className="px-4 py-2 rounded-full bg-[#342421] hover:bg-[#201513] text-white text-xs font-bold uppercase tracking-wider border-2 border-[#342421]"
+                  disabled={isValidating || !promoCode.trim()}
+                  className="px-4 py-2 rounded-full bg-[#342421] hover:bg-[#201513] text-white text-xs font-bold uppercase tracking-wider border-2 border-[#342421] disabled:opacity-50"
                 >
-                  Apply
+                  {isValidating ? '...' : 'Apply'}
                 </button>
+                {couponCode && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPromoCode('');
+                      applyCoupon(null).then((res) => {
+                        setPromoMessage({ text: res.message, isError: false });
+                      });
+                    }}
+                    className="px-3 py-2 rounded-full bg-rose-100 text-rose-800 text-xs font-bold border border-rose-300 hover:bg-rose-200"
+                  >
+                    Remove
+                  </button>
+                )}
               </div>
               {promoMessage && (
                 <p

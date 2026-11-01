@@ -29,7 +29,17 @@ import {
 export default function CheckoutPage() {
   const router = useRouter();
   const { user, isAuthenticated, isLoading } = useAuth();
-  const { items, channel, clearCart, validation } = useCart();
+  const { items, channel, clearCart, validation, couponCode, applyCoupon, isValidating } = useCart();
+
+  // Coupon state
+  const [couponInput, setCouponInput] = useState(couponCode || '');
+  const [couponMessage, setCouponMessage] = useState<{ text: string; isError: boolean } | null>(null);
+
+  React.useEffect(() => {
+    if (couponCode) {
+      setCouponInput(couponCode);
+    }
+  }, [couponCode]);
 
   // Authentication & Contact details
   const [customerEmail, setCustomerEmail] = useState(user?.email || '');
@@ -141,11 +151,16 @@ export default function CheckoutPage() {
         taxAmount: validation?.taxAmount || Math.round(subtotal * 0.05),
         deliveryFee: fulfillmentType === 'PICKUP' ? 0 : (validation?.deliveryFee || 0),
         totalAmount: total,
+        couponCode: couponCode || undefined,
       };
 
       const created = await apiClient.createOrder(orderPayload);
       clearCart();
-      router.push(`/order/${created.orderNumber}`);
+      if (paymentMethod === 'YOUPI_PG') {
+        router.push(`/order/${created.orderNumber}?pay=true`);
+      } else {
+        router.push(`/order/${created.orderNumber}`);
+      }
     } catch (err: any) {
       setOrderError(err?.message || 'Unable to submit order. Please check connection.');
       setIsSubmitting(false);
@@ -458,14 +473,14 @@ export default function CheckoutPage() {
                   <div className="flex-1">
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-bold text-[#342421]">
-                        UPI
+                        UPI (Google Pay, PhonePe, Paytm, BHIM)
                       </span>
-                      <span className="px-2 py-0.5 rounded-full bg-[#D9EAF3] text-[#342421] text-[10px] font-bold border border-[#342421]/30">
-                        Instant Verification
+                      <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold border border-emerald-300">
+                        Instant Dynamic Match
                       </span>
                     </div>
                     <p className="text-[11px] text-[#342421]/70 mt-1">
-                      Instant secure UPI payment. Order verified by Spring Boot backend webhook callbacks.
+                      Direct UPI payment with unique digital verification paise (nominal +₹0.xx platform fee) for instant automated bank confirmation.
                     </p>
                   </div>
                 </label>
@@ -537,6 +552,67 @@ export default function CheckoutPage() {
               ))}
             </div>
 
+            {/* Promo / Live Verification Coupon */}
+            <div className="pt-3 border-t-2 border-[#342421]/15 space-y-2">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-bold text-[#342421]">Have a coupon code?</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCouponInput('qazwsx');
+                    applyCoupon('qazwsx').then((res) => {
+                      setCouponMessage({ text: res.message, isError: !res.success });
+                    });
+                  }}
+                  className="text-[11px] font-bold text-[#FF7836] hover:text-[#e06325] flex items-center gap-1 cursor-pointer"
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  Apply &quot;qazwsx&quot; (₹1 Test)
+                </button>
+              </div>
+
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={couponInput}
+                  onChange={(e) => setCouponInput(e.target.value)}
+                  placeholder="Enter code (e.g. qazwsx)"
+                  className="flex-1 px-3 py-1.5 rounded-full border-2 border-[#342421] bg-white text-xs font-bold text-[#342421] placeholder:text-[#342421]/40 uppercase focus:outline-hidden focus:ring-2 focus:ring-[#FF7836]"
+                />
+                <button
+                  type="button"
+                  disabled={isValidating || !couponInput.trim()}
+                  onClick={async () => {
+                    const res = await applyCoupon(couponInput);
+                    setCouponMessage({ text: res.message, isError: !res.success });
+                  }}
+                  className="px-4 py-1.5 rounded-full bg-[#342421] hover:bg-[#201513] text-white text-xs font-bold uppercase tracking-wider border-2 border-[#342421] disabled:opacity-50"
+                >
+                  {isValidating ? '...' : 'Apply'}
+                </button>
+                {couponCode && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCouponInput('');
+                      applyCoupon(null).then((res) => {
+                        setCouponMessage({ text: res.message, isError: false });
+                      });
+                    }}
+                    className="px-2.5 py-1.5 rounded-full bg-rose-100 text-rose-800 text-[10px] font-bold border border-rose-300 hover:bg-rose-200"
+                  >
+                    Remove
+                  </button>
+                )}
+              </div>
+
+              {couponMessage && (
+                <p className={`text-[11px] font-bold ${couponMessage.isError ? 'text-rose-700' : 'text-emerald-700'}`}>
+                  {couponMessage.text}
+                </p>
+              )}
+            </div>
+
             <div className="space-y-2 pt-3 border-t-2 border-[#342421]/15 text-xs text-[#342421]/70 font-medium">
               <div className="flex justify-between">
                 <span>Subtotal</span>
@@ -545,7 +621,10 @@ export default function CheckoutPage() {
 
               {validation?.discountAmount ? (
                 <div className="flex justify-between text-[#FF7836] font-bold">
-                  <span>Discounts</span>
+                  <span className="flex items-center gap-1">
+                    <Sparkles className="w-3.5 h-3.5 shrink-0" />
+                    <span>{validation.appliedDiscount?.name || 'Discount Applied'}</span>
+                  </span>
                   <span>-{formatCurrency(validation.discountAmount)}</span>
                 </div>
               ) : null}

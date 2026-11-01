@@ -122,6 +122,27 @@ describe('Google Messages / SMS Payment Observer Integration Tests', () => {
       assert.equal(json.service, 'sms-observer');
     });
 
+    test('GET /pair returns 200 with HTML pairing page', async () => {
+      const res = await get('/pair');
+      assert.equal(res.status, 200);
+      assert.ok(res.text.includes('<!DOCTYPE html>'));
+      assert.ok(res.text.includes('Google Messages Server Gateway'));
+      assert.ok(res.text.includes('/api/browser/qr'));
+    });
+
+    test('GET /api/browser/qr returns JSON status payload', async () => {
+      const res = await get('/api/browser/qr');
+      assert.equal(res.status, 200);
+      const json = JSON.parse(res.text);
+      assert.ok(typeof json.isPaired === 'boolean');
+      assert.ok(json.status);
+    });
+
+    test('GET /api/browser/qr.png responds cleanly', async () => {
+      const res = await get('/api/browser/qr.png');
+      assert.ok(res.status === 200 || res.status === 404);
+    });
+
     test('End-to-End: processing bank SMS confirms active payment session in Payment API', async () => {
       // 1. Create a payment in Payment API for ₹499
       const session = apiInstance.app.context.sessionRepo.create({

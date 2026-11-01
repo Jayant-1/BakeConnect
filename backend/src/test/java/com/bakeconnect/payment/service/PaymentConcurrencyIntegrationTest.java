@@ -228,7 +228,8 @@ class PaymentConcurrencyIntegrationTest {
         // Every request got a valid session response
         for (PaymentSessionResponse response : results) {
             assertThat(response).isNotNull();
-            assertThat(response.amount()).isEqualByComparingTo("525.00");
+            assertThat(response.baseAmount()).isEqualByComparingTo("525.00");
+            assertThat(response.amount()).isGreaterThanOrEqualTo(new BigDecimal("525.01"));
         }
 
         // Verify provider was called at most once or all other threads received the active in-flight attempt

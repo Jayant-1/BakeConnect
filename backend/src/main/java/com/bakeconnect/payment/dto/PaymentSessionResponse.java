@@ -11,6 +11,8 @@ public record PaymentSessionResponse(
         String provider,
         String providerReference,
         String paymentUrl,
+        BigDecimal baseAmount,
+        BigDecimal platformFee,
         BigDecimal amount,
         String currency,
         PaymentAttemptStatus status,
@@ -27,9 +29,27 @@ public record PaymentSessionResponse(
             String paymentUrl,
             BigDecimal amount,
             String currency,
+            PaymentAttemptStatus status,
+            int queuePosition,
+            Instant expiresAt,
+            String customerMessage,
+            boolean retryEligible
+    ) {
+        this(paymentAttemptId, idempotencyKey, provider, providerReference, paymentUrl,
+                amount, BigDecimal.ZERO, amount, currency, status, queuePosition, expiresAt, customerMessage, retryEligible);
+    }
+
+    public PaymentSessionResponse(
+            UUID paymentAttemptId,
+            String idempotencyKey,
+            String provider,
+            String providerReference,
+            String paymentUrl,
+            BigDecimal amount,
+            String currency,
             PaymentAttemptStatus status
     ) {
         this(paymentAttemptId, idempotencyKey, provider, providerReference, paymentUrl,
-                amount, currency, status, 0, null, null, false);
+                amount, BigDecimal.ZERO, amount, currency, status, 0, null, null, false);
     }
 }

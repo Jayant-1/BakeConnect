@@ -12,6 +12,8 @@ out/
 build/
 dist/
 **/.tsbuildinfo
+*.tsbuildinfo
+**/*.tsbuildinfo
 
 # Maven & Java Build Outputs
 backend/target/
@@ -34,6 +36,8 @@ backend/.staff-credentials.local.json
 **/.berry-sessions/
 **/data/browser-sessions/
 **/data/backups/
+**/*.tar.gz
+**/assets/*.tar.gz
 
 # Logs
 *.log

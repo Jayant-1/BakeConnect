@@ -4,7 +4,7 @@ import React, { useState, use } from 'react';
 import { notFound, useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { useAuth } from '../../../lib/store/auth-context';
-import { Lock, Mail, ArrowRight, AlertCircle, Eye, EyeOff, Shield } from 'lucide-react';
+import { Lock, Mail, ArrowRight, AlertCircle, Eye, EyeOff, Shield, Sparkles, Check } from 'lucide-react';
 
 export default function StaffLoginPage({
   params,
@@ -29,6 +29,17 @@ export default function StaffLoginPage({
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [filledRole, setFilledRole] = useState<string | null>(null);
+
+  const handleQuickFill = (quickEmail: string, quickPass: string, roleName: string) => {
+    setEmail(quickEmail);
+    setPassword(quickPass);
+    setError(null);
+    setFilledRole(roleName);
+    setTimeout(() => {
+      setFilledRole(null);
+    }, 2500);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -90,12 +101,35 @@ export default function StaffLoginPage({
 
       <div className="mt-6 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-[#2D211E] py-8 px-6 sm:px-10 rounded-3xl border-2 border-[#3E2F2B] shadow-[6px_6px_0px_rgba(0,0,0,0.5)]">
+          {/* Error Banner */}
           {error && (
             <div className="mb-6 p-4 rounded-2xl bg-rose-950/80 border-2 border-rose-500/50 flex items-start gap-3 text-rose-200 text-xs font-semibold">
               <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
               <span>{error}</span>
             </div>
           )}
+
+          {/* Minimal Quick Login Bar */}
+          <div className="mb-6 flex items-center justify-between p-2.5 px-3.5 rounded-2xl bg-[#241A18] border border-[#54413B] shadow-xs">
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-bold text-white/70 flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-[#FF7836]" />
+                Staff Quick-Fill:
+              </span>
+              {filledRole && (
+                <span className="text-[10px] font-bold text-emerald-400 bg-emerald-950/80 px-2 py-0.5 rounded-full border border-emerald-500/50">
+                  ✓ {filledRole} filled
+                </span>
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={() => handleQuickFill('admin@bakeconnect.com', 'Password@123', 'Admin')}
+              className="px-3 py-1 rounded-xl text-[11px] font-bold text-[#FFF7EB] bg-[#3E2F2B] hover:bg-[#FF7836] hover:text-white border border-[#FF7836]/40 transition-all active:scale-95"
+            >
+              Master Baker (Admin)
+            </button>
+          </div>
 
           <form className="space-y-5" onSubmit={handleSubmit}>
             <div>

@@ -77,7 +77,8 @@ export class BankSmsParser {
    * } | null}
    */
   static parse(sms) {
-    const text = (sms.text || '').trim();
+    const text = typeof sms === 'string' ? sms.trim() : (sms?.text || '').trim();
+    const sender = typeof sms === 'object' ? sms?.sender : undefined;
     if (!text) return null;
 
     // Check if SMS represents an incoming credit

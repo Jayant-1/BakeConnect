@@ -213,7 +213,8 @@ public class PaymentPostgresIntegrationTest {
         UUID activeAttemptId = dbAttempts.stream().filter(a -> a.getStatus().isActive()).findFirst().get().getId();
         for (PaymentSessionResponse resp : responses) {
             assertThat(resp.paymentAttemptId()).isEqualTo(activeAttemptId);
-            assertThat(resp.amount()).isEqualByComparingTo("525.00");
+            assertThat(resp.baseAmount()).isEqualByComparingTo("525.00");
+            assertThat(resp.amount()).isGreaterThanOrEqualTo(new BigDecimal("525.01"));
         }
     }
 
@@ -257,12 +258,12 @@ public class PaymentPostgresIntegrationTest {
                     "event": "OBSERVED_SUCCESS",
                     "paymentId": "YOUPI-2PHASE-REF",
                     "idempotencyKey": "IDEMP-2PHASE",
-                    "amount": 525.00,
+                    "amount": %s,
                     "currency": "INR",
                     "utr": "123456789012",
                     "verificationLevel": 2
                 }
-                """);
+                """, session.amount().toPlainString());
         paymentService.processWebhook("YOUPI_PG", "DEL-OBS-" + UUID.randomUUID(), "sig1", "sig2",
                 String.valueOf(System.currentTimeMillis()), observedPayload.getBytes(StandardCharsets.UTF_8));
 
@@ -281,11 +282,11 @@ public class PaymentPostgresIntegrationTest {
                     "event": "RECONCILED",
                     "paymentId": "YOUPI-2PHASE-REF",
                     "idempotencyKey": "IDEMP-2PHASE",
-                    "amount": 525.00,
+                    "amount": %s,
                     "currency": "INR",
                     "utr": "123456789012"
                 }
-                """);
+                """, session.amount().toPlainString());
         paymentService.processWebhook("YOUPI_PG", "DEL-REC-" + UUID.randomUUID(), "sig1", "sig2",
                 String.valueOf(System.currentTimeMillis()), reconciledPayload.getBytes(StandardCharsets.UTF_8));
 
@@ -325,11 +326,11 @@ public class PaymentPostgresIntegrationTest {
                     "event": "OBSERVED_SUCCESS",
                     "paymentId": "YOUPI-LATE-REF",
                     "idempotencyKey": "IDEMP-LATE-CREDIT",
-                    "amount": 525.00,
+                    "amount": %s,
                     "currency": "INR",
                     "utr": "999888777111"
                 }
-                """);
+                """, session.amount().toPlainString());
         paymentService.processWebhook("YOUPI_PG", "DEL-LATE-" + UUID.randomUUID(), "sig1", "sig2",
                 String.valueOf(System.currentTimeMillis()), latePayload.getBytes(StandardCharsets.UTF_8));
 
@@ -346,7 +347,7 @@ public class PaymentPostgresIntegrationTest {
                 .filter(r -> r.getOrder().getId().equals(testOrder.getId()))
                 .toList();
         assertThat(refunds).hasSize(1);
-        assertThat(refunds.get(0).getAmount()).isEqualByComparingTo("525.00");
+        assertThat(refunds.get(0).getAmount()).isEqualByComparingTo(session.amount());
         assertThat(refunds.get(0).getReason()).contains("Late credit received");
     }
 
@@ -384,5 +385,117 @@ public class PaymentPostgresIntegrationTest {
 
         // Must retain OBSERVED_SUCCESS, NOT be overwritten with AWAITING_PAYMENT
         assertThat(completed.getStatus()).isEqualTo(PaymentAttemptStatus.OBSERVED_SUCCESS);
+    }
+
+    @Test
+    @DisplayName("Hardened Dynamic Paise Engine: 5 concurrent customers checking out same base ₹525 receive unique paise offsets with zero collisions")
+    void fiveConcurrentCustomers_SameBaseAmount_AllReceiveUniquePaiseOffsets_ZeroCollisions() throws Exception {
+        int customerCount = 5;
+        List<User> customers = new ArrayList<>();
+        List<Order> orders = new ArrayList<>();
+
+        for (int i = 0; i < customerCount; i++) {
+            User u = new User("multi-cust-" + i + "-" + UUID.randomUUID() + "@bakeconnect.com", "hash", "Customer " + i, "987654320" + i, UserRole.DIRECT_CUSTOMER);
+            u = userRepository.save(u);
+            customers.add(u);
+
+            Order o = new Order(
+                    "BC-MULTI-" + i + "-" + System.currentTimeMillis(),
+                    u,
+                    OrderType.PERSONAL,
+                    OrderStatus.PENDING_REVIEW,
+                    PaymentStatus.PENDING,
+                    DeliveryType.DELIVERY,
+                    "{}",
+                    null,
+                    null,
+                    new BigDecimal("500.00"),
+                    BigDecimal.ZERO,
+                    new BigDecimal("25.00"),
+                    new BigDecimal("525.00"),
+                    null
+            );
+            o = orderRepository.save(o);
+            orders.add(o);
+        }
+
+        try {
+            when(mockProvider.initiatePaymentSession(any(PaymentSessionRequest.class))).thenAnswer(inv -> {
+                PaymentSessionRequest req = inv.getArgument(0);
+                return new PaymentSessionResult(
+                        "MULTI-SESSION-" + req.orderId(),
+                        "https://pay.bakeconnect.local/checkout?ref=" + req.orderId(),
+                        Map.of("account", "HDFC_XX1234"),
+                        0,
+                        "AWAITING_PAYMENT",
+                        Instant.now().plusSeconds(600),
+                        "HDFC_XX1234"
+                );
+            });
+
+            ExecutorService executor = Executors.newFixedThreadPool(customerCount);
+            CountDownLatch startLatch = new CountDownLatch(1);
+            CountDownLatch finishLatch = new CountDownLatch(customerCount);
+
+            List<PaymentSessionResponse> sessions = Collections.synchronizedList(new ArrayList<>());
+            List<Throwable> failures = Collections.synchronizedList(new ArrayList<>());
+
+            for (int i = 0; i < customerCount; i++) {
+                final int idx = i;
+                executor.submit(() -> {
+                    try {
+                        startLatch.await();
+                        PaymentInitiateRequest req = new PaymentInitiateRequest(
+                                orders.get(idx).getId(), null, "YOUPI_PG", "IDEMP-MULTI-CUST-" + idx
+                        );
+                        PaymentSessionResponse resp = paymentService.initiatePayment(
+                                req, customers.get(idx).getId(), customers.get(idx).getRole());
+                        sessions.add(resp);
+                    } catch (Throwable t) {
+                        failures.add(t);
+                        log.error("Multi-customer checkout {} failed: {}", idx, t.getMessage(), t);
+                    } finally {
+                        finishLatch.countDown();
+                    }
+                });
+            }
+
+            startLatch.countDown();
+            boolean done = finishLatch.await(10, TimeUnit.SECONDS);
+            executor.shutdown();
+
+            assertThat(done).isTrue();
+            assertThat(failures).isEmpty();
+            assertThat(sessions).hasSize(customerCount);
+
+            // Assert each customer received base amount 525.00
+            Set<BigDecimal> assignedTotalAmounts = new HashSet<>();
+            Set<BigDecimal> assignedFees = new HashSet<>();
+
+            for (PaymentSessionResponse s : sessions) {
+                assertThat(s.baseAmount()).isEqualByComparingTo("525.00");
+                assertThat(s.platformFee()).isGreaterThan(BigDecimal.ZERO);
+                assertThat(s.amount()).isEqualTo(s.baseAmount().add(s.platformFee()));
+                assertThat(s.status()).isEqualTo(PaymentAttemptStatus.AWAITING_PAYMENT);
+
+                assignedTotalAmounts.add(s.amount());
+                assignedFees.add(s.platformFee());
+            }
+
+            // Zero collision: all 5 assigned total amounts must be strictly unique!
+            assertThat(assignedTotalAmounts).hasSize(customerCount);
+            assertThat(assignedFees).hasSize(customerCount);
+            log.info("MULTI-CUSTOMER DYNAMIC PAISE VERIFIED: Unique amounts: {}", assignedTotalAmounts);
+
+        } finally {
+            for (Order o : orders) {
+                List<PaymentAttempt> atts = paymentAttemptRepository.findByOrderId(o.getId());
+                paymentAttemptRepository.deleteAll(atts);
+                orderRepository.delete(o);
+            }
+            for (User u : customers) {
+                userRepository.delete(u);
+            }
+        }
     }
 }

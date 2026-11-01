@@ -16,13 +16,15 @@ export class BrowserLauncher {
    */
   static findBrowserExecutable() {
     const candidates = [
+      // Custom environment override
+      process.env.CHROME_BIN,
+      process.env.CHROMIUM_BIN,
       // Chrome on Windows
       'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
       'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
       process.env.LOCALAPPDATA ? path.join(process.env.LOCALAPPDATA, 'Google\\Chrome\\Application\\chrome.exe') : '',
       // Edge on Windows (Always present on Windows 10/11)
       'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe',
-      'C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe',
       // Linux
       '/usr/bin/google-chrome',
       '/usr/bin/google-chrome-stable',
@@ -47,7 +49,8 @@ export class BrowserLauncher {
    *   url: string,
    *   profileDir: string,
    *   debuggingPort?: number,
-   *   headless?: boolean
+   *   headless?: boolean,
+   *   minimized?: boolean
    * }} options
    */
   static launch(options) {
@@ -56,21 +59,46 @@ export class BrowserLauncher {
 
     if (!fs.existsSync(options.profileDir)) {
       fs.mkdirSync(options.profileDir, { recursive: true });
+    } else {
+      // Purge any stale singleton locks left by previous killed/crashed instances
+      try {
+        const resolved = path.resolve(options.profileDir);
+        for (const lock of ['SingletonLock', 'SingletonCookie', 'SingletonSocket']) {
+          const lp = path.join(resolved, lock);
+          try { fs.unlinkSync(lp); } catch {}
+        }
+      } catch {}
     }
 
     const isLinux = process.platform === 'linux';
+    const hasDisplay = Boolean(process.env.DISPLAY);
+    // On headless server without DISPLAY, default to headless=new
+    const useHeadless = options.headless || (!hasDisplay && isLinux);
+
     const args = [
       `--user-data-dir=${path.resolve(options.profileDir)}`,
       `--remote-debugging-port=${port}`,
       '--no-first-run',
       '--no-default-browser-check',
+      '--password-store=basic',
+      '--use-mock-keychain',
       '--disable-translate',
       '--disable-background-timer-throttling',
       '--disable-backgrounding-occluded-windows',
       '--disable-renderer-backgrounding',
-      '--disable-features=CalculateNativeWinOcclusion',
-      ...(isLinux ? ['--no-sandbox', '--disable-dev-shm-usage'] : []),
-      options.minimized ? '--window-position=-2400,-2400' : (options.headless ? '--headless=new' : '--start-maximized'),
+      '--disable-features=CalculateNativeWinOcclusion,AimEnabled,AutoDeElevate',
+      '--disable-blink-features=AutomationControlled',
+      '--user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
+      ...(isLinux ? [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-gpu',
+        '--disable-software-rasterizer'
+      ] : []),
+      options.minimized && !useHeadless
+        ? '--window-position=-2400,-2400'
+        : (useHeadless ? '--headless=new' : '--start-maximized'),
       options.url
     ];
 
@@ -89,7 +117,8 @@ export class BrowserLauncher {
       pid: child.pid,
       port,
       executable,
-      profileDir: options.profileDir
+      profileDir: options.profileDir,
+      headless: Boolean(useHeadless)
     };
   }
 
@@ -151,15 +180,16 @@ export class BrowserLauncher {
     if (!wsUrl) return null;
     return new Promise((resolve) => {
       try {
+        const reqId = Math.floor(Math.random() * 1000000) + 1;
         const ws = new WebSocket(wsUrl);
         const timeout = setTimeout(() => {
           try { ws.close(); } catch {}
           resolve(null);
-        }, 5000);
+        }, 8000);
 
         ws.onopen = () => {
           ws.send(JSON.stringify({
-            id: 1,
+            id: reqId,
             method: 'Runtime.evaluate',
             params: {
               expression,
@@ -170,13 +200,68 @@ export class BrowserLauncher {
         };
 
         ws.onmessage = (event) => {
-          clearTimeout(timeout);
           try {
             const data = JSON.parse(event.data);
-            ws.close();
-            resolve(data.result?.result?.value);
+            if (data.id === reqId) {
+              clearTimeout(timeout);
+              try { ws.close(); } catch {}
+              resolve(data.result?.result?.value);
+            }
           } catch {
-            ws.close();
+            clearTimeout(timeout);
+            try { ws.close(); } catch {}
+            resolve(null);
+          }
+        };
+
+        ws.onerror = () => {
+          clearTimeout(timeout);
+          resolve(null);
+        };
+      } catch {
+        resolve(null);
+      }
+    });
+  }
+
+  /**
+   * Sends an arbitrary Chrome DevTools Protocol command to a target page.
+   * @param {string} wsUrl
+   * @param {string} method
+   * @param {Record<string, any>} params
+   * @param {number} timeoutMs
+   * @returns {Promise<any>}
+   */
+  static async sendCommand(wsUrl, method, params = {}, timeoutMs = 8000) {
+    if (!wsUrl) return null;
+    return new Promise((resolve) => {
+      try {
+        const reqId = Math.floor(Math.random() * 1000000) + 1;
+        const ws = new WebSocket(wsUrl);
+        const timeout = setTimeout(() => {
+          try { ws.close(); } catch {}
+          resolve(null);
+        }, timeoutMs);
+
+        ws.onopen = () => {
+          ws.send(JSON.stringify({
+            id: reqId,
+            method,
+            params
+          }));
+        };
+
+        ws.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            if (data.id === reqId) {
+              clearTimeout(timeout);
+              try { ws.close(); } catch {}
+              resolve(data.result);
+            }
+          } catch {
+            clearTimeout(timeout);
+            try { ws.close(); } catch {}
             resolve(null);
           }
         };

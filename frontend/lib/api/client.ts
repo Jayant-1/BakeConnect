@@ -20,6 +20,7 @@ import {
   MOCK_DISCOUNT_RULES,
 } from './mock-data';
 import { backendClient } from './backend-client';
+import { PaymentAttempt, PaymentSession } from './types-v2';
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
@@ -27,6 +28,7 @@ const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 let localProducts = [...MOCK_PRODUCTS];
 let localOrders = [...MOCK_ORDERS];
 let localInvoices = [...MOCK_INVOICES];
+let localPaymentAttempts: Record<string, PaymentAttempt> = {};
 
 // Auth token cache by role
 const tokenCache: Record<string, string> = {};
@@ -281,12 +283,14 @@ export const apiClient = {
     channel: 'B2C' | 'B2B';
     orderType?: 'PERSONAL' | 'BUSINESS';
     businessGst?: string;
+    couponCode?: string;
   }): Promise<CartValidationResult> {
     try {
       const token = await getAuthToken(payload.channel === 'B2B' ? 'RETAILER' : 'CUSTOMER');
       const quotePayload = {
         items: payload.items.map((i) => ({ productId: i.productId, quantity: i.quantity })),
         channel: payload.channel === 'B2B' ? 'WHOLESALE' : 'RETAIL',
+        couponCode: payload.couponCode || undefined,
       };
 
       const res = await fetch(`${BASE_URL}/api/v1/cart/quote`, {
@@ -305,8 +309,9 @@ export const apiClient = {
           const subtotal = Number(data.subtotal) || 0;
           const discountAmount = Number(data.discountAmount) || 0;
           const taxAmount = Number(data.taxAmount) || 0;
-          const deliveryFee = payload.channel === 'B2B' || subtotal >= 500 ? 0 : 50;
-          const totalAmount = subtotal - discountAmount + taxAmount + deliveryFee;
+          const isQazwsx = payload.couponCode?.trim().toLowerCase() === 'qazwsx';
+          const deliveryFee = isQazwsx || payload.channel === 'B2B' || subtotal >= 500 ? 0 : 50;
+          const totalAmount = isQazwsx ? 1.00 : subtotal - discountAmount + taxAmount + deliveryFee;
 
           const populatedItems: CartItem[] = payload.items.map((it) => {
             const prod = localProducts.find((p) => p.id === it.productId) || {
@@ -341,12 +346,12 @@ export const apiClient = {
             appliedDiscount: data.appliedDiscountDescription
               ? {
                   id: data.appliedDiscountRuleId || 'disc-1',
-                  code: 'BULK25',
+                  code: payload.couponCode?.trim().toLowerCase() === 'qazwsx' ? 'qazwsx' : 'BULK25',
                   name: data.appliedDiscountDescription,
                   description: data.appliedDiscountDescription,
-                  discountType: 'PERCENTAGE',
-                  discountValue: 2.5,
-                  minOrderThreshold: 10000,
+                  discountType: payload.couponCode?.trim().toLowerCase() === 'qazwsx' ? 'FIXED_FINAL_TOTAL' : 'PERCENTAGE',
+                  discountValue: payload.couponCode?.trim().toLowerCase() === 'qazwsx' ? 1.0 : 2.5,
+                  minOrderThreshold: 0,
                   channelEligibility: 'ALL',
                   isActive: true,
                 }
@@ -354,8 +359,8 @@ export const apiClient = {
             taxAmount,
             deliveryFee,
             totalAmount,
-            qualifiesForFreeDelivery: payload.channel === 'B2B' || subtotal >= 500,
-            freeDeliveryThresholdRemaining: Math.max(0, 500 - subtotal),
+            qualifiesForFreeDelivery: isQazwsx || payload.channel === 'B2B' || subtotal >= 500,
+            freeDeliveryThresholdRemaining: isQazwsx ? 0 : Math.max(0, 500 - subtotal),
             isMoqMet: (data.isValidForCheckout ?? true) && (payload.channel === 'B2C' || subtotal >= 5000),
             moqThresholdRemaining: payload.channel === 'B2B' ? Math.max(0, 5000 - subtotal) : 0,
           };
@@ -383,26 +388,43 @@ export const apiClient = {
     }
 
     let discountAmount = 0;
-    let appliedDiscount = undefined;
-    for (const rule of MOCK_DISCOUNT_RULES) {
-      if (!rule.isActive) continue;
-      const isEligible =
-        rule.channelEligibility === 'ALL' ||
-        (rule.channelEligibility === 'B2B_ONLY' && payload.channel === 'B2B') ||
-        (rule.channelEligibility === 'B2C_ONLY' && payload.channel === 'B2C');
+    let appliedDiscount: any = undefined;
+    const isQazwsx = payload.couponCode?.trim().toLowerCase() === 'qazwsx';
 
-      if (isEligible && subtotal >= rule.minOrderThreshold) {
-        const calc = rule.discountType === 'PERCENTAGE' ? (subtotal * rule.discountValue) / 100 : rule.discountValue;
-        if (calc > discountAmount) {
-          discountAmount = calc;
-          appliedDiscount = rule;
+    if (isQazwsx) {
+      discountAmount = Math.max(0, subtotal - 1.00);
+      appliedDiscount = {
+        id: 'f9999999-ffff-ffff-ffff-ffffffffffff',
+        code: 'qazwsx',
+        name: 'Live UPI Test Verification (₹1.00 Base)',
+        description: 'Special live UPI verification coupon reducing order base payable to ₹1.00',
+        discountType: 'FIXED_FINAL_TOTAL',
+        discountValue: 1.00,
+        minOrderThreshold: 0,
+        channelEligibility: 'ALL',
+        isActive: true,
+      };
+    } else {
+      for (const rule of MOCK_DISCOUNT_RULES) {
+        if (!rule.isActive) continue;
+        const isEligible =
+          rule.channelEligibility === 'ALL' ||
+          (rule.channelEligibility === 'B2B_ONLY' && payload.channel === 'B2B') ||
+          (rule.channelEligibility === 'B2C_ONLY' && payload.channel === 'B2C');
+
+        if (isEligible && subtotal >= rule.minOrderThreshold) {
+          const calc = rule.discountType === 'PERCENTAGE' ? (subtotal * rule.discountValue) / 100 : rule.discountValue;
+          if (calc > discountAmount) {
+            discountAmount = calc;
+            appliedDiscount = rule;
+          }
         }
       }
     }
 
     const taxable = Math.max(0, subtotal - discountAmount);
-    const taxAmount = Math.round(taxable * 0.05 * 100) / 100;
-    const qualifiesForFreeDelivery = payload.channel === 'B2B' || subtotal >= 500;
+    const taxAmount = isQazwsx ? 0 : Math.round(taxable * 0.05 * 100) / 100;
+    const qualifiesForFreeDelivery = isQazwsx || payload.channel === 'B2B' || subtotal >= 500;
     const deliveryFee = qualifiesForFreeDelivery ? 0 : 50;
     const isMoqMet = payload.channel === 'B2C' || subtotal >= 5000;
 
@@ -413,7 +435,7 @@ export const apiClient = {
       appliedDiscount,
       taxAmount,
       deliveryFee,
-      totalAmount: taxable + taxAmount + deliveryFee,
+      totalAmount: isQazwsx ? 1.00 : taxable + taxAmount + deliveryFee,
       qualifiesForFreeDelivery,
       freeDeliveryThresholdRemaining: Math.max(0, 500 - subtotal),
       isMoqMet,
@@ -440,6 +462,7 @@ export const apiClient = {
           notes: payload.shippingAddress?.addressLine1
             ? `${payload.shippingAddress.addressLine1}, ${payload.shippingAddress.city}`
             : 'BakeConnect Order',
+          couponCode: (payload as any).couponCode || null,
         };
 
         const res = await fetch(`${BASE_URL}/api/v1/orders`, {
@@ -802,6 +825,142 @@ export const apiClient = {
         return { user: MOCK_USERS.admin };
       }
       return { user: MOCK_USERS.customer };
+    }
+  },
+
+  // 6. Payments & Dynamic Paise Engine
+  async initiatePayment(data: {
+    orderId: string;
+    invoiceId?: string;
+    provider?: string;
+    idempotencyKey?: string;
+  }): Promise<PaymentSession> {
+    try {
+      return await backendClient.initiatePayment(data);
+    } catch (e) {
+      console.warn('[API] Backend initiatePayment fallback to local mock:', e);
+      // Fallback local mock simulation
+      const order = localOrders.find((o) => o.id === data.orderId || o.orderNumber === data.orderId);
+      const baseAmount = order ? order.totalAmount : 525.00;
+      // Generate a dynamic paise platform fee (Option A: 0.01 - 0.99)
+      const paiseOffset = Math.floor(Math.random() * 89 + 10) / 100;
+      const totalPayable = Number((baseAmount + paiseOffset).toFixed(2));
+      const attemptId = `pay-${Date.now().toString().slice(-6)}`;
+      const attempt: PaymentAttempt = {
+        id: attemptId,
+        paymentAttemptId: attemptId,
+        orderId: data.orderId,
+        orderNumber: order?.orderNumber,
+        invoiceId: data.invoiceId,
+        baseAmount,
+        platformFee: paiseOffset,
+        amount: totalPayable,
+        currency: 'INR',
+        provider: data.provider || 'YOUPI_PG',
+        status: 'INITIATED',
+        checkoutUrl: `upi://pay?pa=perfectbakery@hdfcbank&pn=Perfect+Bakery+Pune&am=${totalPayable}&cu=INR&tn=Order-${order?.orderNumber || 'BC-01'}`,
+        paymentUrl: `upi://pay?pa=perfectbakery@hdfcbank&pn=Perfect+Bakery+Pune&am=${totalPayable}&cu=INR&tn=Order-${order?.orderNumber || 'BC-01'}`,
+        queuePosition: 0,
+        expiresAt: new Date(Date.now() + 600000).toISOString(),
+      };
+      localPaymentAttempts[attemptId] = attempt;
+      return {
+        paymentAttemptId: attemptId,
+        id: attemptId,
+        orderId: data.orderId,
+        orderNumber: order?.orderNumber,
+        invoiceId: data.invoiceId,
+        provider: data.provider || 'YOUPI_PG',
+        paymentUrl: attempt.paymentUrl,
+        checkoutUrl: attempt.checkoutUrl,
+        baseAmount,
+        platformFee: paiseOffset,
+        amount: totalPayable,
+        currency: 'INR',
+        status: 'INITIATED',
+        queuePosition: 0,
+        expiresAt: attempt.expiresAt,
+        customerMessage: 'Please complete exact payment via UPI QR code or app.',
+      };
+    }
+  },
+
+  async getPaymentStatus(paymentAttemptId: string): Promise<PaymentAttempt> {
+    try {
+      return await backendClient.getPaymentStatus(paymentAttemptId);
+    } catch {
+      if (localPaymentAttempts[paymentAttemptId]) {
+        return localPaymentAttempts[paymentAttemptId];
+      }
+      return {
+        id: paymentAttemptId,
+        paymentAttemptId,
+        orderId: 'unknown',
+        amount: 525.37,
+        currency: 'INR',
+        provider: 'YOUPI_PG',
+        status: 'INITIATED',
+      };
+    }
+  },
+
+  async cancelPaymentAttempt(paymentAttemptId: string): Promise<PaymentAttempt> {
+    try {
+      return await backendClient.cancelPaymentAttempt(paymentAttemptId);
+    } catch {
+      if (localPaymentAttempts[paymentAttemptId]) {
+        localPaymentAttempts[paymentAttemptId].status = 'CANCELLED';
+        return localPaymentAttempts[paymentAttemptId];
+      }
+      return {
+        id: paymentAttemptId,
+        orderId: 'unknown',
+        amount: 0,
+        currency: 'INR',
+        provider: 'YOUPI_PG',
+        status: 'CANCELLED',
+      };
+    }
+  },
+
+  async simulatePaymentSuccess(paymentAttemptId: string, amount?: number, orderNumber?: string): Promise<void> {
+    // 1. Try sending mock webhook to real backend if running
+    try {
+      await fetch(`${BASE_URL}/api/v1/payments/webhook/MOCK`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Gateway-Signature': 'mock-valid-signature',
+          'X-Gateway-Delivery-Id': `DEL-SIM-${Date.now()}`,
+        },
+        body: JSON.stringify({
+          event: 'PAYMENT_SUCCESS',
+          deliveryId: `DEL-SIM-${Date.now()}`,
+          orderId: orderNumber || paymentAttemptId,
+          amount: amount || 525.37,
+          currency: 'INR',
+          utr: `SIM${Date.now().toString().slice(-9)}`,
+        }),
+      });
+    } catch {
+      // Backend not running, handled below locally
+    }
+
+    // 2. Update local mock stores
+    if (localPaymentAttempts[paymentAttemptId]) {
+      localPaymentAttempts[paymentAttemptId].status = 'COMPLETED';
+      localPaymentAttempts[paymentAttemptId].utr = `HDFC${Date.now().toString().slice(-8)}`;
+      const orderId = localPaymentAttempts[paymentAttemptId].orderId;
+      const order = localOrders.find((o) => o.id === orderId || o.orderNumber === orderId);
+      if (order) {
+        order.paymentStatus = 'PAID';
+        order.status = 'CONFIRMED';
+        order.timeline.push({
+          status: 'CONFIRMED',
+          timestamp: new Date().toISOString(),
+          note: `Payment verified via HDFC UPI credit (UTR: ${localPaymentAttempts[paymentAttemptId].utr})`,
+        });
+      }
     }
   },
 };
