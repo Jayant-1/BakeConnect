@@ -33,11 +33,12 @@ public class SecurityConfig {
 
     public SecurityConfig(
             JwtAuthenticationFilter jwtAuthFilter,
-            @Value("${bakeconnect.cors.allowed-origins:http://localhost:3000,http://localhost:3001}") String allowedOriginsStr
+            @Value("${bakeconnect.cors.allowed-origins:http://localhost:3000,http://localhost:3001,http://localhost:8000,http://127.0.0.1:3000,http://127.0.0.1:8000,https://bakeconnect.vercel.app,https://*.vercel.app}") String allowedOriginsStr
     ) {
         this.jwtAuthFilter = jwtAuthFilter;
         this.allowedOrigins = Arrays.stream(allowedOriginsStr.split(","))
                 .map(String::trim)
+                .filter(origin -> !origin.isEmpty())
                 .toList();
     }
 
@@ -79,11 +80,9 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(allowedOrigins);
+        configuration.setAllowedOriginPatterns(allowedOrigins);
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-Correlation-Id",
-                "X-Gateway-Signature", "X-Gateway-Signature-V2", "X-Gateway-Delivery-Id", "X-Gateway-Timestamp",
-                "X-Gateway-Event", "X-Delivery-Id", "X-Signature"));
+        configuration.setAllowedHeaders(List.of("*"));
         configuration.setExposedHeaders(List.of("X-Correlation-Id"));
         configuration.setAllowCredentials(true);
         configuration.setMaxAge(3600L);

@@ -843,6 +843,7 @@ export const apiClient = {
       const order = localOrders.find((o) => o.id === data.orderId || o.orderNumber === data.orderId);
       const baseAmount = order ? order.totalAmount : 525.00;
       // Generate a dynamic paise platform fee (Option A: 0.01 - 0.99)
+      const attemptId = 'pay-' + Math.floor(100000 + Math.random() * 900000);
       const paiseOffset = Math.floor(Math.random() * 89 + 10) / 100;
       const totalPayable = Number((baseAmount + paiseOffset).toFixed(2));
       let checkoutUrl = `http://localhost:7000/checkout/${attemptId}`;
