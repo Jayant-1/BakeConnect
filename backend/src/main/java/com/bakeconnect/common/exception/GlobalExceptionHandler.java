@@ -64,6 +64,25 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
     }
 
+    @ExceptionHandler(org.springframework.web.method.annotation.MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ApiResponse<Void>> handleMethodArgumentTypeMismatch(
+            org.springframework.web.method.annotation.MethodArgumentTypeMismatchException ex,
+            HttpServletRequest request) {
+        String correlationId = getCorrelationId(request);
+        String msg = String.format("Parameter '%s' with value '%s' is in an invalid format.", ex.getName(), ex.getValue());
+        ApiResponse<Void> body = ApiResponse.error("INVALID_PARAMETER", msg, correlationId);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ApiResponse<Void>> handleIllegalArgument(
+            IllegalArgumentException ex,
+            HttpServletRequest request) {
+        String correlationId = getCorrelationId(request);
+        ApiResponse<Void> body = ApiResponse.error("BAD_REQUEST", ex.getMessage(), correlationId);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
+    }
+
     @ExceptionHandler(BadRequestException.class)
     public ResponseEntity<ApiResponse<Void>> handleBadRequest(BadRequestException ex,
                                                               HttpServletRequest request) {

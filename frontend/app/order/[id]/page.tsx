@@ -22,6 +22,7 @@ import {
   User,
   MapPin,
   RefreshCw,
+  ExternalLink,
 } from 'lucide-react';
 
 import { StorefrontLayout } from '../../../components/layout/storefront-layout';
@@ -35,15 +36,39 @@ export default function OrderTrackingPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [isRedirectingToGateway, setIsRedirectingToGateway] = useState(false);
+
+  const handlePayViaYouPi = async (targetOrder?: Order | null) => {
+    const o = targetOrder || order;
+    if (!o) return;
+    setIsRedirectingToGateway(true);
+    try {
+      const session = await apiClient.initiatePayment({
+        orderId: o.id,
+        provider: 'YOUPI_PG',
+      });
+      const targetUrl = session.checkoutUrl || session.paymentUrl;
+      if (targetUrl && (targetUrl.startsWith('http://') || targetUrl.startsWith('https://') || targetUrl.startsWith('/'))) {
+        window.location.href = targetUrl;
+        return;
+      }
+    } catch (err) {
+      console.error('Failed to initiate YouPi PG session:', err);
+    } finally {
+      setIsRedirectingToGateway(false);
+    }
+    // Fallback to modal if direct gateway URL couldn't be loaded
+    setIsPaymentModalOpen(true);
+  };
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined' && order && order.paymentStatus !== 'PAID') {
       const search = new URLSearchParams(window.location.search);
       if (search.get('pay') === 'true') {
-        setIsPaymentModalOpen(true);
+        handlePayViaYouPi(order);
       }
     }
-  }, []);
+  }, [order]);
 
   const fetchOrder = async () => {
     if (!orderId) return;
@@ -363,10 +388,21 @@ export default function OrderTrackingPage() {
                 {order.paymentStatus !== 'PAID' && order.paymentMethod === 'YOUPI_PG' && (
                   <button
                     type="button"
-                    onClick={() => setIsPaymentModalOpen(true)}
-                    className="text-[11px] text-[#FF7836] hover:underline font-bold"
+                    onClick={() => handlePayViaYouPi(order)}
+                    disabled={isRedirectingToGateway}
+                    className="text-xs bg-[#FF7836] text-white hover:bg-[#FF6A1F] font-bold px-3 py-1 rounded-full border border-[#342421] shadow-[1px_1px_0px_#342421] transition-all flex items-center gap-1.5"
                   >
-                    Pay Now
+                    {isRedirectingToGateway ? (
+                      <>
+                        <RefreshCw className="w-3 h-3 animate-spin" />
+                        <span>Opening Gateway...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>Pay via YOUPI PG</span>
+                        <ExternalLink className="w-3 h-3" />
+                      </>
+                    )}
                   </button>
                 )}
               </div>

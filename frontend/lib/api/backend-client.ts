@@ -263,16 +263,28 @@ export const backendClient = {
     provider?: string;
     idempotencyKey?: string;
   }): Promise<PaymentSession> {
+    const payload = {
+      ...data,
+      provider: data.provider || 'YOUPI_PG',
+      idempotencyKey: data.idempotencyKey || `idem-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+    };
     const res = await request<any>('/api/v1/payments/initiate', {
       method: 'POST',
-      body: JSON.stringify(data),
+      body: JSON.stringify(payload),
     });
+    let checkoutUrl = res.paymentUrl || res.checkoutUrl;
+    if (typeof window !== 'undefined' && checkoutUrl) {
+      const origin = window.location.origin;
+      if (checkoutUrl.includes('localhost:7000') && !origin.includes('localhost:7000') && !origin.includes('localhost:3000')) {
+        checkoutUrl = checkoutUrl.replace(/^http:\/\/localhost:7000/, origin);
+      }
+    }
     return {
       ...res,
       id: res.paymentAttemptId || res.id,
       paymentAttemptId: res.paymentAttemptId || res.id,
-      checkoutUrl: res.paymentUrl || res.checkoutUrl,
-      paymentUrl: res.paymentUrl || res.checkoutUrl,
+      checkoutUrl,
+      paymentUrl: checkoutUrl,
     };
   },
 

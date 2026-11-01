@@ -41,11 +41,19 @@ const server = http.createServer((req, res) => {
   let target = TARGETS.SPRING_BOOT;
   let targetPath = url;
 
-  if (url.startsWith('/api/v1/') || url.startsWith('/actuator/')) {
-    target = TARGETS.SPRING_BOOT;
-    targetPath = url;
-  } else if (url.startsWith('/checkout/') || url.startsWith('/css/') || url.startsWith('/js/') || url.startsWith('/icons/') || url.startsWith('/assets/')) {
+  if (
+    url.startsWith('/checkout/') ||
+    url.startsWith('/css/') ||
+    url.startsWith('/js/') ||
+    url.startsWith('/icons/') ||
+    url.startsWith('/assets/') ||
+    url.startsWith('/api/v1/checkout/') ||
+    url.startsWith('/api/v1/customer/')
+  ) {
     target = TARGETS.CHECKOUT;
+    targetPath = url;
+  } else if (url.startsWith('/api/v1/') || url.startsWith('/actuator/')) {
+    target = TARGETS.SPRING_BOOT;
     targetPath = url;
   } else if (url.startsWith('/payment-api/')) {
     target = TARGETS.PAYMENT_API;

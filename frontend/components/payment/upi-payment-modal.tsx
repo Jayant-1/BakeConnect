@@ -52,7 +52,8 @@ export function UpiPaymentModal({
 
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const upiId = 'perfectbakery@hdfcbank';
+  const upiId = '9699197282@ibl';
+  const payeeName = 'MRUNAL KAILASH JADHAV';
 
   // Initiate or retrieve existing payment session
   const initSession = async () => {
@@ -84,7 +85,7 @@ export function UpiPaymentModal({
         sess.paymentUrl?.startsWith('upi://')
           ? sess.paymentUrl
           : `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(
-              'Perfect Bakery Pune'
+              payeeName
             )}&am=${amountStr}&cu=INR&tn=${encodeURIComponent(
               `Order ${orderNumber}`
             )}`;
@@ -240,7 +241,7 @@ export function UpiPaymentModal({
   const dynamicFee = session?.platformFee ?? (totalAmount - baseAmount);
   const upiIntentUrl = `upi://pay?pa=${encodeURIComponent(
     upiId
-  )}&pn=${encodeURIComponent('Perfect Bakery Pune')}&am=${totalAmount.toFixed(
+  )}&pn=${encodeURIComponent(payeeName)}&am=${totalAmount.toFixed(
     2
   )}&cu=INR&tn=${encodeURIComponent(`Order ${orderNumber}`)}`;
 
@@ -301,7 +302,7 @@ export function UpiPaymentModal({
                   Payment Verified!
                 </h3>
                 <p className="text-xs text-[#342421]/70 mt-1">
-                  Instant HDFC bank credit confirmed via automated SMS observer.
+                  Instant bank credit confirmed via automated Google Messages observer.
                 </p>
               </div>
 
@@ -321,8 +322,8 @@ export function UpiPaymentModal({
                   </div>
                 )}
                 <div className="flex justify-between">
-                  <span className="text-[#342421]/60">Account:</span>
-                  <span className="font-mono text-[#342421]">HDFC XX1234</span>
+                  <span className="text-[#342421]/60">Receiving VPA:</span>
+                  <span className="font-mono text-[#342421]">{upiId}</span>
                 </div>
               </div>
 
@@ -462,6 +463,19 @@ export function UpiPaymentModal({
                 </div>
               </div>
 
+              {/* Direct Open in Full YOUPI PG Portal */}
+              {session?.checkoutUrl && (
+                <div className="pt-2">
+                  <a
+                    href={session.checkoutUrl}
+                    className="w-full py-2.5 px-4 rounded-full bg-[#FF7836] hover:bg-[#FF6A1F] text-white text-xs font-bold uppercase tracking-wider border-2 border-[#342421] shadow-[2px_2px_0px_#342421] active:translate-x-0.5 active:translate-y-0.5 transition-all flex items-center justify-center gap-2"
+                  >
+                    <span>Proceed to YOUPI Payment Gateway</span>
+                    <ExternalLink className="w-4 h-4" />
+                  </a>
+                </div>
+              )}
+
               {/* Mobile Deep Links */}
               <div className="pt-2">
                 <div className="text-[10px] uppercase font-bold text-[#342421]/60 text-center mb-2">
@@ -479,7 +493,7 @@ export function UpiPaymentModal({
                   <a
                     href={`phonepe://pay?pa=${encodeURIComponent(
                       upiId
-                    )}&pn=${encodeURIComponent('Perfect Bakery Pune')}&am=${totalAmount.toFixed(
+                    )}&pn=${encodeURIComponent(payeeName)}&am=${totalAmount.toFixed(
                       2
                     )}&cu=INR&tn=${encodeURIComponent(`Order ${orderNumber}`)}`}
                     className="py-2 px-3 rounded-full bg-white hover:bg-[#FFF7EB] border-2 border-[#342421] shadow-[2px_2px_0px_#342421] text-xs font-bold text-[#342421] text-center flex items-center justify-center gap-1.5 active:translate-x-0.5 active:translate-y-0.5 transition-all"
@@ -498,7 +512,7 @@ export function UpiPaymentModal({
                     <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500" />
                   </span>
                   <span className="text-[11px] font-medium">
-                    Listening for HDFC bank SMS confirmation...
+                    Autonomous bank observation active on 9699197282@ibl...
                   </span>
                 </div>
                 <ShieldCheck className="w-4 h-4 text-emerald-700 shrink-0" />

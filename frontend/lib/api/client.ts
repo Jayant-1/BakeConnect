@@ -845,7 +845,13 @@ export const apiClient = {
       // Generate a dynamic paise platform fee (Option A: 0.01 - 0.99)
       const paiseOffset = Math.floor(Math.random() * 89 + 10) / 100;
       const totalPayable = Number((baseAmount + paiseOffset).toFixed(2));
-      const attemptId = `pay-${Date.now().toString().slice(-6)}`;
+      let checkoutUrl = `http://localhost:7000/checkout/${attemptId}`;
+      if (typeof window !== 'undefined') {
+        const origin = window.location.origin;
+        if (!origin.includes('localhost:7000') && !origin.includes('localhost:3000')) {
+          checkoutUrl = `${origin}/checkout/${attemptId}`;
+        }
+      }
       const attempt: PaymentAttempt = {
         id: attemptId,
         paymentAttemptId: attemptId,
@@ -858,8 +864,8 @@ export const apiClient = {
         currency: 'INR',
         provider: data.provider || 'YOUPI_PG',
         status: 'INITIATED',
-        checkoutUrl: `upi://pay?pa=perfectbakery@hdfcbank&pn=Perfect+Bakery+Pune&am=${totalPayable}&cu=INR&tn=Order-${order?.orderNumber || 'BC-01'}`,
-        paymentUrl: `upi://pay?pa=perfectbakery@hdfcbank&pn=Perfect+Bakery+Pune&am=${totalPayable}&cu=INR&tn=Order-${order?.orderNumber || 'BC-01'}`,
+        checkoutUrl,
+        paymentUrl: `upi://pay?pa=9699197282@ibl&pn=MRUNAL+KAILASH+JADHAV&am=${totalPayable}&cu=INR&tn=Order-${order?.orderNumber || 'BC-01'}`,
         queuePosition: 0,
         expiresAt: new Date(Date.now() + 600000).toISOString(),
       };

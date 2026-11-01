@@ -157,6 +157,19 @@ export default function CheckoutPage() {
       const created = await apiClient.createOrder(orderPayload);
       clearCart();
       if (paymentMethod === 'YOUPI_PG') {
+        try {
+          const session = await apiClient.initiatePayment({
+            orderId: created.id,
+            provider: 'YOUPI_PG',
+          });
+          const targetUrl = session.checkoutUrl || session.paymentUrl;
+          if (targetUrl && (targetUrl.startsWith('http://') || targetUrl.startsWith('https://') || targetUrl.startsWith('/'))) {
+            window.location.href = targetUrl;
+            return;
+          }
+        } catch (payErr) {
+          console.error('[Checkout] Failed to initiate YouPi PG session directly:', payErr);
+        }
         router.push(`/order/${created.orderNumber}?pay=true`);
       } else {
         router.push(`/order/${created.orderNumber}`);
