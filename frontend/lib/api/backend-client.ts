@@ -264,7 +264,8 @@ export const backendClient = {
     idempotencyKey?: string;
   }): Promise<PaymentSession> {
     const payload = {
-      ...data,
+      orderId: data.orderId,
+      invoiceId: data.invoiceId,
       provider: data.provider || 'YOUPI_PG',
       idempotencyKey: data.idempotencyKey || `idem-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
     };

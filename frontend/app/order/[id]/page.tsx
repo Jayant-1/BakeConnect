@@ -216,11 +216,22 @@ export default function OrderTrackingPage() {
           <Button
             variant="primary"
             size="default"
-            onClick={() => setIsPaymentModalOpen(true)}
+            onClick={() => handlePayViaYouPi(order)}
+            disabled={isRedirectingToGateway}
             className="rounded-full px-5 py-2.5 font-bold shadow-[3px_3px_0px_#342421] shrink-0 flex items-center gap-2"
           >
-            <CreditCard className="w-4 h-4" />
-            <span>Pay via UPI ({formatCurrency(order.totalAmount)})</span>
+            {isRedirectingToGateway ? (
+              <>
+                <RefreshCw className="w-4 h-4 animate-spin" />
+                <span>Opening Gateway...</span>
+              </>
+            ) : (
+              <>
+                <CreditCard className="w-4 h-4" />
+                <span>Pay via UPI ({formatCurrency(order.totalAmount)})</span>
+                <ExternalLink className="w-3.5 h-3.5 ml-1" />
+              </>
+            )}
           </Button>
         </div>
       )}

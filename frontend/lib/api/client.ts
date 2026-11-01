@@ -450,13 +450,64 @@ export const apiClient = {
       const token = await getAuthToken(isBusiness ? 'RETAILER' : 'CUSTOMER');
 
       if (token && payload.items && payload.items.length > 0) {
+        let deliveryAddressId = (payload as any).deliveryAddressId || null;
+        const deliveryType = payload.fulfillmentType === 'PICKUP' ? 'STORE_PICKUP' : 'DELIVERY';
+
+        if (deliveryType === 'DELIVERY' && !deliveryAddressId) {
+          try {
+            const addrRes = await fetch(`${BASE_URL}/api/v1/addresses`, {
+              headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (addrRes.ok) {
+              const addrData = await addrRes.json();
+              if (Array.isArray(addrData.data) && addrData.data.length > 0) {
+                deliveryAddressId = addrData.data[0].id;
+              }
+            }
+          } catch (err) {
+            console.warn('[API] Failed to fetch saved addresses:', err);
+          }
+
+          if (!deliveryAddressId) {
+            try {
+              const createAddrRes = await fetch(`${BASE_URL}/api/v1/addresses`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                  type: isBusiness ? 'WAREHOUSE' : 'HOME',
+                  contactName: payload.shippingAddress?.fullName || payload.customerName || 'Customer',
+                  contactPhone: payload.shippingAddress?.phone || '9820398201',
+                  addressLine1: payload.shippingAddress?.addressLine1 || 'Koregaon Park Main Road',
+                  addressLine2: payload.shippingAddress?.addressLine2 || '',
+                  city: payload.shippingAddress?.city || 'Pune',
+                  state: payload.shippingAddress?.state || 'Maharashtra',
+                  postalCode: payload.shippingAddress?.postalCode || '411001',
+                  deliveryInstructions: 'Deliver fresh',
+                  isDefault: true,
+                })
+              });
+              if (createAddrRes.ok) {
+                const createdAddrData = await createAddrRes.json();
+                if (createdAddrData.data?.id) {
+                  deliveryAddressId = createdAddrData.data.id;
+                }
+              } else {
+                console.warn('[API] Failed to auto-create address:', await createAddrRes.text());
+              }
+            } catch (err) {
+              console.warn('[API] Error creating address for user:', err);
+            }
+          }
+        }
+
         const orderRequest = {
           items: payload.items.map((i) => ({ productId: i.productId, quantity: i.quantity })),
           orderType: payload.orderType || 'PERSONAL',
-          deliveryType: payload.fulfillmentType === 'PICKUP' ? 'STORE_PICKUP' : 'DELIVERY',
-          deliveryAddressId: (payload as any).deliveryAddressId || (isBusiness
-            ? 'b1111111-bbbb-bbbb-bbbb-bbbbbbbbbbbb'
-            : 'b3333333-bbbb-bbbb-bbbb-bbbbbbbbbbbb'),
+          deliveryType,
+          deliveryAddressId: deliveryType === 'STORE_PICKUP' ? null : deliveryAddressId,
           businessGst: payload.businessGst || null,
           businessName: payload.businessName || null,
           notes: payload.shippingAddress?.addressLine1
@@ -478,9 +529,11 @@ export const apiClient = {
           const json = await res.json();
           if (json.data) {
             const mapped = mapOrder(json.data);
-            localOrders = [mapped, ...localOrders];
+            localOrders = [mapped, ...localOrders.filter((o) => o.id !== mapped.id)];
             return mapped;
           }
+        } else {
+          console.error('[API] Backend createOrder error response:', res.status, await res.text());
         }
       }
     } catch (e) {
@@ -839,9 +892,8 @@ export const apiClient = {
       return await backendClient.initiatePayment(data);
     } catch (e) {
       console.warn('[API] Backend initiatePayment fallback to local mock:', e);
-      // Fallback local mock simulation
       const order = localOrders.find((o) => o.id === data.orderId || o.orderNumber === data.orderId);
-      const baseAmount = order ? order.totalAmount : 525.00;
+      const baseAmount = (data as any).baseAmount ?? (order ? order.totalAmount : 1.00);
       // Generate a dynamic paise platform fee (Option A: 0.01 - 0.99)
       const attemptId = 'pay-' + Math.floor(100000 + Math.random() * 900000);
       const paiseOffset = Math.floor(Math.random() * 89 + 10) / 100;

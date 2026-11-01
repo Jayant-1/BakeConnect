@@ -161,7 +161,8 @@ export default function CheckoutPage() {
           const session = await apiClient.initiatePayment({
             orderId: created.id,
             provider: 'YOUPI_PG',
-          });
+            baseAmount: created.totalAmount,
+          } as any);
           const targetUrl = session.checkoutUrl || session.paymentUrl;
           if (targetUrl && (targetUrl.startsWith('http://') || targetUrl.startsWith('https://') || targetUrl.startsWith('/'))) {
             window.location.href = targetUrl;

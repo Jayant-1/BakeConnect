@@ -65,8 +65,16 @@ export function UpiPaymentModal({
         orderId,
         invoiceId,
         provider: 'YOUPI_PG',
-      });
+        baseAmount,
+      } as any);
       setSession(sess);
+
+      // Immediately redirect to real YouPi PG portal
+      const targetUrl = sess.checkoutUrl || sess.paymentUrl;
+      if (targetUrl && (targetUrl.startsWith('http://') || targetUrl.startsWith('https://') || targetUrl.startsWith('/'))) {
+        window.location.href = targetUrl;
+        return;
+      }
 
       // Compute remaining time
       if (sess.expiresAt) {

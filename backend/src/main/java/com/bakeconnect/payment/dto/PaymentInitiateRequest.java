@@ -1,9 +1,11 @@
 package com.bakeconnect.payment.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import java.util.UUID;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class PaymentInitiateRequest {
 
     @NotNull(message = "Order ID is required")
