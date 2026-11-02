@@ -3,6 +3,7 @@
 import React, { useState, useEffect, use } from 'react';
 import { notFound } from 'next/navigation';
 import { useAuth } from '../../../lib/store/auth-context';
+import { getApiBase } from '../../../lib/api/backend-client';
 import { formatCurrency } from '../../../lib/utils';
 import {
   ChefHat,
@@ -144,7 +145,7 @@ export default function BakeryManagerPage({
     return typeof window !== 'undefined' ? localStorage.getItem('bakeconnect_token_v1') : null;
   };
 
-  const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+  const API_BASE = getApiBase();
 
   const loadData = async () => {
     const token = getAuthToken();

@@ -19,10 +19,12 @@ import {
   MOCK_RETAILER_PROFILE,
   MOCK_DISCOUNT_RULES,
 } from './mock-data';
-import { backendClient } from './backend-client';
+import { backendClient, getApiBase } from './backend-client';
 import { PaymentAttempt, PaymentSession } from './types-v2';
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+function getBaseUrl(): string {
+  return getApiBase();
+}
 
 // In-memory store for fallback/demo resilience
 let localProducts = [...MOCK_PRODUCTS];
@@ -50,10 +52,11 @@ async function getAuthToken(role: 'CUSTOMER' | 'RETAILER' | 'ADMIN' = 'CUSTOMER'
   }[role];
 
   try {
-    const res = await fetch(`${BASE_URL}/api/v1/auth/login`, {
+    const res = await fetch(`${getBaseUrl()}/api/v1/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(creds),
+      signal: AbortSignal.timeout(5000),
     });
     if (!res.ok) return null;
     const json = await res.json();
@@ -161,8 +164,8 @@ export const apiClient = {
       const headers: Record<string, string> = { 'Accept': 'application/json' };
       if (token) headers['Authorization'] = `Bearer ${token}`;
 
-      let url = `${BASE_URL}/api/v1/catalog/products?size=50`;
-      const res = await fetch(url, { headers });
+      let url = `${getBaseUrl()}/api/v1/catalog/products?size=50`;
+      const res = await fetch(url, { headers, signal: AbortSignal.timeout(5000) });
       if (res.ok) {
         const json = await res.json();
         const content = json.data?.content || json.data || [];
@@ -206,7 +209,9 @@ export const apiClient = {
 
   async getProduct(slugOrId: string): Promise<Product | null> {
     try {
-      const res = await fetch(`${BASE_URL}/api/v1/catalog/products/${slugOrId}`);
+      const res = await fetch(`${getBaseUrl()}/api/v1/catalog/products/${slugOrId}`, {
+        signal: AbortSignal.timeout(5000),
+      });
       if (res.ok) {
         const json = await res.json();
         if (json.data) return mapProduct(json.data);
@@ -219,7 +224,9 @@ export const apiClient = {
 
   async getCategories(): Promise<Category[]> {
     try {
-      const res = await fetch(`${BASE_URL}/api/v1/catalog/categories`);
+      const res = await fetch(`${getBaseUrl()}/api/v1/catalog/categories`, {
+        signal: AbortSignal.timeout(5000),
+      });
       if (res.ok) {
         const json = await res.json();
         const list = json.data || [];
@@ -293,13 +300,14 @@ export const apiClient = {
         couponCode: payload.couponCode || undefined,
       };
 
-      const res = await fetch(`${BASE_URL}/api/v1/cart/quote`, {
+      const res = await fetch(`${getBaseUrl()}/api/v1/cart/quote`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
         },
         body: JSON.stringify(quotePayload),
+        signal: AbortSignal.timeout(5000),
       });
 
       if (res.ok) {
@@ -455,8 +463,9 @@ export const apiClient = {
 
         if (deliveryType === 'DELIVERY' && !deliveryAddressId) {
           try {
-            const addrRes = await fetch(`${BASE_URL}/api/v1/addresses`, {
-              headers: { 'Authorization': `Bearer ${token}` }
+            const addrRes = await fetch(`${getBaseUrl()}/api/v1/addresses`, {
+              headers: { 'Authorization': `Bearer ${token}` },
+              signal: AbortSignal.timeout(5000),
             });
             if (addrRes.ok) {
               const addrData = await addrRes.json();
@@ -470,7 +479,7 @@ export const apiClient = {
 
           if (!deliveryAddressId) {
             try {
-              const createAddrRes = await fetch(`${BASE_URL}/api/v1/addresses`, {
+              const createAddrRes = await fetch(`${getBaseUrl()}/api/v1/addresses`, {
                 method: 'POST',
                 headers: {
                   'Content-Type': 'application/json',
@@ -487,7 +496,8 @@ export const apiClient = {
                   postalCode: payload.shippingAddress?.postalCode || '411001',
                   deliveryInstructions: 'Deliver fresh',
                   isDefault: true,
-                })
+                }),
+                signal: AbortSignal.timeout(5000),
               });
               if (createAddrRes.ok) {
                 const createdAddrData = await createAddrRes.json();
@@ -516,13 +526,14 @@ export const apiClient = {
           couponCode: (payload as any).couponCode || null,
         };
 
-        const res = await fetch(`${BASE_URL}/api/v1/orders`, {
+        const res = await fetch(`${getBaseUrl()}/api/v1/orders`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`,
           },
           body: JSON.stringify(orderRequest),
+          signal: AbortSignal.timeout(6000),
         });
 
         if (res.ok) {
@@ -589,10 +600,11 @@ export const apiClient = {
       if (token) {
         const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(orderNumberOrId);
         const url = isUuid
-          ? `${BASE_URL}/api/v1/orders/${orderNumberOrId}`
-          : `${BASE_URL}/api/v1/orders/by-number/${encodeURIComponent(orderNumberOrId)}`;
+          ? `${getBaseUrl()}/api/v1/orders/${orderNumberOrId}`
+          : `${getBaseUrl()}/api/v1/orders/by-number/${encodeURIComponent(orderNumberOrId)}`;
         const res = await fetch(url, {
           headers: { 'Authorization': `Bearer ${token}` },
+          signal: AbortSignal.timeout(5000),
         });
         if (res.ok) {
           const json = await res.json();
@@ -609,19 +621,24 @@ export const apiClient = {
     try {
       const token = await getAuthToken('CUSTOMER');
       if (token) {
-        const res = await fetch(`${BASE_URL}/api/v1/orders?size=20`, {
+        const res = await fetch(`${getBaseUrl()}/api/v1/orders?size=20`, {
           headers: { Authorization: `Bearer ${token}` },
+          signal: AbortSignal.timeout(5000),
         });
         if (res.ok) {
           const json = await res.json();
           const list = json.data?.content || json.data || [];
-          if (Array.isArray(list) && list.length > 0) {
+          if (Array.isArray(list)) {
             return list.map(mapOrder);
           }
         }
       }
     } catch (e) {
       console.warn('[API] Backend getMyOrders fallback:', e);
+    }
+    const userToken = getStoredToken();
+    if (userToken) {
+      return [];
     }
     return localOrders.filter((o) => o.orderType === 'PERSONAL' || !o.businessGst);
   },
@@ -630,13 +647,14 @@ export const apiClient = {
     try {
       const token = await getAuthToken('ADMIN');
       if (token) {
-        const res = await fetch(`${BASE_URL}/api/v1/admin/orders?size=50`, {
+        const res = await fetch(`${getBaseUrl()}/api/v1/admin/orders?size=50`, {
           headers: { 'Authorization': `Bearer ${token}` },
+          signal: AbortSignal.timeout(5000),
         });
         if (res.ok) {
           const json = await res.json();
           const list = json.data?.content || json.data || [];
-          if (Array.isArray(list) && list.length > 0) {
+          if (Array.isArray(list)) {
             return list.map(mapOrder);
           }
         }
@@ -659,17 +677,17 @@ export const apiClient = {
     try {
       const token = await getAuthToken('ADMIN');
       if (token) {
-        let endpoint = `${BASE_URL}/api/v1/admin/orders/${orderId}/accept`;
+        let endpoint = `${getBaseUrl()}/api/v1/admin/orders/${orderId}/accept`;
         let body: any = {};
 
         if (action.status === 'DELAYED') {
-          endpoint = `${BASE_URL}/api/v1/admin/orders/${orderId}/delay`;
+          endpoint = `${getBaseUrl()}/api/v1/admin/orders/${orderId}/delay`;
           body = {
             reasonCode: action.preset || 'OTHER',
             customerMessage: action.reason || 'Operations delay',
           };
         } else if (action.status === 'CANCELLED') {
-          endpoint = `${BASE_URL}/api/v1/admin/orders/${orderId}/decline`;
+          endpoint = `${getBaseUrl()}/api/v1/admin/orders/${orderId}/decline`;
           body = {
             reasonCode: action.preset || 'CAPACITY_REACHED',
             customerMessage: action.reason || 'Order declined',
@@ -683,6 +701,7 @@ export const apiClient = {
             'Authorization': `Bearer ${token}`,
           },
           body: JSON.stringify(body),
+          signal: AbortSignal.timeout(5000),
         });
 
         if (res.ok) {
@@ -728,8 +747,9 @@ export const apiClient = {
     try {
       const token = await getAuthToken('RETAILER');
       if (token) {
-        const res = await fetch(`${BASE_URL}/api/v1/billing/invoices?size=50`, {
+        const res = await fetch(`${getBaseUrl()}/api/v1/billing/invoices?size=50`, {
           headers: { 'Authorization': `Bearer ${token}` },
+          signal: AbortSignal.timeout(5000),
         });
         if (res.ok) {
           const json = await res.json();
@@ -765,8 +785,9 @@ export const apiClient = {
       if (token) {
         let amountToPay = customAmount || 1000;
         try {
-          const invRes = await fetch(`${BASE_URL}/api/v1/billing/invoices/${invoiceId}`, {
+          const invRes = await fetch(`${getBaseUrl()}/api/v1/billing/invoices/${invoiceId}`, {
             headers: { 'Authorization': `Bearer ${token}` },
+            signal: AbortSignal.timeout(5000),
           });
           if (invRes.ok) {
             const invJson = await invRes.json();
@@ -778,7 +799,7 @@ export const apiClient = {
           // fallback
         }
 
-        const res = await fetch(`${BASE_URL}/api/v1/admin/billing/invoices/${invoiceId}/payments`, {
+        const res = await fetch(`${getBaseUrl()}/api/v1/admin/billing/invoices/${invoiceId}/payments`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -789,6 +810,7 @@ export const apiClient = {
             referenceNumber: `PAY-REC-${Date.now().toString().slice(-4)}`,
             notes: 'Payment settled via retailer dashboard',
           }),
+          signal: AbortSignal.timeout(5000),
         });
         if (res.ok) {
           const json = await res.json();
@@ -978,7 +1000,7 @@ export const apiClient = {
   async simulatePaymentSuccess(paymentAttemptId: string, amount?: number, orderNumber?: string): Promise<void> {
     // 1. Try sending mock webhook to real backend if running
     try {
-      await fetch(`${BASE_URL}/api/v1/payments/webhook/MOCK`, {
+      await fetch(`${getBaseUrl()}/api/v1/payments/webhook/MOCK`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -993,6 +1015,7 @@ export const apiClient = {
           currency: 'INR',
           utr: `SIM${Date.now().toString().slice(-9)}`,
         }),
+        signal: AbortSignal.timeout(5000),
       });
     } catch {
       // Backend not running, handled below locally

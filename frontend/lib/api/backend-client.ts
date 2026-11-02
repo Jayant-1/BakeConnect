@@ -28,6 +28,9 @@ export function getApiBase(): string {
       return 'http://localhost:8080';
     }
   }
+  if (process.env.NODE_ENV === 'development') {
+    return 'http://localhost:8080';
+  }
   return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 }
 

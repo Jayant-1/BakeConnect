@@ -5,7 +5,7 @@ import { notFound, usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useAuth } from '../../lib/store/auth-context';
-import { backendClient } from '../../lib/api/backend-client';
+import { backendClient, getApiBase } from '../../lib/api/backend-client';
 import {
   Shield,
   ChefHat,
@@ -89,8 +89,9 @@ export default function StaffLayout({
         const token = localStorage.getItem('bakeconnect_token_v1');
         if (!token) return;
 
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'}/api/v1/manager/notifications/recent`, {
+        const res = await fetch(`${getApiBase()}/api/v1/manager/notifications/recent`, {
           headers: { Authorization: `Bearer ${token}` },
+          signal: AbortSignal.timeout(5000),
         });
 
         if (res.ok) {
@@ -132,9 +133,10 @@ export default function StaffLayout({
       const token = localStorage.getItem('bakeconnect_token_v1');
       if (!token) return;
 
-      await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'}/api/v1/manager/notifications/mark-all-read`, {
+      await fetch(`${getApiBase()}/api/v1/manager/notifications/mark-all-read`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
+        signal: AbortSignal.timeout(5000),
       });
 
       setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
