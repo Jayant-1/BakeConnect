@@ -164,7 +164,7 @@ export const apiClient = {
       const headers: Record<string, string> = { 'Accept': 'application/json' };
       if (token) headers['Authorization'] = `Bearer ${token}`;
 
-      let url = `${getBaseUrl()}/api/v1/catalog/products?size=50`;
+      let url = `${getBaseUrl()}/api/v1/catalog/products?size=500`;
       const res = await fetch(url, { headers, signal: AbortSignal.timeout(5000) });
       if (res.ok) {
         const json = await res.json();
@@ -293,7 +293,8 @@ export const apiClient = {
     couponCode?: string;
   }): Promise<CartValidationResult> {
     try {
-      const token = await getAuthToken(payload.channel === 'B2B' ? 'RETAILER' : 'CUSTOMER');
+      const userToken = getStoredToken();
+      const token = userToken || (payload.channel === 'B2B' ? await getAuthToken('RETAILER') : null);
       const quotePayload = {
         items: payload.items.map((i) => ({ productId: i.productId, quantity: i.quantity })),
         channel: payload.channel === 'B2B' ? 'WHOLESALE' : 'RETAIL',

@@ -24,14 +24,14 @@ import {
 
 export function getApiBase(): string {
   if (typeof window !== 'undefined') {
-    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-      return 'http://localhost:8080';
-    }
+    // In the browser, use relative path '' so requests go through the Next.js same-origin rewrite.
+    // This completely eliminates cross-origin blocks, preflight failures, and mixed-content errors.
+    return '';
   }
   if (process.env.NODE_ENV === 'development') {
     return 'http://localhost:8080';
   }
-  return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+  return process.env.BACKEND_INTERNAL_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 }
 
 class ApiError extends Error {

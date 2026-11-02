@@ -33,7 +33,7 @@ public class SecurityConfig {
 
     public SecurityConfig(
             JwtAuthenticationFilter jwtAuthFilter,
-            @Value("${bakeconnect.cors.allowed-origins:http://localhost:3000,http://localhost:3001,http://localhost:8000,http://127.0.0.1:3000,http://127.0.0.1:8000,https://bakeconnect.vercel.app,https://*.vercel.app}") String allowedOriginsStr
+            @Value("${bakeconnect.cors.allowed-origins:http://localhost:*,http://127.0.0.1:*,http://localhost:3000,http://localhost:3001,http://localhost:8000,http://127.0.0.1:3000,http://127.0.0.1:8000,https://bakeconnect.vercel.app,https://*.vercel.app}") String allowedOriginsStr
     ) {
         this.jwtAuthFilter = jwtAuthFilter;
         this.allowedOrigins = Arrays.stream(allowedOriginsStr.split(","))

@@ -51,7 +51,7 @@ public class CatalogController {
             @RequestParam(value = "sort", defaultValue = "name,asc") String sort,
             @AuthenticationPrincipal SecurityUser currentUser
     ) {
-        int boundedSize = Math.min(Math.max(1, size), 100);
+        int boundedSize = Math.min(Math.max(1, size), 500);
         String[] sortParams = sort.split(",");
         Sort.Direction direction = (sortParams.length > 1 && sortParams[1].equalsIgnoreCase("desc"))
                 ? Sort.Direction.DESC : Sort.Direction.ASC;
