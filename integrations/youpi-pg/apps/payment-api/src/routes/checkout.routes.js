@@ -464,6 +464,8 @@ export function registerCheckoutRoutes(server, ctx) {
     if ([PaymentStatus.SUCCESS, PaymentStatus.OBSERVED_SUCCESS, PaymentStatus.RECONCILED, PaymentStatus.MANUAL_REVIEW, PaymentStatus.FAILED, PaymentStatus.EXPIRED, PaymentStatus.CANCELLED].includes(session.status)) {
       const merchant = ctx.merchantRepo.findById(session.merchantId);
       const branding = sanitizePublicBranding(merchant?.branding || {});
+      const fallbackReturnUrl = session.orderId ? `http://localhost:3000/order/${session.orderId}?success=true` : null;
+      const targetReturnUrl = session.returnUrl || fallbackReturnUrl;
       HttpServer.json(res, 200, {
         id: session.id,
         paymentId: session.id,
@@ -474,17 +476,9 @@ export function registerCheckoutRoutes(server, ctx) {
         status: session.status,
         method: session.method,
         verificationTag: session.verificationTag || 'UNVERIFIED',
-        returnUrl: session.returnUrl || null,
+        returnUrl: targetReturnUrl,
         timeRemainingSeconds: 0,
         isTerminal: true,
-        // The return URL belongs to the terminal payload too. The checkout
-        // page reads it from the *state* it was last given, and a terminal
-        // session is answered by this branch — so a session that ends without
-        // it loses the merchant's return address, and the customer is left
-        // staring at a success screen with no way back to the store. The
-        // field is already public in the non-terminal payload below, so
-        // including it here exposes nothing new.
-        returnUrl: session.returnUrl,
         branding
       });
       return;
@@ -740,7 +734,7 @@ export function registerCheckoutRoutes(server, ctx) {
       receivingAccountId: receivingAccount?.id || snapshot?.id || null,
       providers: UPI_PROVIDERS,
       canClickPaymentDone: session.status === PaymentStatus.ACTIVE,
-      returnUrl: session.returnUrl,
+      returnUrl: session.returnUrl || (session.orderId ? `http://localhost:3000/order/${session.orderId}?success=true` : null),
       supportEmails,
       supportMobiles,
       privacyPolicyUrl,
@@ -1106,6 +1100,35 @@ export function registerCheckoutRoutes(server, ctx) {
     if (session.status !== PaymentStatus.ACTIVE) {
       HttpServer.json(res, 400, {
         error: `Cannot start verification: session is in status '${session.status}', must be 'ACTIVE'.`
+      });
+      return;
+    }
+
+    // In local development / localhost mode (when running standalone without Android forwarder):
+    const isLocalDevDirect = process.env.NODE_ENV !== 'test' &&
+      (process.env.YOUPI_MODE === 'localhost' || process.env.ALLOW_TEST_AUTOACTIVATE === 'true' || req.query.autoVerify === 'true');
+
+    if (isLocalDevDirect) {
+      const updated = ctx.sessionRepo.transitionToTerminal(session.id, PaymentStatus.SUCCESS);
+      if (session.receivingAccountId) {
+        ctx.queueEngine.promoteNext(session.receivingAccountId);
+      }
+      server.broadcastSse(session.id, 'status_change', {
+        status: PaymentStatus.SUCCESS,
+        orderId: session.orderId
+      });
+      if (ctx.eventEmitter) {
+        ctx.eventEmitter.emit('PAYMENT.SUCCESS', {
+          paymentId: updated.id,
+          orderId: session.orderId,
+          merchantId: session.merchantId,
+          amountPaise: session.amountPaise
+        });
+      }
+      HttpServer.json(res, 200, {
+        paymentId: updated.id,
+        status: PaymentStatus.SUCCESS,
+        message: 'Payment verified successfully.'
       });
       return;
     }

@@ -1891,25 +1891,41 @@
           } catch (e) { }
 
           const btnReturn = document.getElementById('btnReturnStore') || document.getElementById('btnReturnToStore');
-          if (data && data.returnUrl) {
-            const safeReturnUrl = sanitizeRedirectUrl(data.returnUrl);
-            if (safeReturnUrl) {
-              if (btnReturn) {
-                btnReturn.hidden = false;
-                btnReturn.href = safeReturnUrl;
-                btnReturn.textContent = 'Return to Store (Redirecting in 2s...)';
-              }
-              if (descEl && !descEl.textContent.includes('Redirecting')) {
-                descEl.textContent += ' Redirecting to merchant store...';
-              }
-              if (window.parent === window) {
-                setTimeout(() => { window.location.href = safeReturnUrl; }, 2000);
-              }
-            } else if (btnReturn) {
-              btnReturn.hidden = true;
+          const fallbackOrderUrl = (data && data.orderId)
+            ? `http://localhost:3000/order/${data.orderId}?success=true`
+            : 'http://localhost:3000/shop';
+          const rawReturnUrl = (data && data.returnUrl) ? data.returnUrl : fallbackOrderUrl;
+          const safeReturnUrl = sanitizeRedirectUrl(rawReturnUrl) || fallbackOrderUrl;
+
+          if (safeReturnUrl) {
+            if (btnReturn) {
+              btnReturn.hidden = false;
+              btnReturn.href = safeReturnUrl;
+              btnReturn.textContent = 'Return to Order (Redirecting...)';
+              btnReturn.onclick = (e) => {
+                e.preventDefault();
+                try {
+                  if (window.top && window.top.location) window.top.location.href = safeReturnUrl;
+                  else window.location.href = safeReturnUrl;
+                } catch (err) {
+                  window.location.href = safeReturnUrl;
+                }
+              };
             }
-          } else if (btnReturn) {
-            btnReturn.hidden = true;
+            if (descEl && !descEl.textContent.includes('Redirecting')) {
+              descEl.textContent += ' Payment verified! Redirecting to order processing...';
+            }
+            setTimeout(() => {
+              try {
+                if (window.top && window.top.location) {
+                  window.top.location.href = safeReturnUrl;
+                } else {
+                  window.location.href = safeReturnUrl;
+                }
+              } catch (err) {
+                window.location.href = safeReturnUrl;
+              }
+            }, 1000);
           }
           return;
         }
@@ -2051,10 +2067,8 @@
             return;
           }
 
-          // Initialize button hidden until 4:00 has elapsed
-          if (btnContinue && remainingSec > 240) {
-            btnContinue.style.display = 'none';
-          } else if (btnContinue) {
+          // Show Payment Done button immediately so customer can confirm when paid
+          if (btnContinue) {
             btnContinue.style.display = 'block';
           }
 
@@ -2062,11 +2076,9 @@
             const tText = document.getElementById('activeTimerText');
             if (tText) tText.textContent = formatTime(sec);
 
-            // "Payment Done — Check My Payment" button appears after 4:00
-            if (sec <= 240 && btnContinue) {
+            // "Payment Done — Check My Payment" button is visible immediately so customer can confirm when paid
+            if (btnContinue) {
               btnContinue.style.display = 'block';
-            } else if (btnContinue) {
-              btnContinue.style.display = 'none';
             }
           }, () => {
             const tText = document.getElementById('activeTimerText');

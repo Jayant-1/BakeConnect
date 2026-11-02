@@ -388,6 +388,10 @@ export function registerPaymentRoutes(server, ctx) {
       try { ctx.deviceRepo.associateCustomer(deviceId, customerId); } catch {}
     }
 
+    const resolvedReturnUrl = (body.returnUrl && typeof body.returnUrl === 'string' && body.returnUrl.trim())
+      ? body.returnUrl.trim()
+      : (merchant?.websiteUrl ? `${merchant.websiteUrl.replace(/\/$/, '')}/order/${body.orderId}?success=true` : `http://localhost:3000/order/${body.orderId}?success=true`);
+
     // Create session in DB
     const session = ctx.sessionRepo.create({
       merchantId: merchant.id,
@@ -398,7 +402,7 @@ export function registerPaymentRoutes(server, ctx) {
       currency: body.currency || 'INR',
       method: body.method || 'UPI',
       status: initialStatus,
-      returnUrl: body.returnUrl || null,
+      returnUrl: resolvedReturnUrl,
       idempotencyKey: idempotencyKey || null,
       deviceId,
       metadata: sessionMetadata

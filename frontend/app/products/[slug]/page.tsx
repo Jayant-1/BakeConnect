@@ -271,21 +271,56 @@ export default function ProductDetailPage() {
               </span>
             </div>
 
-            {/* Packaging & Ingredients Detail */}
-            <div className="space-y-2 text-xs bg-white p-4 rounded-2xl border-2 border-[#342421]/20">
-              {product.packDetails && (
-                <div className="flex items-center gap-2 text-[#342421]">
-                  <PackageCheck className="w-4 h-4 text-[#FF7836] shrink-0" />
-                  <span><strong>Packaging:</strong> {product.packDetails}</span>
-                </div>
-              )}
-              {product.allergens && (
-                <div className="flex items-center gap-2 text-[#342421]/80">
-                  <AlertCircle className="w-4 h-4 text-amber-700 shrink-0" />
-                  <span><strong>Allergens:</strong> {product.allergens}</span>
-                </div>
-              )}
-            </div>
+            {/* Packaging & Allergens Specification Card */}
+            {(product.packDetails || product.allergens) && (
+              <div className="bg-white rounded-2xl p-4 border-2 border-[#342421] shadow-[3px_3px_0px_#342421] space-y-3">
+                {product.packDetails && (
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="w-8 h-8 rounded-lg bg-[#FFF7EB] border-2 border-[#342421] flex items-center justify-center text-[#FF7836] shrink-0 shadow-[1px_1px_0px_#342421]">
+                        <PackageCheck className="w-4 h-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <span className="text-[10px] uppercase font-bold tracking-wider text-[#342421]/60 block leading-tight">
+                          Packaging Specification
+                        </span>
+                        <span className="text-xs font-bold text-[#342421] block truncate mt-0.5">
+                          {product.packDetails}
+                        </span>
+                      </div>
+                    </div>
+                    <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-[#D9EAF3] text-[#342421] border border-[#342421]/30 shrink-0">
+                      Hearth Sealed
+                    </span>
+                  </div>
+                )}
+
+                {product.packDetails && product.allergens && (
+                  <div className="border-t border-[#342421]/15" />
+                )}
+
+                {product.allergens && (
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="w-8 h-8 rounded-lg bg-amber-50 border-2 border-[#342421] flex items-center justify-center text-amber-800 shrink-0 shadow-[1px_1px_0px_#342421]">
+                        <AlertCircle className="w-4 h-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <span className="text-[10px] uppercase font-bold tracking-wider text-amber-900/70 block leading-tight">
+                          Allergen Advisory
+                        </span>
+                        <span className="text-xs font-semibold text-[#342421] block truncate mt-0.5">
+                          {product.allergens}
+                        </span>
+                      </div>
+                    </div>
+                    <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300 shrink-0">
+                      FSSAI Notice
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Quantity Controls */}
             <div className="space-y-2">

@@ -85,6 +85,26 @@ export default function OrderTrackingPage() {
 
   useEffect(() => {
     fetchOrder();
+
+    let interval: NodeJS.Timeout | null = null;
+    let pollCount = 0;
+    if (typeof window !== 'undefined') {
+      const search = new URLSearchParams(window.location.search);
+      if (search.get('success') === 'true') {
+        interval = setInterval(() => {
+          pollCount++;
+          if (pollCount > 6) {
+            if (interval) clearInterval(interval);
+            return;
+          }
+          fetchOrder();
+        }, 1500);
+      }
+    }
+
+    return () => {
+      if (interval) clearInterval(interval);
+    };
   }, [orderId]);
 
   const handleRefresh = () => {
@@ -238,8 +258,8 @@ export default function OrderTrackingPage() {
         </div>
       )}
 
-      {/* Payment Observed & Authorized Banner (AUTHORIZED) */}
-      {order.paymentStatus === 'AUTHORIZED' && (
+      {/* Payment Observed & Authorized Banner (AUTHORIZED or PAID) */}
+      {(order.paymentStatus === 'AUTHORIZED' || order.paymentStatus === 'PAID') && (
         <div className="mb-8 p-6 rounded-3xl bg-[#F0FDF4] border-2 border-[#166534] shadow-[4px_4px_0px_#166534] flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-in fade-in">
           <div className="flex items-start gap-3.5">
             <div className="w-10 h-10 rounded-full bg-[#16A34A] text-white border-2 border-[#166534] shadow-[2px_2px_0px_#166534] flex items-center justify-center shrink-0">
