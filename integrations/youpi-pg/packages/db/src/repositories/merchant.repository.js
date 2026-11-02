@@ -139,10 +139,6 @@ export class MerchantRepository {
     if (updates.webhookSecret !== undefined) {
       fields.push('webhook_secret = ?');
       params.push(encryptAtRest(updates.webhookSecret));
-      if (updates.apiKey === undefined && updates.apiKeyHash === undefined) {
-        fields.push('api_key_hash = ?');
-        params.push(hashApiKey(updates.webhookSecret));
-      }
     }
     if (updates.apiKey !== undefined) {
       fields.push('api_key_hash = ?');

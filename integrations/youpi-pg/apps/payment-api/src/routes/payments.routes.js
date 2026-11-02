@@ -200,17 +200,7 @@ export function registerPaymentRoutes(server, ctx) {
     // Check idempotency & active session state
     const existing = ctx.sessionRepo.findByOrderId(merchant.id, body.orderId);
     if (existing) {
-      const existingCurrency = (existing.currency || 'INR').toUpperCase();
-      if (existing.amountPaise !== amountPaise || existingCurrency !== requestedCurrency) {
-        HttpServer.json(res, 409, {
-          error: 'ORDER_AMOUNT_MISMATCH',
-          code: 'ORDER_AMOUNT_MISMATCH',
-          message: `Order ${body.orderId} already exists with a different amount or currency.`
-        });
-        return;
-      }
-
-      // If SUCCESS: order is already paid, return existing completed session
+      // 1. If SUCCESS: order is already paid, return existing completed session
       if (existing.status === PaymentStatus.SUCCESS
         || existing.status === PaymentStatus.OBSERVED_SUCCESS
         || existing.status === PaymentStatus.RECONCILED
@@ -227,7 +217,7 @@ export function registerPaymentRoutes(server, ctx) {
         return;
       }
 
-      // Check if existing session is stale
+      // 2. Check if existing session is stale
       const now = Date.now();
       const isStale = (existing.status === PaymentStatus.ACTIVE && existing.expiresAt && existing.expiresAt.getTime() <= now) ||
         (existing.status === PaymentStatus.PROCESSING && existing.processingExpiresAt && existing.processingExpiresAt.getTime() <= now);
@@ -248,8 +238,19 @@ export function registerPaymentRoutes(server, ctx) {
         }
       }
 
-      // If existing is non-terminal (ACTIVE, PROCESSING, QUEUED, INITIATED):
+      // 3. If existing is non-terminal (ACTIVE, PROCESSING, QUEUED, INITIATED):
       if ([PaymentStatus.ACTIVE, PaymentStatus.PROCESSING, PaymentStatus.QUEUED, PaymentStatus.INITIATED].includes(existing.status)) {
+        const existingCurrency = (existing.currency || 'INR').toUpperCase();
+        const paiseDiff = Math.abs(Number(existing.amountPaise) - Number(amountPaise));
+        if (existingCurrency !== requestedCurrency || (existing.amountPaise !== amountPaise && paiseDiff > 99)) {
+          HttpServer.json(res, 409, {
+            error: 'ORDER_AMOUNT_MISMATCH',
+            code: 'ORDER_AMOUNT_MISMATCH',
+            message: `Order ${body.orderId} already exists with a different amount or currency.`
+          });
+          return;
+        }
+
         // CASE 3: Active session bound to a device + missing or different device -> DUPLICATE_SESSION_DETECTED
         if (existing.deviceId && (!deviceId || deviceId !== existing.deviceId)) {
           HttpServer.json(res, 409, {

@@ -888,60 +888,7 @@ export const apiClient = {
     provider?: string;
     idempotencyKey?: string;
   }): Promise<PaymentSession> {
-    try {
-      return await backendClient.initiatePayment(data);
-    } catch (e) {
-      console.warn('[API] Backend initiatePayment fallback to local mock:', e);
-      const order = localOrders.find((o) => o.id === data.orderId || o.orderNumber === data.orderId);
-      const baseAmount = (data as any).baseAmount ?? (order ? order.totalAmount : 1.00);
-      // Generate a dynamic paise platform fee (Option A: 0.01 - 0.99)
-      const attemptId = 'pay-' + Math.floor(100000 + Math.random() * 900000);
-      const paiseOffset = Math.floor(Math.random() * 89 + 10) / 100;
-      const totalPayable = Number((baseAmount + paiseOffset).toFixed(2));
-      let checkoutUrl = `http://localhost:7000/checkout/${attemptId}`;
-      if (typeof window !== 'undefined') {
-        const origin = window.location.origin;
-        if (!origin.includes('localhost:7000') && !origin.includes('localhost:3000')) {
-          checkoutUrl = `${origin}/checkout/${attemptId}`;
-        }
-      }
-      const attempt: PaymentAttempt = {
-        id: attemptId,
-        paymentAttemptId: attemptId,
-        orderId: data.orderId,
-        orderNumber: order?.orderNumber,
-        invoiceId: data.invoiceId,
-        baseAmount,
-        platformFee: paiseOffset,
-        amount: totalPayable,
-        currency: 'INR',
-        provider: data.provider || 'YOUPI_PG',
-        status: 'INITIATED',
-        checkoutUrl,
-        paymentUrl: `upi://pay?pa=9699197282@ibl&pn=MRUNAL+KAILASH+JADHAV&am=${totalPayable}&cu=INR&tn=Order-${order?.orderNumber || 'BC-01'}`,
-        queuePosition: 0,
-        expiresAt: new Date(Date.now() + 600000).toISOString(),
-      };
-      localPaymentAttempts[attemptId] = attempt;
-      return {
-        paymentAttemptId: attemptId,
-        id: attemptId,
-        orderId: data.orderId,
-        orderNumber: order?.orderNumber,
-        invoiceId: data.invoiceId,
-        provider: data.provider || 'YOUPI_PG',
-        paymentUrl: attempt.paymentUrl,
-        checkoutUrl: attempt.checkoutUrl,
-        baseAmount,
-        platformFee: paiseOffset,
-        amount: totalPayable,
-        currency: 'INR',
-        status: 'INITIATED',
-        queuePosition: 0,
-        expiresAt: attempt.expiresAt,
-        customerMessage: 'Please complete exact payment via UPI QR code or app.',
-      };
-    }
+    return await backendClient.initiatePayment(data);
   },
 
   async getPaymentStatus(paymentAttemptId: string): Promise<PaymentAttempt> {
