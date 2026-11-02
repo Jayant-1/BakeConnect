@@ -9,6 +9,7 @@ const anton = Anton({
   subsets: ['latin'],
   variable: '--font-anton',
   display: 'swap',
+  preload: false,
 });
 
 const roboto = Roboto({
@@ -16,6 +17,7 @@ const roboto = Roboto({
   subsets: ['latin'],
   variable: '--font-roboto',
   display: 'swap',
+  preload: false,
 });
 
 const jetbrainsMono = JetBrains_Mono({

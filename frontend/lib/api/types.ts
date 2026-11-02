@@ -97,6 +97,7 @@ export type PaymentStatus =
   | 'PROCESSING'
   | 'OBSERVED_SUCCESS'
   | 'COMPLETED'
+  | 'AUTHORIZED'
   | 'PAID'
   | 'FAILED'
   | 'REFUNDED'

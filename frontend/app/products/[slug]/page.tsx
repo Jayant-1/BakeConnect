@@ -117,14 +117,12 @@ export default function ProductDetailPage() {
   const unitPrice = channel === 'B2B' ? product.wholesalePrice : product.retailPrice;
   const lineTotal = unitPrice * quantity;
 
-  const isEggless =
-    product.isEggless ||
-    product.dietaryTags?.includes('EGGLESS') ||
-    product.dietaryTags?.includes('Eggless') ||
-    product.name.toLowerCase().includes('khari') ||
-    product.name.toLowerCase().includes('nankhatai') ||
-    product.name.toLowerCase().includes('rusk') ||
-    product.name.toLowerCase().includes('ladi pav');
+  const isVeg =
+    product.isVegetarian !== false &&
+    product.isEggless !== false &&
+    !product.dietaryTags?.includes('Contains Egg') &&
+    !product.dietaryTags?.includes('Non-Vegetarian') &&
+    !product.dietaryTags?.includes('NON_VEGETARIAN');
 
   const handleAddToCart = () => {
     addItem(product, quantity);
@@ -188,17 +186,17 @@ export default function ProductDetailPage() {
               <div className="absolute top-4 left-4 z-10 flex items-center gap-2 px-3 py-1.5 rounded-full bg-white border-2 border-[#342421] text-xs font-bold shadow-[2px_2px_0px_#342421]">
                 <div
                   className={`border-2 ${
-                    isEggless ? 'border-emerald-700 bg-white' : 'border-amber-800 bg-white'
+                    isVeg ? 'border-emerald-700 bg-white' : 'border-amber-900 bg-white'
                   } p-[2px] rounded-xs flex items-center justify-center`}
                 >
                   <span
                     className={`w-2 h-2 rounded-full ${
-                      isEggless ? 'bg-emerald-700' : 'bg-amber-800'
+                      isVeg ? 'bg-emerald-700' : 'bg-amber-900'
                     }`}
                   />
                 </div>
-                <span className={isEggless ? 'text-emerald-800' : 'text-amber-900'}>
-                  {isEggless ? '100% Eggless' : 'Contains Egg'}
+                <span className={isVeg ? 'text-emerald-800' : 'text-amber-950'}>
+                  {isVeg ? 'Vegetarian' : 'Non-Vegetarian (Contains Egg)'}
                 </span>
               </div>
             </div>

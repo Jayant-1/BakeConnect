@@ -22,7 +22,14 @@ import {
   CustomerIssue,
 } from './types-v2';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+export function getApiBase(): string {
+  if (typeof window !== 'undefined') {
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      return 'http://localhost:8080';
+    }
+  }
+  return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+}
 
 class ApiError extends Error {
   constructor(
@@ -60,13 +67,19 @@ async function request<T>(
     headers.set('Authorization', `Bearer ${token}`);
   }
 
-  const url = path.startsWith('http') ? path : `${API_BASE}${path}`;
+  const base = getApiBase();
+  const url = path.startsWith('http') ? path : `${base}${path}`;
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 12000);
 
   try {
     const res = await fetch(url, {
       ...options,
+      signal: options.signal || controller.signal,
       headers,
     });
+    clearTimeout(timeoutId);
 
     if (res.status === 204) {
       return null as T;

@@ -36,14 +36,12 @@ export function ProductCard({ product }: ProductCardProps) {
     setTimeout(() => setIsAdded(false), 1200);
   };
 
-  const isEggless =
-    product.isEggless ||
-    product.dietaryTags?.includes('EGGLESS') ||
-    product.dietaryTags?.includes('Eggless') ||
-    product.name.toLowerCase().includes('khari') ||
-    product.name.toLowerCase().includes('nankhatai') ||
-    product.name.toLowerCase().includes('rusk') ||
-    product.name.toLowerCase().includes('ladi pav');
+  const isVeg =
+    product.isVegetarian !== false &&
+    product.isEggless !== false &&
+    !product.dietaryTags?.includes('Contains Egg') &&
+    !product.dietaryTags?.includes('Non-Vegetarian') &&
+    !product.dietaryTags?.includes('NON_VEGETARIAN');
 
   const isOutOfStock =
     product.isAvailable === false ||
@@ -67,25 +65,23 @@ export function ProductCard({ product }: ProductCardProps) {
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
         />
 
-        {/* Official Indian Food Safety Green Dot / Vegetarian Indicator Only */}
-        <div className="absolute top-3 left-3 z-10 flex items-center gap-1.5">
+        {/* FSSAI Veg / Non-Veg Dietary Badge at Bottom Right */}
+        <div
+          className="absolute bottom-2.5 right-2.5 z-10"
+          title={isVeg ? 'Vegetarian' : 'Non-Vegetarian (Contains Egg)'}
+          aria-label={isVeg ? 'Vegetarian' : 'Non-Vegetarian'}
+        >
           <div
-            className={`border-2 ${
-              isEggless ? 'border-emerald-700 bg-white' : 'border-amber-800 bg-white'
-            } p-[2px] rounded-xs flex items-center justify-center shadow-xs`}
-            title={isEggless ? 'Eggless / 100% Vegetarian' : 'Contains Egg'}
+            className={`w-[18px] h-[18px] border-2 ${
+              isVeg ? 'border-emerald-700' : 'border-amber-900'
+            } bg-white p-[2px] rounded-xs flex items-center justify-center shadow-xs`}
           >
             <span
               className={`w-2 h-2 rounded-full ${
-                isEggless ? 'bg-emerald-700' : 'bg-amber-800'
+                isVeg ? 'bg-emerald-700' : 'bg-amber-900'
               }`}
             />
           </div>
-          {isEggless && (
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#D9EAF3] text-[#342421] border border-[#342421]/30">
-              Eggless
-            </span>
-          )}
         </div>
 
         {isOutOfStock && (
