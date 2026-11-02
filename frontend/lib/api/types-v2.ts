@@ -34,6 +34,7 @@ export type PaymentStatus =
   | 'PROCESSING'
   | 'OBSERVED_SUCCESS'
   | 'COMPLETED'
+  | 'AUTHORIZED'
   | 'PAID'
   | 'SUCCESS'
   | 'FAILED'
@@ -253,6 +254,10 @@ export interface PaymentSession {
   expiresAt?: string | null;
   customerMessage?: string | null;
   retryEligible?: boolean;
+  upiId?: string;
+  receivingAccountVpa?: string;
+  merchantName?: string;
+  allocatedPaise?: number;
 }
 
 export interface PaymentAttempt {
@@ -276,6 +281,11 @@ export interface PaymentAttempt {
   utr?: string | null;
   customerExplanation?: string | null;
   retryEligible?: boolean;
+  upiId?: string;
+  receivingAccountVpa?: string;
+  merchantName?: string;
+  allocatedPaise?: number;
+  createdAt?: string;
 }
 
 export interface ReorderSuggestion {

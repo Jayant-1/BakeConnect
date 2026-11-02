@@ -478,8 +478,8 @@ export const apiClient = {
                 },
                 body: JSON.stringify({
                   type: isBusiness ? 'WAREHOUSE' : 'HOME',
-                  contactName: payload.shippingAddress?.fullName || payload.customerName || 'Customer',
-                  contactPhone: payload.shippingAddress?.phone || '9820398201',
+                  contactName: (payload.shippingAddress as any)?.fullName || payload.shippingAddress?.contactName || payload.customerName || 'Customer',
+                  contactPhone: (payload.shippingAddress as any)?.phone || payload.shippingAddress?.contactPhone || '9820398201',
                   addressLine1: payload.shippingAddress?.addressLine1 || 'Koregaon Park Main Road',
                   addressLine2: payload.shippingAddress?.addressLine2 || '',
                   city: payload.shippingAddress?.city || 'Pune',
@@ -881,14 +881,60 @@ export const apiClient = {
     }
   },
 
-  // 6. Payments & Dynamic Paise Engine
   async initiatePayment(data: {
     orderId: string;
     invoiceId?: string;
     provider?: string;
     idempotencyKey?: string;
   }): Promise<PaymentSession> {
-    return await backendClient.initiatePayment(data);
+    try {
+      return await backendClient.initiatePayment(data);
+    } catch (e) {
+      console.warn('[API] Backend initiatePayment fallback to local mock:', e);
+      const order = localOrders.find((o) => o.id === data.orderId || o.orderNumber === data.orderId);
+      const baseAmount = order ? order.totalAmount : 525.00;
+      const attemptId = 'pay-' + Math.floor(100000 + Math.random() * 900000);
+      const paiseOffset = Math.floor(Math.random() * 89 + 10) / 100;
+      const totalPayable = Number((baseAmount + paiseOffset).toFixed(2));
+      let checkoutUrl = `http://localhost:7000/checkout/${attemptId}`;
+      if (typeof window !== 'undefined') {
+        const origin = window.location.origin;
+        if (!origin.includes('localhost:7000') && !origin.includes('localhost:3000')) {
+          checkoutUrl = `${origin}/checkout/${attemptId}`;
+        }
+      }
+      const attempt: PaymentAttempt = {
+        id: attemptId,
+        paymentAttemptId: attemptId,
+        orderId: data.orderId,
+        orderNumber: order?.orderNumber,
+        invoiceId: data.invoiceId,
+        baseAmount,
+        platformFee: paiseOffset,
+        amount: totalPayable,
+        currency: 'INR',
+        provider: data.provider || 'YOUPI_PG',
+        status: 'INITIATED',
+        checkoutUrl,
+        expiresAt: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
+      };
+      localPaymentAttempts[attemptId] = attempt;
+      return {
+        paymentAttemptId: attemptId,
+        id: attemptId,
+        checkoutUrl,
+        amount: totalPayable,
+        baseAmount,
+        platformFee: paiseOffset,
+        currency: 'INR',
+        provider: data.provider || 'YOUPI_PG',
+        status: 'INITIATED',
+        upiId: 'bakeconnect@hdfcbank',
+        merchantName: 'BakeConnect Pune Hearth',
+        expiresAt: attempt.expiresAt,
+        allocatedPaise: Math.round(paiseOffset * 100),
+      };
+    }
   },
 
   async getPaymentStatus(paymentAttemptId: string): Promise<PaymentAttempt> {
