@@ -24,78 +24,9 @@
             </button>
           </div>
 
-          <!-- PC 2-SUB-COLUMN CONTAINER (Exact Razorpay Frame 002 layout on Desktop) -->
+          <!-- PC 2-SUB-COLUMN CONTAINER (Desktop View) -->
           <div class="ypg-pc-columns">
-            <!-- PC LEFT METHODS SUB-COLUMN -->
-            <div class="ypg-pc-methods-list" id="pcMethodsList">
-              <!-- UPI Card -->
-              <div class="ypg-pc-method-card is-active" id="pcMethodCardUpi" onclick="selectPaymentMethod('UPI')">
-                <div class="ypg-pc-method-header">
-                  <img src="/icons/upi.svg" alt="UPI" style="height:15px; margin-right:6px; vertical-align:middle;" />
-                  <div class="ypg-pc-method-title">UPI QR</div>
-                </div>
-                <div class="ypg-pc-method-sub">Scan &amp; Pay via UPI Apps</div>
-                <div class="ypg-pc-method-icons">
-                  <img class="ypg-pc-mini-icon" src="/icons/gpay.png"
-                    onerror="if(window.FALLBACK_ICONS)this.src=window.FALLBACK_ICONS.gpay" alt="GPay" />
-                  <img class="ypg-pc-mini-icon" src="/icons/phonepe.png"
-                    onerror="if(window.FALLBACK_ICONS)this.src=window.FALLBACK_ICONS.phonepe" alt="PhonePe" />
-                  <img class="ypg-pc-mini-icon" src="/icons/paytm.png"
-                    onerror="if(window.FALLBACK_ICONS)this.src=window.FALLBACK_ICONS.paytm" alt="Paytm" />
-                  <img class="ypg-pc-mini-icon" src="/icons/cred.png"
-                    onerror="if(window.FALLBACK_ICONS)this.src=window.FALLBACK_ICONS.cred" alt="CRED" />
-                </div>
-              </div>
-
-              <!-- Cash at Till Card (Offline Mode) -->
-              <div class="ypg-pc-method-card" id="pcMethodCardCash" onclick="selectPaymentMethod('CASH_COUNTER')" style="{{PC_CASH_STYLE}}">
-                <div class="ypg-pc-method-header">
-                  <img src="/icons/cash.svg" alt="Cash" style="width:16px; height:16px; margin-right:6px; vertical-align:middle;" />
-                  <div class="ypg-pc-method-title">Cash at Till</div>
-                  <span class="ypg-pc-cash-pill">Counter</span>
-                </div>
-                <div class="ypg-pc-method-sub">Pay cash directly to cashier</div>
-                <div class="ypg-pc-method-icons" style="margin-top:6px;">
-                  <span style="font-size:10.5px; font-weight:700; color:var(--ypg-hc-success, #15803d); background:#dcfce7; padding:2px 8px; border-radius:5px; display:inline-flex; align-items:center; gap:4px; border:1px solid #bbf7d0;">
-                    <img src="/icons/cash.svg" alt="Cash" style="width:12px; height:12px;" />
-                    Physical Cash
-                  </span>
-                </div>
-              </div>
-
-              <!-- Card at Counter (Offline Mode) -->
-              <div class="ypg-pc-method-card" id="pcMethodCardCard" onclick="selectPaymentMethod('CARD_COUNTER')" style="{{PC_CARD_STYLE}}">
-                <div class="ypg-pc-method-header">
-                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px; vertical-align:middle; color:var(--ypg-hc-text-body, #475569);"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
-                  <div class="ypg-pc-method-title">Card at Counter</div>
-                  <span class="ypg-pc-cash-pill" style="background:#f1f5f9; color:var(--ypg-hc-text-body, #475569);">POS</span>
-                </div>
-                <div class="ypg-pc-method-sub">Swipe or tap card at POS desk</div>
-                <div class="ypg-pc-method-icons" style="gap:5px; margin-top:6px; display:flex; align-items:center;">
-                  <img src="/icons/visa.svg" alt="Visa" style="height:15px; width:auto; object-fit:contain;" />
-                  <img src="/icons/mastercard.svg" alt="Mastercard" style="height:15px; width:auto; object-fit:contain;" />
-                  <img src="/icons/rupay.svg" alt="RuPay" style="height:15px; width:auto; object-fit:contain;" />
-                </div>
-              </div>
-
-              <!-- Cash on Delivery (COD) Card (Online Mode) -->
-              <div class="ypg-pc-method-card" id="pcMethodCardCod" onclick="selectPaymentMethod('COD')" style="{{PC_COD_STYLE}}">
-                <div class="ypg-pc-method-header">
-                  <img src="/icons/cash.svg" alt="COD" style="width:16px; height:16px; margin-right:6px; vertical-align:middle;" />
-                  <div class="ypg-pc-method-title">Cash on Delivery</div>
-                  <span class="ypg-pc-cash-pill" style="background:#fef3c7; color:var(--ypg-hc-warning, #92400e);">COD</span>
-                </div>
-                <div class="ypg-pc-method-sub">Pay physical cash at doorstep</div>
-                <div class="ypg-pc-method-icons" style="margin-top:6px;">
-                  <span style="font-size:10.5px; font-weight:700; color:var(--ypg-hc-warning, #b45309); background:#fef3c7; padding:2px 8px; border-radius:5px; display:inline-flex; align-items:center; gap:4px; border:1px solid #fde68a;">
-                    <img src="/icons/cash.svg" alt="COD" style="width:12px; height:12px;" />
-                    Doorstep Cash
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <!-- PC RIGHT ACTIVE PAYMENT WORKSPACE -->
+            <!-- PC ACTIVE PAYMENT WORKSPACE (HERO VIEW) -->
             <div class="ypg-pc-active-view">
               <!-- VIEW A: PURE UPI QR INTERFACE -->
               <div id="viewUpiContent">
@@ -192,7 +123,7 @@
                 <!-- Direct "Payment Done — Check My Payment" Action Button for Desktop & Mobile -->
                 <div style="margin-top: 14px; display: flex; flex-direction: column; gap: 8px;">
                   <button type="button" class="ypg-btn-continue" id="btnDesktopPaymentDone" onclick="submitPaymentDone()"
-                    style="width: 100%; height: 44px; background: #FF7836; color: #fff; font-weight: 700; font-size: 14px; border: 1.5px solid #342421; border-radius: 12px; cursor: pointer; box-shadow: 2px 2px 0px #342421; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    style="width: 100%; height: 48px; background: #FF7836; color: #ffffff; font-weight: 800; font-size: 14.5px; border: 2px solid #342421; border-radius: 14px; cursor: pointer; box-shadow: 3px 3px 0px #342421; display: flex; align-items: center; justify-content: center; gap: 8px;">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
                     <span>Payment Done — Check My Payment</span>
                   </button>

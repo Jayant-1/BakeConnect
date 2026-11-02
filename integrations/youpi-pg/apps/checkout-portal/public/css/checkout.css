@@ -2751,29 +2751,30 @@
 
       .ypg-qr-card-container {
         background: #ffffff !important;
-        border: 1.5px solid var(--ypg-border) !important;
-        border-radius: 16px !important;
-        padding: 16px 18px !important;
+        border: 2px solid #342421 !important;
+        border-radius: 20px !important;
+        padding: 24px 28px !important;
         display: flex !important;
         flex-direction: row !important;
-        gap: 18px !important;
+        gap: 28px !important;
         align-items: center !important;
-        box-shadow: 0 4px 16px rgba(52, 36, 33, 0.04) !important;
-        margin-bottom: 10px !important;
+        box-shadow: 4px 4px 0px #342421 !important;
+        margin-bottom: 14px !important;
       }
 
       .ypg-qr-image-box {
-        width: 154px !important;
-        height: 154px !important;
-        padding: 8px !important;
+        width: 196px !important;
+        height: 196px !important;
+        min-width: 196px !important;
+        padding: 10px !important;
         background: #ffffff !important;
-        border: 1px solid var(--ypg-border) !important;
-        border-radius: 12px !important;
+        border: 2px solid #342421 !important;
+        border-radius: 16px !important;
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
         flex-shrink: 0 !important;
-        box-shadow: 0 2px 8px rgba(52, 36, 33, 0.04) !important;
+        box-shadow: 2px 2px 0px #342421 !important;
       }
 
       .ypg-qr-image-box svg,
@@ -2792,16 +2793,16 @@
       }
 
       .ypg-qr-prompt-title {
-        font-size: 15px !important;
+        font-size: 17px !important;
         font-weight: 800 !important;
         color: var(--ypg-chocolate-dark, #342421) !important;
-        margin-bottom: 3px !important;
+        margin-bottom: 4px !important;
       }
 
       .ypg-qr-prompt-amount {
-        font-size: 13px !important;
+        font-size: 13.5px !important;
         color: var(--ypg-chocolate-muted, #614B47) !important;
-        margin-bottom: 6px !important;
+        margin-bottom: 8px !important;
       }
 
       .ypg-listening-pill {
@@ -2809,14 +2810,14 @@
         align-items: center !important;
         gap: 6px !important;
         background: var(--ypg-green-bg, #EDF7F1) !important;
-        border: 1px solid #bbf7d0 !important;
+        border: 1.5px solid #286E46 !important;
         color: var(--ypg-green, #286E46) !important;
-        font-size: 11px !important;
+        font-size: 11.5px !important;
         font-weight: 700 !important;
         border-radius: 20px !important;
-        padding: 4px 10px !important;
+        padding: 4px 12px !important;
         width: fit-content !important;
-        margin-top: 4px !important;
+        margin-top: 6px !important;
       }
 
       .ypg-listening-dot {
@@ -2838,13 +2839,41 @@
         align-items: center !important;
         gap: 10px !important;
         background: #FDFBF7 !important;
-        border: 1px dashed var(--ypg-border) !important;
+        border: 1.5px dashed #342421 !important;
         border-radius: 12px !important;
         padding: 10px 14px !important;
         font-size: 12px !important;
         color: var(--ypg-chocolate-muted, #614B47) !important;
         line-height: 1.4 !important;
         margin-top: 8px !important;
+      }
+
+      #btnDesktopPaymentDone {
+        width: 100% !important;
+        height: 48px !important;
+        background: #FF7836 !important;
+        color: #ffffff !important;
+        font-weight: 800 !important;
+        font-size: 14.5px !important;
+        border: 2px solid #342421 !important;
+        border-radius: 14px !important;
+        cursor: pointer !important;
+        box-shadow: 3px 3px 0px #342421 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 8px !important;
+        transition: transform 0.1s ease, box-shadow 0.1s ease !important;
+      }
+
+      #btnDesktopPaymentDone:hover {
+        transform: translate(-1px, -1px) !important;
+        box-shadow: 4px 4px 0px #342421 !important;
+      }
+
+      #btnDesktopPaymentDone:active {
+        transform: translate(1px, 1px) !important;
+        box-shadow: 2px 2px 0px #342421 !important;
       }
 
       .ypg-pc-method-icons {
@@ -3061,6 +3090,40 @@
         flex: none !important;
       }
 
+      .ypg-qr-card-container {
+        flex-direction: column !important;
+        align-items: center !important;
+        text-align: center !important;
+        padding: 20px 16px !important;
+        gap: 16px !important;
+        border: 2px solid #342421 !important;
+        border-radius: 18px !important;
+        box-shadow: 3px 3px 0px #342421 !important;
+      }
+
+      .ypg-qr-image-box {
+        width: 170px !important;
+        height: 170px !important;
+        min-width: 170px !important;
+        border: 2px solid #342421 !important;
+        border-radius: 14px !important;
+        box-shadow: 2px 2px 0px #342421 !important;
+      }
+
+      .ypg-qr-details-col {
+        align-items: center !important;
+        text-align: center !important;
+        width: 100% !important;
+      }
+
+      .ypg-listening-pill {
+        margin: 6px auto !important;
+      }
+
+      .ypg-upi-logos-row {
+        justify-content: center !important;
+      }
+
       /* Fixed Bottom Footer Bar */
       .ypg-sticky-footer {
         position: fixed !important;
@@ -3091,15 +3154,15 @@
         gap: 8px;
         width: 100%;
         padding: 12px 16px;
-        background: var(--ypg-blue, #0b63e5);
-        color: #ffffff;
-        border: none;
-        border-radius: 10px;
-        font-weight: 700;
-        font-size: 14px;
+        background: #FF7836 !important;
+        color: #ffffff !important;
+        border: 2px solid #342421 !important;
+        border-radius: 12px !important;
+        font-weight: 800 !important;
+        font-size: 14px !important;
         cursor: pointer;
         margin-top: 10px;
-        box-shadow: 0 4px 14px rgba(11, 99, 229, 0.28);
+        box-shadow: 3px 3px 0px #342421 !important;
         transition: transform 0.15s ease, filter 0.15s ease;
       }
 
