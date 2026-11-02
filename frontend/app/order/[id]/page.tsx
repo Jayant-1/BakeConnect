@@ -62,7 +62,7 @@ export default function OrderTrackingPage() {
   };
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && order && order.paymentStatus !== 'PAID') {
+    if (typeof window !== 'undefined' && order && order.paymentStatus !== 'PAID' && order.paymentStatus !== 'AUTHORIZED') {
       const search = new URLSearchParams(window.location.search);
       if (search.get('pay') === 'true') {
         handlePayViaYouPi(order);
@@ -134,6 +134,8 @@ export default function OrderTrackingPage() {
         return <Badge variant="info">Out for Morning Delivery</Badge>;
       case 'DELIVERED':
         return <Badge variant="success">Delivered</Badge>;
+      case 'PENDING_REVIEW':
+        return <Badge variant="warning">Payment Verified · In Queue</Badge>;
       default:
         return <Badge variant="default">Pending Bakery Review</Badge>;
     }
@@ -191,8 +193,8 @@ export default function OrderTrackingPage() {
         </div>
       </div>
 
-      {/* Payment Required Action Alert for UPI Orders */}
-      {order.paymentStatus !== 'PAID' && order.paymentMethod === 'YOUPI_PG' && (
+      {/* Payment Required Action Alert for UPI Orders (PENDING) */}
+      {order.paymentStatus === 'PENDING' && order.paymentMethod === 'YOUPI_PG' && (
         <div className="mb-8 p-6 rounded-3xl bg-[#FFF7EB] border-2 border-[#342421] shadow-[4px_4px_0px_#342421] flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-in fade-in">
           <div className="flex items-start gap-3.5">
             <div className="w-10 h-10 rounded-full bg-[#FF7836] text-white border-2 border-[#342421] shadow-[2px_2px_0px_#342421] flex items-center justify-center shrink-0">
@@ -233,6 +235,33 @@ export default function OrderTrackingPage() {
               </>
             )}
           </Button>
+        </div>
+      )}
+
+      {/* Payment Observed & Authorized Banner (AUTHORIZED) */}
+      {order.paymentStatus === 'AUTHORIZED' && (
+        <div className="mb-8 p-6 rounded-3xl bg-[#F0FDF4] border-2 border-[#166534] shadow-[4px_4px_0px_#166534] flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-in fade-in">
+          <div className="flex items-start gap-3.5">
+            <div className="w-10 h-10 rounded-full bg-[#16A34A] text-white border-2 border-[#166534] shadow-[2px_2px_0px_#166534] flex items-center justify-center shrink-0">
+              <ShieldCheck className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="font-display text-lg uppercase font-bold text-[#166534]">
+                  UPI Payment Verified · Batch Scheduled
+                </h3>
+                <span className="px-2 py-0.5 rounded-full bg-green-100 text-green-900 text-[10px] font-bold border border-green-300">
+                  Payment Received
+                </span>
+              </div>
+              <p className="text-xs text-[#166534]/80 mt-1 max-w-xl">
+                Your UPI transaction was successfully received and verified by our automated banking observer. Your order is confirmed in the bakery schedule.
+              </p>
+            </div>
+          </div>
+          <Badge variant="success" className="px-3 py-1.5 font-bold shrink-0">
+            Payment Verified
+          </Badge>
         </div>
       )}
 

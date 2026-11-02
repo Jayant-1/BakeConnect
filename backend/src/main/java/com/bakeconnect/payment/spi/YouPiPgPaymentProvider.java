@@ -32,6 +32,7 @@ public class YouPiPgPaymentProvider implements PaymentProvider {
     private final String merchantId;
     private final String apiKey;
     private final String webhookSecret;
+    private final String returnUrlPattern;
     private final int connectTimeoutMs;
     private final int readTimeoutMs;
     private final HttpClient httpClient;
@@ -45,9 +46,10 @@ public class YouPiPgPaymentProvider implements PaymentProvider {
             @Value("${bakeconnect.payment.youpi-pg.api-key:mock_key}") String apiKey,
             @Value("${bakeconnect.payment.youpi-pg.webhook-secret:mock_webhook_secret_32_bytes_long!}") String webhookSecret,
             @Value("${bakeconnect.payment.youpi-pg.connect-timeout-ms:5000}") int connectTimeoutMs,
-            @Value("${bakeconnect.payment.youpi-pg.read-timeout-ms:5000}") int readTimeoutMs) {
+            @Value("${bakeconnect.payment.youpi-pg.read-timeout-ms:5000}") int readTimeoutMs,
+            @Value("${bakeconnect.payment.youpi-pg.return-url-pattern:http://localhost:3000/order/{orderNumber}?success=true}") String returnUrlPattern) {
         this(webhookSecurityService, objectMapper, baseUrl, merchantId, apiKey, webhookSecret,
-                connectTimeoutMs, readTimeoutMs,
+                connectTimeoutMs, readTimeoutMs, returnUrlPattern,
                 HttpClient.newBuilder().connectTimeout(Duration.ofMillis(connectTimeoutMs)).build());
     }
 
@@ -61,6 +63,21 @@ public class YouPiPgPaymentProvider implements PaymentProvider {
             int connectTimeoutMs,
             int readTimeoutMs,
             HttpClient httpClient) {
+        this(webhookSecurityService, objectMapper, baseUrl, merchantId, apiKey, webhookSecret,
+                connectTimeoutMs, readTimeoutMs, "http://localhost:3000/order/{orderNumber}?success=true", httpClient);
+    }
+
+    public YouPiPgPaymentProvider(
+            WebhookSecurityService webhookSecurityService,
+            ObjectMapper objectMapper,
+            String baseUrl,
+            String merchantId,
+            String apiKey,
+            String webhookSecret,
+            int connectTimeoutMs,
+            int readTimeoutMs,
+            String returnUrlPattern,
+            HttpClient httpClient) {
         this.webhookSecurityService = webhookSecurityService;
         this.objectMapper = objectMapper;
         this.baseUrl = baseUrl.replaceAll("/+$", "");
@@ -69,6 +86,7 @@ public class YouPiPgPaymentProvider implements PaymentProvider {
         this.webhookSecret = webhookSecret;
         this.connectTimeoutMs = connectTimeoutMs;
         this.readTimeoutMs = readTimeoutMs;
+        this.returnUrlPattern = returnUrlPattern;
         this.httpClient = httpClient;
     }
 
@@ -97,6 +115,13 @@ public class YouPiPgPaymentProvider implements PaymentProvider {
         payloadMap.put("description", "BakeConnect Order #" + request.orderNumber());
         payloadMap.put("customer", customerMap);
         payloadMap.put("metadata", safeMetadata);
+
+        if (returnUrlPattern != null && !returnUrlPattern.isBlank()) {
+            String returnUrl = returnUrlPattern
+                    .replace("{orderNumber}", request.orderNumber())
+                    .replace("{orderId}", request.orderId() != null ? request.orderId().toString() : "");
+            payloadMap.put("returnUrl", returnUrl);
+        }
 
         try {
             String jsonPayload = objectMapper.writeValueAsString(payloadMap);

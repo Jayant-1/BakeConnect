@@ -32,7 +32,8 @@ function isPairedMessagesUrl(urlString) {
       && !path.includes('/welcome')
       && !path.includes('/pair')
       && !path.includes('/messagesSetup')
-      && !path.includes('/postSignIn');
+      && !path.includes('/postSignIn')
+      && !path.includes('/unableToConnect');
   } catch {
     return false;
   }
@@ -433,6 +434,22 @@ export class GoogleMessagesAutomator {
               this.startKeepAlive();
             }
           } else if (this.isPaired) {
+            if (msgTarget.url.includes('/unableToConnect') && msgTarget.webSocketDebuggerUrl) {
+              this.unableToConnectTicks = (this.unableToConnectTicks || 0) + 1;
+              if (this.unableToConnectTicks % 3 === 0) {
+                try {
+                  await BrowserLauncher.evaluate(msgTarget.webSocketDebuggerUrl, `
+                    (() => {
+                      const btn = Array.from(document.querySelectorAll("button")).find(b => b.innerText && b.innerText.includes("Refresh"));
+                      if (btn) btn.click();
+                    })()
+                  `);
+                } catch {}
+              }
+            } else {
+              this.unableToConnectTicks = 0;
+            }
+
             const isExplicitAuthPage = msgTarget.url.includes('/welcome') || msgTarget.url.includes('/authentication');
             if (isExplicitAuthPage) {
               this.unpairedCounter = (this.unpairedCounter || 0) + 1;
