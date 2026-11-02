@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { StorefrontLayout } from '../../components/layout/storefront-layout';
 import { useAuth } from '../../lib/store/auth-context';
 import { backendClient } from '../../lib/api/backend-client';
 import { CustomerIssue, Order } from '../../lib/api/types-v2';
@@ -138,8 +139,9 @@ export default function CustomerHelpPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FFF7EB] text-[#342421]">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
+    <StorefrontLayout>
+      <div className="bg-[#FFF7EB] min-h-[75vh] py-10 sm:py-14 text-[#342421]">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
         {/* Breadcrumb & Title */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b-2 border-[#342421]/15">
           <div>
@@ -476,7 +478,7 @@ export default function CustomerHelpPage() {
 
         {/* Modal: Create New Support Ticket */}
         {showCreateModal && (
-          <div className="fixed inset-0 z-50 bg-[#342421]/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-[100] bg-[#342421]/60 backdrop-blur-xs flex items-center justify-center p-4">
             <div className="bg-[#FFF7EB] rounded-2xl border-2 border-[#342421] shadow-[6px_6px_0px_#342421] max-w-lg w-full p-6 space-y-5 animate-in fade-in zoom-in-95">
               <div className="flex items-start justify-between">
                 <div>
@@ -586,5 +588,6 @@ export default function CustomerHelpPage() {
         )}
       </div>
     </div>
+  </StorefrontLayout>
   );
 }
