@@ -295,8 +295,9 @@ export class CheckoutServer {
 
   createServer() {
     return http.createServer(async (req, res) => {
-      const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
-      const pathname = url.pathname;
+      try {
+        const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
+        const pathname = url.pathname;
 
       // Health
       if (pathname === '/health') {
@@ -409,21 +410,31 @@ export class CheckoutServer {
       // QR SVG: GET /checkout/:id/qr.svg (Direct from merchant receiving account)
       const qrMatch = pathname.match(/^\/checkout\/([^/]+)\/qr\.svg$/);
       if (qrMatch) {
-        const paymentId = qrMatch[1];
-        const payeeName = state?.payeeName || state?.merchantName || 'MRUNAL KAILASH JADHAV';
-        const vpa = state?.payeeVpa || '9699197282@ibl';
-        const upiUri = state?.upiUri || `upi://pay?pa=${encodeURIComponent(vpa)}&pn=${encodeURIComponent(payeeName)}&am=${encodeURIComponent(state?.amount || '100.00')}&tn=${encodeURIComponent(paymentId)}`;
+        try {
+          const paymentId = qrMatch[1];
+          const state = await this.fetchPaymentState(paymentId);
+          const payeeName = state?.payeeName || state?.merchantName || 'MRUNAL KAILASH JADHAV';
+          const vpa = state?.payeeVpa || state?.vpa || '9699197282@ibl';
+          const amount = state?.amount || '100.00';
+          const upiUri = state?.upiUri || `upi://pay?pa=${encodeURIComponent(vpa)}&pn=${encodeURIComponent(payeeName)}&am=${encodeURIComponent(amount)}&tn=${encodeURIComponent(paymentId)}`;
 
-        const svg = generateQrSvg(upiUri, 220);
-        res.writeHead(200, {
-          'Content-Type': 'image/svg+xml',
-          'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0',
-          'Pragma': 'no-cache',
-          'Expires': '0',
-          'Access-Control-Allow-Origin': '*',
-          ...BASE_SECURITY_HEADERS
-        });
-        res.end(svg);
+          const svg = generateQrSvg(upiUri, 220);
+          res.writeHead(200, {
+            'Content-Type': 'image/svg+xml',
+            'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0',
+            'Pragma': 'no-cache',
+            'Expires': '0',
+            'Access-Control-Allow-Origin': '*',
+            ...BASE_SECURITY_HEADERS
+          });
+          res.end(svg);
+        } catch (qrErr) {
+          console.error('Error generating QR SVG:', qrErr);
+          if (!res.headersSent) {
+            res.writeHead(500, { 'Content-Type': 'text/plain' });
+            res.end('Error generating QR code');
+          }
+        }
         return;
       }
 
@@ -446,9 +457,16 @@ export class CheckoutServer {
         return;
       }
 
-      // Not found
-      res.writeHead(404, { 'Content-Type': 'text/plain' });
-      res.end('Checkout Page Not Found');
+        // Not found
+        res.writeHead(404, { 'Content-Type': 'text/plain' });
+        res.end('Checkout Page Not Found');
+      } catch (err) {
+        console.error('Unhandled checkout-portal request error:', err);
+        if (!res.headersSent) {
+          res.writeHead(500, { 'Content-Type': 'text/plain; charset=utf-8' });
+          res.end('Internal Server Error');
+        }
+      }
     });
   }
 }
