@@ -115,6 +115,7 @@ public class YouPiPgPaymentProvider implements PaymentProvider {
         payloadMap.put("description", "BakeConnect Order #" + request.orderNumber());
         payloadMap.put("customer", customerMap);
         payloadMap.put("metadata", safeMetadata);
+        payloadMap.put("autoActivate", true);
 
         if (returnUrlPattern != null && !returnUrlPattern.isBlank()) {
             String returnUrl = returnUrlPattern

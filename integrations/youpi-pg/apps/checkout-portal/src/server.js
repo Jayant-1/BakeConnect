@@ -5,6 +5,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { generateQrSvg } from '@youpi/core';
 import { getInternalServiceToken } from '@youpi/common';
+import { BRANDING_CONFIG } from './config/branding.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -116,6 +117,7 @@ export function serializeForScript(value) {
 
 // Placeholders that land inside a <script> block rather than HTML markup.
 const SCRIPT_PLACEHOLDERS = new Set(['PAYMENT_ID', 'API_BASE_URL', 'AMOUNT']);
+const RAW_PLACEHOLDERS = new Set(['RAW_FOOTER_NOTE']);
 
 /**
  * Replaces {{PLACEHOLDER}} tokens in the checkout template.
@@ -128,6 +130,7 @@ export function renderTemplate(template, values) {
   return template.replace(/\{\{([A-Z0-9_]+)\}\}/g, (match, key) => {
     if (!Object.prototype.hasOwnProperty.call(values, key)) return match;
     const value = values[key];
+    if (RAW_PLACEHOLDERS.has(key)) return String(value ?? '');
     return SCRIPT_PLACEHOLDERS.has(key) ? escapeJsString(value) : escapeHtml(value);
   });
 }
@@ -221,15 +224,16 @@ export class CheckoutServer {
   renderHtml(paymentId, state) {
     let html = this.loadTemplateWithPartials();
 
-    const appName = state?.branding?.appName || (process.env.DEFAULT_APP_NAME || '').trim() || 'YouPI PG';
-    const primaryColor = state?.branding?.primaryColor || (process.env.DEFAULT_PRIMARY_COLOR || '').trim() || '#0b63e5';
-    const merchantName = state?.merchantName || 'Merchant Checkout';
+    const isCustomApp = Boolean(process.env.DEFAULT_APP_NAME);
+    const appName = state?.branding?.appName || (process.env.DEFAULT_APP_NAME || '').trim() || BRANDING_CONFIG.appName || 'YouPI PG';
+    const primaryColor = state?.branding?.primaryColor || (process.env.DEFAULT_PRIMARY_COLOR || '').trim() || BRANDING_CONFIG.primaryColor || '#FF7836';
+    const merchantName = state?.merchantName || (isCustomApp ? 'Merchant Checkout' : BRANDING_CONFIG.businessName) || 'Merchant Checkout';
     const orderId = state?.orderId || '';
-    const logoUrl = state?.branding?.logoUrl || (process.env.DEFAULT_LOGO_URL || '').trim() || '';
-    const sidebarNotice = state?.branding?.sidebarNotice || 'Fast & Secure 256-Bit Encrypted Payments';
-    const counterInstructions = state?.branding?.counterInstructions || 'Please visit the billing counter and present this screen to the cashier.';
-    const footerGuarantee = state?.branding?.footerGuarantee || (process.env.DEFAULT_FOOTER_GUARANTEE || '').trim() || `Secured by ${appName} & 256-Bit Bank Encryption`;
-    const trustBadgeText = state?.branding?.trustBadgeText || (process.env.DEFAULT_TRUST_BADGE_TEXT || '').trim() || `${appName} Verified Business`;
+    const logoUrl = state?.branding?.logoUrl || (process.env.DEFAULT_LOGO_URL || '').trim() || BRANDING_CONFIG.logoUrl || '';
+    const sidebarNotice = state?.branding?.sidebarNotice || BRANDING_CONFIG.sidebarNotice || 'Fast & Secure 256-Bit Encrypted Payments';
+    const counterInstructions = state?.branding?.counterInstructions || BRANDING_CONFIG.counterInstructions || 'Please visit the billing counter and present this screen to the cashier.';
+    const footerGuarantee = state?.branding?.footerGuarantee || (process.env.DEFAULT_FOOTER_GUARANTEE || '').trim() || (isCustomApp ? `Secured by ${appName} & 256-Bit Bank Encryption` : (BRANDING_CONFIG.appName ? `Secured by ${BRANDING_CONFIG.appName} & 256-Bit Bank Encryption` : `Secured by ${appName} & 256-Bit Bank Encryption`));
+    const trustBadgeText = state?.branding?.trustBadgeText || (process.env.DEFAULT_TRUST_BADGE_TEXT || '').trim() || (isCustomApp ? `${appName} Verified Business` : (BRANDING_CONFIG.trustBadgeText || `${appName} Verified Business`));
     const vpa = state?.payeeVpa || state?.vpa || 'merchant@upi';
 
     // In production and localhost, use relative '' so browser requests hit the checkout portal /api proxy
@@ -266,12 +270,15 @@ export class CheckoutServer {
       APP_NAME: appName,
       PRIMARY_COLOR: primaryColor,
       FOOTER_GUARANTEE: footerGuarantee,
+      RAW_FOOTER_NOTE: `Secured by ${BRANDING_CONFIG.appName || appName} & 256-Bit Bank Encryption`,
       TRUST_BADGE_TEXT: trustBadgeText,
       MERCHANT_NAME: merchantName,
       ORDER_ID: orderId,
       AMOUNT: state?.amount || '0.00',
       VPA: vpa,
       LOGO_URL: logoUrl,
+      SUPPORT_EMAILS_HTML: `<strong>Email:</strong> ${escapeHtml((state?.branding?.supportEmails || (BRANDING_CONFIG.supportEmail ? [BRANDING_CONFIG.supportEmail] : [])).join(', '))}`,
+      SUPPORT_MOBILES_HTML: `<strong>Phone:</strong> ${escapeHtml((state?.branding?.supportMobiles || (BRANDING_CONFIG.supportPhone ? [BRANDING_CONFIG.supportPhone] : [])).join(', '))}`,
       SIDEBAR_NOTICE: sidebarNotice,
       COUNTER_INSTRUCTIONS: counterInstructions,
       SERVER_HEALTH_CLASS: healthClass,
@@ -399,7 +406,7 @@ export class CheckoutServer {
           const contentType = assetFolder === 'css' ? 'text/css; charset=utf-8' : 'application/javascript; charset=utf-8';
           res.writeHead(200, {
             'Content-Type': contentType,
-            'Cache-Control': 'public, max-age=86400',
+            'Cache-Control': 'no-cache, must-revalidate',
             'Access-Control-Allow-Origin': '*'
           });
           fs.createReadStream(assetPath).pipe(res);

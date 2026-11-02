@@ -84,6 +84,7 @@ export function registerPaymentRoutes(server, ctx) {
       : (body.merchantKey !== undefined ? body.merchantKey : (matchedViaApiKeyInMerchantId ? rawMerchantId : undefined));
     const presentedOrderToken = req.headers['x-order-token'] || body.orderToken;
 
+    let isMerchantKeyAuthenticated = false;
     if (presentedMerchantKey !== undefined && presentedMerchantKey !== null) {
       const keyValid = typeof ctx.merchantRepo.verifyApiKey === 'function'
         ? ctx.merchantRepo.verifyApiKey(merchant, String(presentedMerchantKey))
@@ -92,6 +93,7 @@ export function registerPaymentRoutes(server, ctx) {
         HttpServer.json(res, 401, { error: 'Invalid merchant key', code: 'INVALID_MERCHANT_KEY' });
         return;
       }
+      isMerchantKeyAuthenticated = true;
     } else if (presentedOrderToken) {
       let tokenAmountPaise;
       try {
@@ -106,6 +108,7 @@ export function registerPaymentRoutes(server, ctx) {
         HttpServer.json(res, 401, { error: 'Invalid order token', code: 'INVALID_ORDER_TOKEN' });
         return;
       }
+      isMerchantKeyAuthenticated = true;
     } else if (!isAdminRequest(req)) {
       // No credential was presented. The public one-script integration (the browser SDK)
       // cannot carry a merchant secret, so this path stays open - but only for the
@@ -143,6 +146,9 @@ export function registerPaymentRoutes(server, ctx) {
       const autoActivateAllowed =
         process.env.NODE_ENV === 'test' ||
         process.env.ALLOW_TEST_AUTOACTIVATE === 'true' ||
+        process.env.YOUPI_ALLOW_AUTOACTIVATE === 'true' ||
+        process.env.YOUPI_MODE === 'localhost' ||
+        isMerchantKeyAuthenticated ||
         isAdminRequest(req);
       if (!autoActivateAllowed) {
         HttpServer.json(res, 403, {

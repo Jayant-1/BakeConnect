@@ -40,6 +40,9 @@ if (runInLocalhostMode) {
   console.log('====================================================');
   process.env.YOUPI_MODE = 'localhost';
   process.env.NODE_ENV = process.env.NODE_ENV || 'development';
+  process.env.YOUPI_ALLOW_PRIVATE_WEBHOOKS = 'true';
+  process.env.ALLOW_TEST_AUTOACTIVATE = 'true';
+  process.env.YOUPI_DIRECT_CHECKOUT = 'true';
 } else {
   process.env.YOUPI_MODE = 'production';
   process.env.NODE_ENV = 'production';

@@ -1,17 +1,17 @@
-    <!-- PC LEFT SIDEBAR (Razorpay 2-Column Exact Layout for Desktop) -->
+    <!-- PC LEFT SIDEBAR (Option B: Warm Bakery Cream Layout for Desktop) -->
     <aside class="ypg-pc-sidebar">
       <div>
         <!-- Merchant Brand Header -->
         <div class="ypg-pc-brand-header">
           <div class="ypg-pc-avatar" id="pcMerchantAvatarBox">
-            <span id="pcMerchantAvatarLetter">M</span>
-            <img id="pcMerchantAvatarImg" alt="Logo" style="display:none;" />
+            <span id="pcMerchantAvatarLetter">B</span>
+            <img id="pcMerchantAvatarImg" src="{{LOGO_URL}}" alt="Logo" style="display:none;" />
           </div>
           <div class="ypg-pc-brand-info">
             <div class="ypg-pc-merchant-name" id="pcMerchantName">{{MERCHANT_NAME}}</div>
             <div class="ypg-pc-trust-badge" id="pcTrustBadge">
               <svg class="ypg-pc-green-shield" viewBox="0 0 24 24" fill="none">
-                <path d="M12 2L3 6v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V6l-9-4z" fill="#10b981" />
+                <path d="M12 2L3 6v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V6l-9-4z" fill="#286E46" />
                 <path d="M8.5 12l2.5 2.5 5-5" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round"
                   stroke-linejoin="round" />
               </svg>
@@ -32,8 +32,9 @@
 
         <!-- Price Summary Card (STRICTLY NO UPI ID VISIBLE) -->
         <div class="ypg-pc-price-card">
-          <div class="ypg-pc-price-label">Price Summary</div>
+          <div class="ypg-pc-price-label">Total Payable</div>
           <div class="ypg-pc-price-val" id="pcPriceSummaryAmount">₹{{AMOUNT}}</div>
+          <div class="ypg-pc-price-sub">Exact amount with dynamic paise for instant verification</div>
         </div>
 
         <!-- User Identity Row -->
@@ -49,27 +50,30 @@
         </div>
       </div>
 
-      <!-- Bottom Isometric Shopping Bags Graphic -->
-      <div style="margin-top:auto;">
-        <div class="ypg-pc-bags-wrap">
-          <svg viewBox="0 0 260 160" width="220" height="135" fill="none">
-            <ellipse cx="130" cy="145" rx="100" ry="12" fill="rgba(0,0,0,0.18)" />
-            <!-- White / Cyan shopping bag with blue handles -->
-            <path d="M100 65 L135 60 L145 135 L90 140 Z" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" />
-            <path d="M100 65 L135 60 L140 85 L95 90 Z" fill="#f1f5f9" />
-            <path d="M110 63 C110 48, 125 48, 125 61" stroke="#0284c7" stroke-width="3" fill="none"
-              stroke-linecap="round" />
-            <!-- Green shopping bag with % badge -->
-            <path d="M140 75 L180 70 L195 135 L135 140 Z" fill="#10b981" stroke="#059669" stroke-width="1.5" />
-            <path d="M150 73 C150 58, 168 58, 168 71" stroke="#047857" stroke-width="3" fill="none"
-              stroke-linecap="round" />
-            <circle cx="160" cy="98" r="14" fill="#34d399" />
-            <text x="160" y="103" font-size="12" font-weight="900" fill="#064e3b" text-anchor="middle">%</text>
-            <!-- Blue gift box with white ribbon -->
-            <path d="M55 100 L95 95 L105 140 L50 142 Z" fill="#0284c7" />
-            <path d="M50 100 L95 95 L95 105 L48 108 Z" fill="#38bdf8" />
-            <rect x="71" y="96" width="7" height="45" fill="#ffffff" />
-          </svg>
+      <!-- Bottom Artisanal Bakery Trust Assurances (Replaces Generic Vector Bags) -->
+      <div style="margin-top:auto;" class="ypg-pc-bottom-assurances">
+        <div class="ypg-pc-assurance-list">
+          <div class="ypg-pc-assurance-item">
+            <div class="ypg-assurance-dot" style="background:#FF7836;"></div>
+            <div>
+              <div class="ypg-assurance-title">Fresh Pune Bakery Batch</div>
+              <div class="ypg-assurance-desc">Handcrafted daily on wood-fired &amp; deck ovens</div>
+            </div>
+          </div>
+          <div class="ypg-pc-assurance-item">
+            <div class="ypg-assurance-dot" style="background:#286E46;"></div>
+            <div>
+              <div class="ypg-assurance-title">256-Bit Bank Transfer</div>
+              <div class="ypg-assurance-desc">Direct NPCI verified payment processing</div>
+            </div>
+          </div>
+          <div class="ypg-pc-assurance-item">
+            <div class="ypg-assurance-dot" style="background:#D4973B;"></div>
+            <div>
+              <div class="ypg-assurance-title">Instant Order Dispatch</div>
+              <div class="ypg-assurance-desc">Logged straight into bakery queue on payment</div>
+            </div>
+          </div>
         </div>
       </div>
     </aside>

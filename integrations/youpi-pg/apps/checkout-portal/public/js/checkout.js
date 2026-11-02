@@ -387,36 +387,19 @@
       const footerEl = document.getElementById('ypgStickyFooter');
       const pcTopbarTitle = document.querySelector('.ypg-pc-topbar-title');
 
-      if (isAuthView) {
-        if (authEl) {
-          authEl.hidden = false;
-          authEl.style.removeProperty('display');
-        }
-        if (payEl) {
-          payEl.hidden = true;
-          payEl.style.setProperty('display', 'none', 'important');
-        }
-        if (footerEl) {
-          footerEl.style.display = 'none';
-        }
-        if (pcTopbarTitle) {
-          pcTopbarTitle.textContent = 'Sign in to Pay';
-        }
-      } else {
-        if (authEl) {
-          authEl.hidden = true;
-          authEl.style.setProperty('display', 'none', 'important');
-        }
-        if (payEl) {
-          payEl.hidden = false;
-          payEl.style.removeProperty('display');
-        }
-        if (footerEl) {
-          footerEl.style.display = '';
-        }
-        if (pcTopbarTitle) {
-          pcTopbarTitle.textContent = 'Payment Options';
-        }
+      if (authEl) {
+        authEl.hidden = true;
+        authEl.style.setProperty('display', 'none', 'important');
+      }
+      if (payEl) {
+        payEl.hidden = false;
+        payEl.style.removeProperty('display');
+      }
+      if (footerEl) {
+        footerEl.style.display = '';
+      }
+      if (pcTopbarTitle) {
+        pcTopbarTitle.textContent = 'Payment Options';
       }
     }
 
@@ -916,9 +899,7 @@
       activeToken = null;
       hasAttemptedAutoLogin = false;
       updateCustomerDisplay(null);
-      setGatewayAuthMode(true);
-      goToAuthStep('mobile');
-      renderSavedAccountsUI();
+      setGatewayAuthMode(false);
     }
 
     function escapeHtml(str) {
@@ -1415,7 +1396,7 @@
         await DeviceIdentity.getOrRegister();
         const headers = getApiHeaders();
 
-        const res = await fetch(`${API_BASE}/api/v1/checkout/${PAYMENT_ID}/state`, { headers });
+        const res = await fetch(`${API_BASE}/api/v1/checkout/${PAYMENT_ID}/state?activate=true`, { headers });
         const data = await res.json().catch(() => ({}));
 
         if (res.status === 409 || data.error === 'DUPLICATE_SESSION_DETECTED') {
@@ -1461,7 +1442,7 @@
 
     function applyDynamicTheme(branding) {
       if (!branding) return;
-      const primary = branding.primaryColor || '#0b63e5';
+      const primary = branding.primaryColor || '#FF7836';
       const darkPrimary = adjustHexColor(primary, -25);
       const root = document.documentElement;
 
@@ -1470,21 +1451,17 @@
 
       const theme = branding.headerTheme || 'gradient';
       const headerEl = document.querySelector('.ypg-header');
-      const sidebarEl = document.querySelector('.ypg-pc-sidebar');
 
       if (theme === 'solid') {
         root.style.setProperty('--ypg-header-gradient', primary);
         if (headerEl) headerEl.style.background = primary;
-        if (sidebarEl) sidebarEl.style.background = primary;
       } else if (theme === 'dark') {
         root.style.setProperty('--ypg-header-gradient', '#0b1329');
         if (headerEl) headerEl.style.background = '#0b1329';
-        if (sidebarEl) sidebarEl.style.background = 'linear-gradient(180deg, #0b1329 0%, #030712 100%)';
       } else {
         const grad = `linear-gradient(180deg, ${primary} 0%, ${darkPrimary} 100%)`;
         root.style.setProperty('--ypg-header-gradient', grad);
         if (headerEl) headerEl.style.background = grad;
-        if (sidebarEl) sidebarEl.style.background = grad;
       }
     }
 
@@ -1913,21 +1890,20 @@
             });
           } catch (e) { }
 
-          const effectiveReturnUrl = data.returnUrl || state?.returnUrl || null;
           const btnReturn = document.getElementById('btnReturnStore') || document.getElementById('btnReturnToStore');
-          if (effectiveReturnUrl) {
-            const safeReturn = sanitizeRedirectUrl(effectiveReturnUrl);
-            if (safeReturn) {
+          if (data && data.returnUrl) {
+            const safeReturnUrl = sanitizeRedirectUrl(data.returnUrl);
+            if (safeReturnUrl) {
               if (btnReturn) {
                 btnReturn.hidden = false;
-                btnReturn.href = safeReturn;
+                btnReturn.href = safeReturnUrl;
                 btnReturn.textContent = 'Return to Store (Redirecting in 2s...)';
               }
               if (descEl && !descEl.textContent.includes('Redirecting')) {
                 descEl.textContent += ' Redirecting to merchant store...';
               }
               if (window.parent === window) {
-                setTimeout(() => { window.location.href = safeReturn; }, 2000);
+                setTimeout(() => { window.location.href = safeReturnUrl; }, 2000);
               }
             } else if (btnReturn) {
               btnReturn.hidden = true;
@@ -1965,9 +1941,7 @@
               clearPreservedIdentity();
               activeCustomer = null;
               activeToken = null;
-              setGatewayAuthMode(true);
-              goToAuthStep('mobile');
-              renderSavedAccountsUI();
+              setGatewayAuthMode(false);
             }
           } catch (e) {
           } finally {
@@ -1976,36 +1950,26 @@
         };
       }
 
-      // 3. Pre-Gateway Customer Authentication Gate (Preserves identity up to 1 week)
+      // Direct Instant Payment (WhatsApp Auth removed)
+      const preserved = getPreservedIdentity();
+      if (preserved && preserved.token && !activeToken) {
+        activeToken = preserved.token;
+      }
       if (data.customer) {
         activeCustomer = data.customer;
-      } else if (!activeCustomer) {
-        const preserved = getPreservedIdentity();
-        if (preserved && preserved.customer) {
-          activeCustomer = preserved.customer;
-          activeToken = preserved.token || activeToken;
-        }
-      }
-      const hasCustomer = Boolean(data.customer || activeCustomer);
-
-      if (!hasCustomer) {
-        setGatewayAuthMode(true);
-        const stepMob = document.getElementById('authStepMobile');
-        const isAlreadyOnMobile = stepMob && !stepMob.hidden;
-        if (!currentAuthStep || (currentAuthStep === 'mobile' && !isAlreadyOnMobile)) {
-          goToAuthStep('mobile');
-        }
-        renderSavedAccountsUI();
-        return;
+      } else if (!activeCustomer && preserved && preserved.customer) {
+        activeCustomer = preserved.customer;
+      } else if (!activeCustomer && data.metadata && data.metadata.customerName) {
+        activeCustomer = {
+          name: data.metadata.customerName,
+          email: data.metadata.customerEmail || '',
+          mobileNumber: data.metadata.customerPhone || ''
+        };
       }
 
-      // Authenticated Customer
-      if (activeCustomer) {
-        updateCustomerDisplay(activeCustomer);
-        // Automatically bind customer to the payment session if session is INITIATED or unbound
-        if (activeToken && PAYMENT_ID && (!data.customer || data.status === 'INITIATED')) {
-          window.autoBindCustomerToSession(activeCustomer.id, activeToken);
-        }
+      updateCustomerDisplay(activeCustomer);
+      if (activeToken && activeCustomer && PAYMENT_ID && (!data.customer || data.status === 'INITIATED')) {
+        window.autoBindCustomerToSession(activeCustomer.id, activeToken);
       }
       setGatewayAuthMode(false);
 
@@ -2075,7 +2039,9 @@
 
           const btnContinue = document.getElementById('btnContinuePayment');
 
-          const remainingSec = (data.timeRemainingSeconds !== undefined && data.timeRemainingSeconds !== null) ? Number(data.timeRemainingSeconds) : 300;
+          const remainingSec = (data.timeRemainingSeconds && Number(data.timeRemainingSeconds) > 0)
+            ? Number(data.timeRemainingSeconds)
+            : (data.status === 'INITIATED' ? 300 : ((data.status === 'ACTIVE' && data.expiresAt) ? 0 : 300));
           const targetExpiry = data.expiresAt || new Date(Date.now() + remainingSec * 1000).toISOString();
 
           if (remainingSec <= 0 && data.status === 'ACTIVE') {

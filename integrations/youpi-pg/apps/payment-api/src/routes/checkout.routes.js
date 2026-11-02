@@ -518,6 +518,37 @@ export function registerCheckoutRoutes(server, ctx) {
       : (receivingAccount ? Boolean(receivingAccount.isMerchantEnabled) : true);
     const upiMode = isMerchantEnabled ? 'MERCHANT' : 'NON_MERCHANT';
 
+    // Auto-activate INITIATED session for direct checkout (when WhatsApp OTP auth is bypassed)
+    const shouldDirectActivate = session.status === PaymentStatus.INITIATED &&
+      receivingAccount &&
+      (req.query.activate === 'true' ||
+       process.env.YOUPI_DIRECT_CHECKOUT === 'true' ||
+       process.env.YOUPI_MODE === 'localhost' ||
+       isInternalServiceRequest(req) ||
+       req.headers['x-direct-checkout'] === 'true');
+
+    if (shouldDirectActivate) {
+      const activeDurationMs = ctx.timingEngine?.activeDurationMs || 300000;
+      const queueResult = ctx.queueEngine.enqueueOrActivate(session.id, receivingAccount.id, activeDurationMs);
+      session.status = queueResult.status;
+      session.queuePosition = queueResult.queuePosition;
+      session.expiresAt = queueResult.expiresAt;
+      if (queueResult.expiresAt && ctx.timingEngine && queueResult.status === PaymentStatus.ACTIVE) {
+        ctx.timingEngine.startActiveTimer(session.id, queueResult.expiresAt);
+      }
+      server.broadcastSse(session.id, 'status_change', {
+        status: queueResult.status,
+        queuePosition: queueResult.queuePosition,
+        expiresAt: queueResult.expiresAt
+      });
+      server.broadcastSse('admin_counter_events', 'status_change', {
+        status: queueResult.status,
+        sessionId: session.id,
+        orderId: session.orderId,
+        amountPaise: session.amountPaise ? session.amountPaise.toString() : '0'
+      });
+    }
+
     let timeRemainingSeconds = 0;
     if (session.status === PaymentStatus.ACTIVE && session.expiresAt) {
       timeRemainingSeconds = Math.max(0, Math.ceil((session.expiresAt.getTime() - now) / 1000));
