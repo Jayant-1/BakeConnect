@@ -2067,18 +2067,16 @@
             return;
           }
 
-          // Show Payment Done button immediately so customer can confirm when paid
           if (btnContinue) {
-            btnContinue.style.display = 'block';
+            btnContinue.style.display = 'none';
           }
 
           runCountdown(remainingSec, sec => {
             const tText = document.getElementById('activeTimerText');
             if (tText) tText.textContent = formatTime(sec);
 
-            // "Payment Done — Check My Payment" button is visible immediately so customer can confirm when paid
             if (btnContinue) {
-              btnContinue.style.display = 'block';
+              btnContinue.style.display = 'none';
             }
           }, () => {
             const tText = document.getElementById('activeTimerText');
