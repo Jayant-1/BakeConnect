@@ -167,6 +167,13 @@ export const backendClient = {
     });
   },
 
+  async updateAddress(id: string, data: Partial<Omit<Address, 'id' | 'userId'>>): Promise<Address> {
+    return request(`/api/v1/addresses/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  },
+
   async deleteAddress(id: string): Promise<void> {
     return request(`/api/v1/addresses/${id}`, {
       method: 'DELETE',

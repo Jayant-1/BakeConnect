@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useAuth } from '../../lib/store/auth-context';
 import { useCart } from '../../lib/store/cart-context';
-import { ShoppingBag, Menu, X, User, Store, HelpCircle, Package, FileText, ShoppingCart, ChevronDown, LogOut } from 'lucide-react';
+import { ShoppingBag, Menu, X, User, Store, HelpCircle, Package, FileText, ShoppingCart, ChevronDown, LogOut, MapPin } from 'lucide-react';
 
 function getNetflixAvatar(seed: string) {
   // Vibrant Netflix-style profile palette with accessible face stroke colors
@@ -263,6 +263,15 @@ export function StorefrontHeader() {
                             <FileText className="w-4 h-4 text-[#342421]" />
                             <span>Invoices & Ledger</span>
                           </Link>
+                          <Link
+                            href="/account/addresses"
+                            onClick={() => setAccountMenuOpen(false)}
+                            className="flex items-center gap-2.5 px-3 py-2 text-xs font-bold text-[#342421] hover:bg-white rounded-xl transition-colors"
+                            role="menuitem"
+                          >
+                            <MapPin className="w-4 h-4 text-[#342421]" />
+                            <span>Delivery Addresses</span>
+                          </Link>
                         </>
                       ) : role === 'DIRECT_CUSTOMER' ? (
                         <>
@@ -274,6 +283,15 @@ export function StorefrontHeader() {
                           >
                             <Package className="w-4 h-4 text-[#342421]" />
                             <span>My Orders & Receipts</span>
+                          </Link>
+                          <Link
+                            href="/account/addresses"
+                            onClick={() => setAccountMenuOpen(false)}
+                            className="flex items-center gap-2.5 px-3 py-2 text-xs font-bold text-[#342421] hover:bg-[#D9EAF3] rounded-xl transition-colors"
+                            role="menuitem"
+                          >
+                            <MapPin className="w-4 h-4 text-[#342421]" />
+                            <span>Saved Delivery Addresses</span>
                           </Link>
                         </>
                       ) : (role === 'BAKERY_ADMIN' || role === 'BAKERY_MANAGER') ? (
@@ -404,6 +422,13 @@ export function StorefrontHeader() {
                   className="block px-3 py-2 text-sm font-bold text-[#342421] hover:text-[#FF7836]"
                 >
                   My Orders
+                </Link>
+                <Link
+                  href="/account/addresses"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block px-3 py-2 text-sm font-bold text-[#342421] hover:text-[#FF7836]"
+                >
+                  Saved Addresses
                 </Link>
                 <Link
                   href="/help"

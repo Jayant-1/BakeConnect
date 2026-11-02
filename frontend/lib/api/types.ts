@@ -29,15 +29,15 @@ export interface RetailerProfile {
 export interface Address {
   id: string;
   userId: string;
-  type: 'SHIPPING' | 'BILLING';
+  type: 'SHIPPING' | 'BILLING' | string;
   contactName: string;
   contactPhone: string;
   addressLine1: string;
-  addressLine2?: string;
+  addressLine2?: string | null;
   city: string;
   state: string;
   postalCode: string;
-  deliveryInstructions?: string;
+  deliveryInstructions?: string | null;
   isDefault: boolean;
 }
 

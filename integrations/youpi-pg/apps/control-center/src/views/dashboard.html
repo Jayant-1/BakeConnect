@@ -396,10 +396,10 @@
             <td class="num">${s.uptimeSeconds ? s.uptimeSeconds + 's' : '-'}</td>
             <td class="actions">
               ${isRunning ? `
-                <button class="btn btn-secondary btn-sm" onclick="restartService('${s.id}')"><svg class="i" aria-hidden="true"><use href="#i-arrow-path"/></svg>Restart</button>
-                <button class="btn btn-danger btn-sm" onclick="stopService('${s.id}')"><svg class="i" aria-hidden="true"><use href="#i-stop"/></svg>Stop</button>
+                <button class="btn btn-secondary btn-sm" data-id="${escapeHtml(s.id)}" onclick="restartService(this.getAttribute('data-id'))"><svg class="i" aria-hidden="true"><use href="#i-arrow-path"/></svg>Restart</button>
+                <button class="btn btn-danger btn-sm" data-id="${escapeHtml(s.id)}" onclick="stopService(this.getAttribute('data-id'))"><svg class="i" aria-hidden="true"><use href="#i-stop"/></svg>Stop</button>
               ` : `
-                <button class="btn btn-success btn-sm" onclick="startService('${s.id}')"><svg class="i" aria-hidden="true"><use href="#i-play"/></svg>Start</button>
+                <button class="btn btn-success btn-sm" data-id="${escapeHtml(s.id)}" onclick="startService(this.getAttribute('data-id'))"><svg class="i" aria-hidden="true"><use href="#i-play"/></svg>Start</button>
               `}
             </td>
           </tr>

@@ -9,6 +9,7 @@ import {
   PaymentStatus,
   User,
   RetailerProfile,
+  Address,
 } from './types';
 import {
   MOCK_PRODUCTS,
@@ -31,6 +32,58 @@ let localProducts = [...MOCK_PRODUCTS];
 let localOrders = [...MOCK_ORDERS];
 let localInvoices = [...MOCK_INVOICES];
 let localPaymentAttempts: Record<string, PaymentAttempt> = {};
+
+const STORAGE_KEY_ADDRESSES = 'bakeconnect_saved_addresses_v1';
+let memoryAddresses: Address[] = [
+  {
+    id: 'addr-demo-01',
+    userId: 'usr-demo',
+    type: 'SHIPPING',
+    contactName: 'Rohit Deshmukh',
+    contactPhone: '9820398201',
+    addressLine1: 'Flat 402, Ganga Carnation, Lane 5',
+    addressLine2: 'Near German Bakery, Koregaon Park',
+    city: 'Pune',
+    state: 'Maharashtra',
+    postalCode: '411001',
+    deliveryInstructions: 'Ring doorbell, leave with security if unavailable',
+    isDefault: true,
+  },
+  {
+    id: 'addr-demo-02',
+    userId: 'usr-demo',
+    type: 'SHIPPING',
+    contactName: 'Rohit Deshmukh',
+    contactPhone: '9820398201',
+    addressLine1: 'Cybercity Tower 4, Level 6',
+    addressLine2: 'Magarpatta City, Hadapsar',
+    city: 'Pune',
+    state: 'Maharashtra',
+    postalCode: '411028',
+    deliveryInstructions: 'Reception delivery between 9 AM and 6 PM',
+    isDefault: false,
+  },
+];
+
+function getLocalAddresses(): Address[] {
+  if (typeof window === 'undefined') return memoryAddresses;
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY_ADDRESSES);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch {}
+  return memoryAddresses;
+}
+
+function saveLocalAddresses(addresses: Address[]): void {
+  memoryAddresses = addresses;
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(STORAGE_KEY_ADDRESSES, JSON.stringify(addresses));
+  } catch {}
+}
 
 // Auth token cache by role
 const tokenCache: Record<string, string> = {};
@@ -1039,4 +1092,140 @@ export const apiClient = {
       }
     }
   },
+
+  // Saved Addresses (Amazon-style pre-saved address support)
+  async getAddresses(): Promise<Address[]> {
+    try {
+      const addresses = await backendClient.getAddresses();
+      if (Array.isArray(addresses) && addresses.length > 0) {
+        const typedAddrs = addresses as Address[];
+        saveLocalAddresses(typedAddrs);
+        return typedAddrs;
+      }
+    } catch {
+      // Backend unavailable or unauthenticated, fallback to local/cached addresses
+    }
+    return getLocalAddresses();
+  },
+
+  async createAddress(data: Omit<Address, 'id' | 'userId'>): Promise<Address> {
+    try {
+      const created = (await backendClient.createAddress(data)) as Address;
+      const current = getLocalAddresses().filter((a) => a.id !== created.id);
+      if (data.isDefault) {
+        current.forEach((a) => {
+          a.isDefault = false;
+        });
+      }
+      saveLocalAddresses([created, ...current]);
+      return created;
+    } catch {
+      // Local fallback
+      const current = getLocalAddresses();
+      if (data.isDefault) {
+        current.forEach((a) => {
+          a.isDefault = false;
+        });
+      }
+      const newAddr: Address = {
+        id: `addr-${Date.now()}`,
+        userId: 'usr-current',
+        ...data,
+      };
+      saveLocalAddresses([newAddr, ...current]);
+      return newAddr;
+    }
+  },
+
+  async updateAddress(id: string, data: Partial<Omit<Address, 'id' | 'userId'>>): Promise<Address> {
+    let list = getLocalAddresses();
+    const existing = list.find((a) => a.id === id);
+    const merged = {
+      type: data.type || existing?.type || ('SHIPPING' as const),
+      contactName: data.contactName || existing?.contactName || '',
+      contactPhone: data.contactPhone || existing?.contactPhone || '',
+      addressLine1: data.addressLine1 || existing?.addressLine1 || '',
+      addressLine2: data.addressLine2 !== undefined ? data.addressLine2 : existing?.addressLine2,
+      city: data.city || existing?.city || 'Pune',
+      state: data.state || existing?.state || 'Maharashtra',
+      postalCode: data.postalCode || existing?.postalCode || '411001',
+      deliveryInstructions: data.deliveryInstructions !== undefined ? data.deliveryInstructions : existing?.deliveryInstructions,
+      isDefault: data.isDefault !== undefined ? data.isDefault : (existing?.isDefault ?? false),
+    };
+
+    try {
+      const updated = (await backendClient.updateAddress(id, merged)) as Address;
+      if (merged.isDefault) {
+        list.forEach((a) => {
+          a.isDefault = false;
+        });
+      }
+      list = list.map((a) => (a.id === id ? updated : a));
+      saveLocalAddresses(list);
+      return updated;
+    } catch {
+      let found: Address = {
+        id,
+        userId: existing?.userId || 'usr-current',
+        ...merged,
+      };
+      if (merged.isDefault) {
+        list.forEach((a) => {
+          a.isDefault = false;
+        });
+      }
+      const index = list.findIndex((a) => a.id === id);
+      if (index >= 0) {
+        list[index] = found;
+      } else {
+        list.push(found);
+      }
+      saveLocalAddresses(list);
+      return found;
+    }
+  },
+
+  async deleteAddress(id: string): Promise<void> {
+    try {
+      await backendClient.deleteAddress(id);
+    } catch {
+      // ignore
+    }
+    const filtered = getLocalAddresses().filter((a) => a.id !== id);
+    if (filtered.length > 0 && !filtered.some((a) => a.isDefault)) {
+      filtered[0].isDefault = true;
+    }
+    saveLocalAddresses(filtered);
+  },
+
+  async setDefaultAddress(id: string): Promise<Address> {
+    let list = getLocalAddresses();
+    list = list.map((a) => ({
+      ...a,
+      isDefault: a.id === id,
+    }));
+    saveLocalAddresses(list);
+    const target = list.find((a) => a.id === id);
+    if (!target) {
+      throw new Error('Address not found');
+    }
+    try {
+      await backendClient.updateAddress(id, {
+        type: target.type || 'SHIPPING',
+        contactName: target.contactName,
+        contactPhone: target.contactPhone,
+        addressLine1: target.addressLine1,
+        addressLine2: target.addressLine2,
+        city: target.city,
+        state: target.state,
+        postalCode: target.postalCode,
+        deliveryInstructions: target.deliveryInstructions,
+        isDefault: true,
+      });
+    } catch {
+      // ignore
+    }
+    return target;
+  },
 };
+
