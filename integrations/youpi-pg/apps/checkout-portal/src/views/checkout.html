@@ -1850,15 +1850,21 @@
       // 9. Dynamic Logo
       const logoImg = document.getElementById('merchantAvatarImg');
       const letterSpan = document.getElementById('merchantAvatarLetter');
+      const avatarBox = document.getElementById('merchantAvatarBox');
+      const pcAvatarBox = document.getElementById('pcMerchantAvatarBox');
       if (b.logoUrl) {
         if (logoImg) {
           logoImg.src = b.logoUrl;
           logoImg.style.display = 'block';
         }
         if (letterSpan) letterSpan.style.display = 'none';
+        if (avatarBox) avatarBox.classList.add('has-logo');
+        if (pcAvatarBox) pcAvatarBox.classList.add('has-logo');
       } else {
         if (logoImg) logoImg.style.display = 'none';
         if (letterSpan) letterSpan.style.display = 'block';
+        if (avatarBox) avatarBox.classList.remove('has-logo');
+        if (pcAvatarBox) pcAvatarBox.classList.remove('has-logo');
       }
 
       // 10. Splash Screen Branding
@@ -2461,6 +2467,93 @@
           text.textContent = 'Copied!';
           setTimeout(() => { text.textContent = 'Copy'; }, 2000);
         });
+      }
+    }
+
+    // --- FAST 12-DIGIT UPI REFERENCE / UTR VERIFICATION ---
+    function toggleUtrInput() {
+      const drawer = document.getElementById('utrDrawer');
+      const arrow = document.getElementById('utrToggleArrow');
+      if (!drawer) return;
+      const isClosed = drawer.style.display === 'none';
+      drawer.style.display = isClosed ? 'block' : 'none';
+      if (arrow) {
+        if (isClosed) arrow.classList.add('open');
+        else arrow.classList.remove('open');
+      }
+      if (isClosed) {
+        const inp = document.getElementById('inputUtrNumber');
+        if (inp) inp.focus();
+      }
+    }
+
+    function handleUtrInput(input) {
+      if (!input) return;
+      input.value = input.value.replace(/\D/g, '').slice(0, 12);
+      const btn = document.getElementById('btnVerifyUtr');
+      const err = document.getElementById('utrErrorMessage');
+      if (err) err.style.display = 'none';
+      if (btn) {
+        btn.disabled = input.value.length !== 12;
+      }
+    }
+
+    async function submitUtrVerification() {
+      const input = document.getElementById('inputUtrNumber');
+      const btn = document.getElementById('btnVerifyUtr');
+      const err = document.getElementById('utrErrorMessage');
+      if (!input || !btn) return;
+      const utr = input.value.trim();
+      if (!/^\d{12}$/.test(utr)) {
+        if (err) {
+          err.textContent = 'Please enter a valid 12-digit numeric UPI Reference / UTR Number.';
+          err.style.display = 'block';
+        }
+        return;
+      }
+
+      btn.disabled = true;
+      const originalText = btn.innerHTML;
+      btn.innerHTML = '<span class="ypg-spinner-mini" style="display:inline-block; width:12px; height:12px; border:2px solid #fff; border-top-color:transparent; border-radius:50%; animation:ypgSpin 0.7s linear infinite; margin-right:5px; vertical-align:middle;"></span><span>Verifying...</span>';
+      if (err) err.style.display = 'none';
+
+      try {
+        const devQuery = DeviceIdentity.currentDeviceId ? `?deviceId=${encodeURIComponent(DeviceIdentity.currentDeviceId)}` : '';
+        const res = await fetch(`${API_BASE}/api/v1/checkout/${PAYMENT_ID}/verify-utr${devQuery}`, {
+          method: 'POST',
+          headers: getApiHeaders({ 'Content-Type': 'application/json' }),
+          body: JSON.stringify({ 
+            utr, 
+            deviceId: DeviceIdentity?.currentDeviceId,
+            deviceToken: DeviceIdentity?.currentDeviceToken
+          })
+        });
+        const data = await res.json();
+        if (res.ok && data.status === 'SUCCESS') {
+          showOptionToast('Payment Verified! Redirecting to BakeConnect...');
+          const targetUrl = data.returnUrl || (state?.orderId ? `http://localhost:3000/order/${state.orderId}?success=true` : null);
+          if (targetUrl) {
+            setTimeout(() => {
+              window.location.href = targetUrl;
+            }, 600);
+          } else {
+            loadState();
+          }
+        } else {
+          btn.disabled = false;
+          btn.innerHTML = originalText;
+          if (err) {
+            err.textContent = data.error || 'Verification failed. Please check the UTR number and retry.';
+            err.style.display = 'block';
+          }
+        }
+      } catch (e) {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+        if (err) {
+          err.textContent = 'Network error during verification. Please check connection and retry.';
+          err.style.display = 'block';
+        }
       }
     }
 

@@ -436,11 +436,18 @@ export class GoogleMessagesAutomator {
           } else if (this.isPaired) {
             if (msgTarget.url.includes('/unableToConnect') && msgTarget.webSocketDebuggerUrl) {
               this.unableToConnectTicks = (this.unableToConnectTicks || 0) + 1;
-              if (this.unableToConnectTicks % 3 === 0) {
+              if (this.unableToConnectTicks % 6 === 0) {
+                // If stuck on unableToConnect for 12s, navigate directly to conversations to force fresh handshake
+                try {
+                  await BrowserLauncher.sendCommand(msgTarget.webSocketDebuggerUrl, 'Page.navigate', {
+                    url: 'https://messages.google.com/web/conversations'
+                  });
+                } catch {}
+              } else if (this.unableToConnectTicks % 3 === 0) {
                 try {
                   await BrowserLauncher.evaluate(msgTarget.webSocketDebuggerUrl, `
                     (() => {
-                      const btn = Array.from(document.querySelectorAll("button")).find(b => b.innerText && b.innerText.includes("Refresh"));
+                      const btn = Array.from(document.querySelectorAll("button, a")).find(b => b.innerText && b.innerText.includes("Refresh"));
                       if (btn) btn.click();
                     })()
                   `);
@@ -481,6 +488,7 @@ export class GoogleMessagesAutomator {
 
   /**
    * Periodic keep-alive ping to ensure Google Messages WebSocket does not time out.
+   * Runs every 25 seconds to maintain active WebRTC/FCM channel with phone.
    */
   startKeepAlive() {
     if (this.keepAliveTimer) clearInterval(this.keepAliveTimer);
@@ -489,11 +497,20 @@ export class GoogleMessagesAutomator {
         const targets = await BrowserLauncher.getTargets(this.debuggingPort);
         const target = targets.find(t => isGoogleMessagesUrl(t.url) && t.webSocketDebuggerUrl);
         if (target) {
-          await BrowserLauncher.evaluate(target.webSocketDebuggerUrl, '(() => document.title)()');
+          await BrowserLauncher.evaluate(target.webSocketDebuggerUrl, `
+            (() => {
+              try {
+                window.dispatchEvent(new Event('focus'));
+                return document.title;
+              } catch {
+                return null;
+              }
+            })()
+          `);
           this.lastSeenAt = new Date();
         }
       } catch {}
-    }, 300000); // Every 5 minutes
+    }, 25000); // Every 25 seconds
     if (this.keepAliveTimer.unref) this.keepAliveTimer.unref();
   }
 

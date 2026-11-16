@@ -3,9 +3,9 @@
       <div>
         <!-- Merchant Brand Header -->
         <div class="ypg-pc-brand-header">
-          <div class="ypg-pc-avatar" id="pcMerchantAvatarBox">
-            <span id="pcMerchantAvatarLetter">B</span>
-            <img id="pcMerchantAvatarImg" src="{{LOGO_URL}}" alt="Logo" style="display:none;" />
+          <div class="ypg-pc-avatar {{HAS_LOGO_CLASS}}" id="pcMerchantAvatarBox">
+            <span id="pcMerchantAvatarLetter" style="{{AVATAR_LETTER_STYLE}}">{{MERCHANT_INITIAL}}</span>
+            <img id="pcMerchantAvatarImg" src="{{LOGO_URL}}" alt="Logo" style="{{AVATAR_IMG_STYLE}}" />
           </div>
           <div class="ypg-pc-brand-info">
             <div class="ypg-pc-merchant-name" id="pcMerchantName">{{MERCHANT_NAME}}</div>
@@ -35,18 +35,6 @@
           <div class="ypg-pc-price-label">Total Payable</div>
           <div class="ypg-pc-price-val" id="pcPriceSummaryAmount">₹{{AMOUNT}}</div>
           <div class="ypg-pc-price-sub">Exact amount with dynamic paise for instant verification</div>
-        </div>
-
-        <!-- User Identity Row -->
-        <div class="ypg-pc-row-btn" id="pcCustomerProfileRow" onclick="toggleAccountMenu(event)">
-          <div class="ypg-pc-row-left">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-              <circle cx="12" cy="7" r="4" />
-            </svg>
-            <span id="pcCustomerProfileText">Using as Guest User</span>
-          </div>
-          <span class="ypg-pc-chevron">&rsaquo;</span>
         </div>
       </div>
 

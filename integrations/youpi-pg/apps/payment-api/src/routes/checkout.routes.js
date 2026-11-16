@@ -470,6 +470,7 @@ export function registerCheckoutRoutes(server, ctx) {
         id: session.id,
         paymentId: session.id,
         orderId: session.orderId,
+        merchantName: merchant?.businessName || 'BakeConnect',
         amount: toRupeesString(session.amountPaise),
         amountPaise: session.amountPaise.toString(),
         currency: session.currency,
@@ -1151,6 +1152,173 @@ export function registerCheckoutRoutes(server, ctx) {
       paymentId: updated.id,
       status: PaymentStatus.PROCESSING,
       processingExpiresAt: updated.processingExpiresAt
+    });
+  });
+
+  // POST /api/v1/checkout/:id/verify-utr (Fast, Secure UPI Reference / UTR Verification Rail)
+  server.post('/api/v1/checkout/:id/verify-utr', async (req, res, params) => {
+    const session = ctx.sessionRepo.findById(params.id);
+    if (!session) {
+      HttpServer.json(res, 404, { error: `Payment session not found: ${params.id}` });
+      return;
+    }
+
+    const deviceAccess = checkSessionDeviceAccess(session, req, null, ctx);
+    if (!deviceAccess.allowed) {
+      HttpServer.json(res, deviceAccess.statusCode || 409, deviceAccess.body);
+      return;
+    }
+
+    const returnUrl = session.returnUrl || (session.orderId ? `http://localhost:3000/order/${session.orderId}?success=true` : null);
+
+    // Idempotent success
+    if (session.status === PaymentStatus.SUCCESS || session.status === PaymentStatus.OBSERVED_SUCCESS) {
+      HttpServer.json(res, 200, {
+        success: true,
+        status: PaymentStatus.SUCCESS,
+        orderId: session.orderId,
+        returnUrl,
+        message: 'Payment already verified.'
+      });
+      return;
+    }
+
+    const body = await HttpServer.parseBody(req);
+    const rawUtr = (body.utr || body.bankReferenceNumber || body.reference || '').toString().trim();
+
+    // 1. Exact 12-Digit NPCI Numeric UPI Reference Validation
+    if (!/^\d{12}$/.test(rawUtr)) {
+      HttpServer.json(res, 400, {
+        error: 'Invalid UPI Reference / UTR format. Must be exactly 12 numeric digits.'
+      });
+      return;
+    }
+
+    // 2. Anti-Replay: Prevent reuse of an existing UTR from another payment
+    const duplicateRow = ctx.db.queryOne(
+      `SELECT id, attributed_payment_id FROM payment_observations 
+       WHERE bank_reference_number = ? AND attributed_payment_id IS NOT NULL AND attributed_payment_id != ? LIMIT 1`,
+      [rawUtr, session.id]
+    );
+    if (duplicateRow) {
+      HttpServer.json(res, 409, {
+        error: 'This UPI Reference / UTR has already been claimed for another order.',
+        code: 'UTR_ALREADY_USED'
+      });
+      return;
+    }
+
+    // 3. Prevent duplicate submission checks on other completed sessions
+    const dupSession = ctx.db.queryOne(
+      `SELECT id FROM payment_sessions 
+       WHERE id != ? AND (
+         metadata LIKE ? OR 
+         id IN (SELECT attributed_payment_id FROM payment_observations WHERE bank_reference_number = ?)
+       ) LIMIT 1`,
+      [session.id, `%"utr":"${rawUtr}"%`, rawUtr]
+    );
+    if (dupSession) {
+      HttpServer.json(res, 409, {
+        error: 'This UPI Reference / UTR has already been claimed for another order.',
+        code: 'UTR_ALREADY_USED'
+      });
+      return;
+    }
+
+    // 4. Rate-Limiting: Track UTR attempt count per session
+    const meta = session.metadata || {};
+    const attempts = (meta.utrAttempts || 0) + 1;
+    meta.utrAttempts = attempts;
+    meta.lastSubmittedUtr = rawUtr;
+    if (attempts > 5) {
+      HttpServer.json(res, 429, {
+        error: 'Too many verification attempts. Please wait or contact support.',
+        code: 'RATE_LIMIT_EXCEEDED'
+      });
+      return;
+    }
+
+    // Record observation in payment_observations
+    try {
+      const existingObs = ctx.db.queryOne(
+        `SELECT id FROM payment_observations WHERE bank_reference_number = ? AND attributed_payment_id = ?`,
+        [rawUtr, session.id]
+      );
+      if (!existingObs) {
+        ctx.db.execute(
+          `INSERT INTO payment_observations (
+             id, receiving_account_id, source, amount_paise, observed_at, ingested_at,
+             bank_reference_number, fingerprint_hash, raw_payload, attribution_status,
+             attributed_payment_id, created_at
+           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            `obs_utr_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+            session.receivingAccountId || '00000000-0000-0000-0000-000000000002',
+            'CUSTOMER_UTR',
+            Number(session.amountPaise),
+            new Date().toISOString(),
+            new Date().toISOString(),
+            rawUtr,
+            `utr_${rawUtr}`,
+            JSON.stringify({ source: 'CUSTOMER_UTR', utr: rawUtr, sessionId: session.id }),
+            'ATTRIBUTED',
+            session.id,
+            new Date().toISOString()
+          ]
+        );
+      }
+    } catch (e) {
+      console.warn('[verify-utr] Observation record note:', e.message);
+    }
+
+    // 5. Transition session to SUCCESS
+    const updated = ctx.sessionRepo.transitionToTerminal(session.id, PaymentStatus.SUCCESS, {
+      verificationSource: 'CUSTOMER_UTR',
+      bankReferenceNumber: rawUtr,
+      utr: rawUtr
+    });
+
+    if (session.receivingAccountId) {
+      ctx.queueEngine.promoteNext(session.receivingAccountId);
+    }
+
+    // Update metadata with verified UTR
+    try {
+      ctx.db.execute(
+        `UPDATE payment_sessions 
+         SET verification_level = 2, verification_tag = 'UTR_VERIFIED', updated_at = ?
+         WHERE id = ?`,
+        [new Date().toISOString(), session.id]
+      );
+    } catch {}
+
+    // Broadcast SSE
+    server.broadcastSse(session.id, 'status_change', {
+      status: PaymentStatus.SUCCESS,
+      orderId: session.orderId,
+      verificationLevel: 2,
+      verificationTag: 'UTR_VERIFIED',
+      returnUrl
+    });
+
+    if (ctx.eventEmitter) {
+      ctx.eventEmitter.emit('PAYMENT.SUCCESS', {
+        paymentId: session.id,
+        orderId: session.orderId,
+        merchantId: session.merchantId,
+        amountPaise: session.amountPaise,
+        verificationLevel: 2,
+        verificationTag: 'UTR_VERIFIED',
+        sources: ['CUSTOMER_UTR']
+      });
+    }
+
+    HttpServer.json(res, 200, {
+      success: true,
+      status: PaymentStatus.SUCCESS,
+      orderId: session.orderId,
+      returnUrl,
+      message: 'Payment successfully verified via UPI Reference Number.'
     });
   });
 

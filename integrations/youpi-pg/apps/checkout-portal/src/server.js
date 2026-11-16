@@ -227,9 +227,9 @@ export class CheckoutServer {
     const isCustomApp = Boolean(process.env.DEFAULT_APP_NAME);
     const appName = state?.branding?.appName || (process.env.DEFAULT_APP_NAME || '').trim() || BRANDING_CONFIG.appName || 'YouPI PG';
     const primaryColor = state?.branding?.primaryColor || (process.env.DEFAULT_PRIMARY_COLOR || '').trim() || BRANDING_CONFIG.primaryColor || '#FF7836';
-    const merchantName = state?.merchantName || (isCustomApp ? 'Merchant Checkout' : BRANDING_CONFIG.businessName) || 'Merchant Checkout';
+    const merchantName = state?.merchantName || (process.env.DEFAULT_MERCHANT_NAME || '').trim() || (isCustomApp ? 'BakeConnect' : BRANDING_CONFIG.businessName) || 'BakeConnect';
     const orderId = state?.orderId || '';
-    const logoUrl = state?.branding?.logoUrl || (process.env.DEFAULT_LOGO_URL || '').trim() || BRANDING_CONFIG.logoUrl || '';
+    const logoUrl = state?.branding?.logoUrl !== undefined ? (state?.branding?.logoUrl || '') : ((process.env.DEFAULT_LOGO_URL || '').trim() || BRANDING_CONFIG.logoUrl || '/icons/bakeconnect-logo.png');
     const sidebarNotice = state?.branding?.sidebarNotice || BRANDING_CONFIG.sidebarNotice || 'Fast & Secure 256-Bit Encrypted Payments';
     const counterInstructions = state?.branding?.counterInstructions || BRANDING_CONFIG.counterInstructions || 'Please visit the billing counter and present this screen to the cashier.';
     const footerGuarantee = state?.branding?.footerGuarantee || (process.env.DEFAULT_FOOTER_GUARANTEE || '').trim() || (isCustomApp ? `Secured by ${appName} & 256-Bit Bank Encryption` : (BRANDING_CONFIG.appName ? `Secured by ${BRANDING_CONFIG.appName} & 256-Bit Bank Encryption` : `Secured by ${appName} & 256-Bit Bank Encryption`));
@@ -264,6 +264,11 @@ export class CheckoutServer {
     const downtimeAltBtnDisplay = ((sellingMode === 'ONLINE' && enabledMethods.includes('COD')) || (sellingMode === 'OFFLINE' && enabledMethods.includes('CASH_COUNTER'))) ? 'inline-block' : 'none';
     const downtimeAltBtnLabel = (sellingMode === 'ONLINE') ? 'Pay via Cash on Delivery Instead' : 'Pay by Cash at Till Instead';
 
+    const avatarImgStyle = logoUrl ? 'display:block;' : 'display:none;';
+    const avatarLetterStyle = logoUrl ? 'display:none;' : 'display:block;';
+    const merchantInitial = (merchantName || 'B').charAt(0).toUpperCase();
+    const hasLogoClass = logoUrl ? 'has-logo' : '';
+
     return renderTemplate(html, {
       PAYMENT_ID: paymentId,
       API_BASE_URL: clientApiBase,
@@ -273,6 +278,10 @@ export class CheckoutServer {
       RAW_FOOTER_NOTE: `Secured by ${BRANDING_CONFIG.appName || appName} & 256-Bit Bank Encryption`,
       TRUST_BADGE_TEXT: trustBadgeText,
       MERCHANT_NAME: merchantName,
+      MERCHANT_INITIAL: merchantInitial,
+      AVATAR_IMG_STYLE: avatarImgStyle,
+      AVATAR_LETTER_STYLE: avatarLetterStyle,
+      HAS_LOGO_CLASS: hasLogoClass,
       ORDER_ID: orderId,
       AMOUNT: state?.amount || '0.00',
       VPA: vpa,
