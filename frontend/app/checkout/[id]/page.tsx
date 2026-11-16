@@ -381,12 +381,6 @@ export default function CheckoutAttemptPage() {
               <span>/</span>
               <span className="text-[#342421]">Merchant Payment Terminal</span>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500 shrink-0" />
-              <span className="text-xs font-bold uppercase tracking-wider text-emerald-800">
-                Live Terminal Link
-              </span>
-            </div>
           </div>
 
           {/* Stageshow Two-Column Grid: Terminal Counter (Hero) + Satellite Dispatch Ticket */}
@@ -422,7 +416,7 @@ export default function CheckoutAttemptPage() {
                 {/* Terminal Screen: Exact Digit-Centered Amount Callout */}
                 <div className="bg-[#FFF7EB]/80 border-b-2 border-[#342421] p-6 text-center space-y-1 relative">
                   <span className="text-[10px] font-bold uppercase tracking-widest text-[#342421]/60 block">
-                    Exact Authoritative Amount Payable
+                    Total Amount Payable
                   </span>
 
                   {/* Digit-centered Amount per Stageshow craft rules: currency hangs off the left */}
@@ -442,7 +436,7 @@ export default function CheckoutAttemptPage() {
 
                   <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100/80 border border-emerald-700/30 text-emerald-900 text-[11px] font-bold">
                     <Sparkles className="w-3 h-3 text-emerald-700 shrink-0" />
-                    <span>Includes +₹0.{decimalPart} unique paise for instant zero-UTR bank match</span>
+                    <span>Includes ₹0.{decimalPart} Platform Fees</span>
                   </div>
                 </div>
 
@@ -526,14 +520,10 @@ export default function CheckoutAttemptPage() {
             </div>
 
             {/* COLUMN 2: The Satellite Bakery Dispatch Slip (Col span 5) */}
-            <div className="lg:col-span-5 space-y-4">
-              <div className="relative bg-white border-2 border-[#342421] rounded-3xl p-6 sm:p-7 shadow-[6px_6px_0px_#342421] overflow-hidden">
-                {/* Perforation Punch Hole Notches */}
-                <div className="absolute top-1/2 -left-3 w-6 h-6 rounded-full bg-[#FFF7EB] border-2 border-[#342421]" />
-                <div className="absolute top-1/2 -right-3 w-6 h-6 rounded-full bg-[#FFF7EB] border-2 border-[#342421]" />
-
+            <div className="lg:col-span-5 space-y-4 lg:sticky lg:top-24 self-start">
+              <div className="relative bg-white border-2 border-[#342421] rounded-3xl p-6 sm:p-7 shadow-[6px_6px_0px_#342421]">
                 {/* Satellite Header */}
-                <div className="border-b-2 border-dashed border-[#342421]/20 pb-5 mb-5 space-y-3">
+                <div className="space-y-3">
                   <div>
                     <span className="text-[10px] font-bold uppercase tracking-wider text-[#342421]/60 block">
                       Bakery Order Dispatch Slip
@@ -555,6 +545,18 @@ export default function CheckoutAttemptPage() {
                       <span className="font-bold text-[#342421]">Tomorrow 07:00 AM</span>
                     </div>
                   </div>
+                </div>
+
+                {/* Perforation Divider 1: Header / Items Tear-off Notch */}
+                <div className="relative my-5 -mx-6 sm:-mx-7 flex items-center justify-between pointer-events-none select-none">
+                  {/* Left Semicircle Cutout */}
+                  <div className="absolute -left-[2px] top-1/2 -translate-y-1/2 w-4 sm:w-5 h-7 sm:h-8 bg-[#FFF7EB] border-y-2 border-r-2 border-[#342421] rounded-r-full z-10 shadow-[inset_1.5px_0px_0px_rgba(52,36,33,0.08)]" />
+                  
+                  {/* Perforated Dashed Tear Line */}
+                  <div className="w-full border-b-2 border-dashed border-[#342421]/25 mx-5 sm:mx-6" />
+                  
+                  {/* Right Semicircle Cutout */}
+                  <div className="absolute -right-[8px] top-1/2 -translate-y-1/2 w-6 sm:w-7 h-7 sm:h-8 bg-[#FFF7EB] border-y-2 border-l-2 border-[#342421] rounded-l-full z-10 shadow-[inset_-1.5px_0px_0px_rgba(52,36,33,0.08)]" />
                 </div>
 
                 {/* Itemized Bakery Lines */}
@@ -603,12 +605,30 @@ export default function CheckoutAttemptPage() {
                       </>
                     )}
                   </div>
+                </div>
 
-                  {/* Financial Breakdown */}
-                  <div className="border-t-2 border-dashed border-[#342421]/20 pt-4 space-y-2 text-xs">
+                {/* Perforation Divider 2: Items / Totals Tear-off Notch */}
+                <div className="relative my-5 -mx-6 sm:-mx-7 flex items-center justify-between pointer-events-none select-none">
+                  {/* Left Semicircle Cutout */}
+                  <div className="absolute -left-[2px] top-1/2 -translate-y-1/2 w-4 sm:w-5 h-7 sm:h-8 bg-[#FFF7EB] border-y-2 border-r-2 border-[#342421] rounded-r-full z-10 shadow-[inset_1.5px_0px_0px_rgba(52,36,33,0.08)]" />
+                  
+                  {/* Perforated Dashed Tear Line */}
+                  <div className="w-full border-b-2 border-dashed border-[#342421]/25 mx-5 sm:mx-6" />
+                  
+                  {/* Right Semicircle Cutout */}
+                  <div className="absolute -right-[8px] top-1/2 -translate-y-1/2 w-6 sm:w-7 h-7 sm:h-8 bg-[#FFF7EB] border-y-2 border-l-2 border-[#342421] rounded-l-full z-10 shadow-[inset_-1.5px_0px_0px_rgba(52,36,33,0.08)]" />
+                </div>
+
+                {/* Financial Breakdown */}
+                <div className="space-y-2 text-xs">
                     <div className="flex justify-between text-[#342421]/70">
                       <span>Artisan Items Subtotal</span>
-                      <span className="font-mono">{formatCurrency(order?.subtotal || Math.max(1, checkoutState.amount - 0.47))}</span>
+                      <span className="font-mono">
+                        {formatCurrency(
+                          order?.subtotal ||
+                            Math.max(0, Math.floor(checkoutState.amount))
+                        )}
+                      </span>
                     </div>
                     <div className="flex justify-between text-[#342421]/70">
                       <span>Applicable GST (5%)</span>
@@ -618,16 +638,13 @@ export default function CheckoutAttemptPage() {
                       <span>Morning Bakery Delivery</span>
                       <span>FREE</span>
                     </div>
-                    <div className="flex justify-between items-center text-[#FF7836] font-bold pt-1">
-                      <span className="flex items-center gap-1">
-                        <span>Digital Verification Key</span>
-                        <span className="text-[10px] bg-[#FFF0E8] px-1.5 py-0.5 rounded border border-[#FF7836]/30">Unique</span>
-                      </span>
-                      <span className="font-mono">+₹0.{decimalPart}</span>
+                    <div className="flex justify-between items-center text-[#342421]/80 font-medium pt-1">
+                      <span>Platform Fees</span>
+                      <span className="font-mono font-bold text-[#342421]">₹0.{decimalPart}</span>
                     </div>
 
                     <div className="border-t-2 border-[#342421] pt-3 flex justify-between items-baseline">
-                      <span className="font-bold text-sm text-[#342421]">Total Authoritative Sum</span>
+                      <span className="font-bold text-sm text-[#342421]">Total Amount</span>
                       <span className="font-display text-2xl font-black text-[#342421]">
                         {formatCurrency(checkoutState.amount)}
                       </span>
@@ -637,7 +654,6 @@ export default function CheckoutAttemptPage() {
               </div>
             </div>
           </div>
-        </div>
       </StorefrontLayout>
     );
   }

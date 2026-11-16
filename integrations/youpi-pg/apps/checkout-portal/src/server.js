@@ -269,6 +269,10 @@ export class CheckoutServer {
     const merchantInitial = (merchantName || 'B').charAt(0).toUpperCase();
     const hasLogoClass = logoUrl ? 'has-logo' : '';
 
+    const amtNum = parseFloat(state?.amount || '0.00');
+    const paise = !isNaN(amtNum) ? (amtNum % 1).toFixed(2) : '0.00';
+    const platformFeeStr = parseFloat(paise) > 0 ? `₹${paise}` : '₹0.00';
+
     return renderTemplate(html, {
       PAYMENT_ID: paymentId,
       API_BASE_URL: clientApiBase,
@@ -284,6 +288,7 @@ export class CheckoutServer {
       HAS_LOGO_CLASS: hasLogoClass,
       ORDER_ID: orderId,
       AMOUNT: state?.amount || '0.00',
+      PLATFORM_FEE: platformFeeStr,
       VPA: vpa,
       LOGO_URL: logoUrl,
       SUPPORT_EMAILS_HTML: `<strong>Email:</strong> ${escapeHtml((state?.branding?.supportEmails || (BRANDING_CONFIG.supportEmail ? [BRANDING_CONFIG.supportEmail] : [])).join(', '))}`,

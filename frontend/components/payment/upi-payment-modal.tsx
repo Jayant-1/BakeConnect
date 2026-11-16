@@ -294,10 +294,10 @@ export function UpiPaymentModal({
             <div className="py-12 text-center space-y-3">
               <div className="animate-spin w-8 h-8 border-4 border-[#FF7836] border-t-transparent rounded-full mx-auto" />
               <div className="text-xs font-bold text-[#342421]">
-                Generating Dynamic Verification Key...
+                Preparing Payment Details...
               </div>
               <p className="text-[11px] text-[#342421]/60">
-                Allocating dedicated paise slot to guarantee zero payment collisions.
+                Generating your secure UPI payment QR and link.
               </p>
             </div>
           ) : isSuccess ? (
@@ -395,19 +395,19 @@ export function UpiPaymentModal({
                   </div>
                 </div>
 
-                {/* Perforated Satellite Fee Breakdown */}
+                {/* Fee Breakdown */}
                 <div className="pt-2.5 border-t border-dashed border-[#342421]/20 flex items-center justify-between text-xs text-[#342421]/80 px-2">
                   <span>Base Order: <strong>{formatCurrency(baseAmount)}</strong></span>
                   <span className="text-emerald-700 font-bold">•</span>
-                  <span className="text-[#FF7836] font-bold">Verification Paise: +₹{dynamicFee.toFixed(2)}</span>
+                  <span className="text-[#342421] font-semibold">Platform Fees: <strong>₹{dynamicFee.toFixed(2)}</strong></span>
                 </div>
               </div>
 
-              {/* Exact Paise Notice Pill */}
+              {/* Platform Fees Notice Pill */}
               <div className="p-3 rounded-xl bg-amber-50 border-2 border-amber-300 text-[11px] text-amber-900 leading-relaxed flex items-start gap-2">
                 <Info className="w-4 h-4 shrink-0 text-amber-700 mt-0.5" />
                 <div>
-                  <strong>Pay exact amount with paise:</strong> The fractional paise (+₹{dynamicFee.toFixed(2)}) guarantees instant bank reconciliation without manual UTR submission.
+                  <strong>Total includes ₹{dynamicFee.toFixed(2)} Platform Fees.</strong> Please pay the exact amount shown (₹{totalAmount.toFixed(2)}) for automated order processing.
                 </div>
               </div>
 

@@ -852,11 +852,11 @@ export default function CheckoutPage() {
                         UPI (Google Pay, PhonePe, Paytm, BHIM)
                       </span>
                       <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold border border-emerald-300">
-                        Instant Dynamic Match
+                        Instant Confirmation
                       </span>
                     </div>
                     <p className="text-[11px] text-[#342421]/70 mt-1">
-                      Direct UPI payment with unique digital verification paise (nominal +₹0.xx platform fee) for instant automated bank confirmation.
+                      Direct UPI payment via QR or app (nominal platform fees included) for instant automated order confirmation.
                     </p>
                   </div>
                 </label>

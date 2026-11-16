@@ -1852,6 +1852,12 @@
         if (dAmt) dAmt.textContent = formatted;
         const sAmt = document.getElementById('successAmountVal');
         if (sAmt) sAmt.textContent = formatted;
+        const feeEl = document.getElementById('drawerPlatformFee');
+        if (feeEl) {
+          const amtNum = parseFloat(data.amount);
+          const paise = !isNaN(amtNum) ? (amtNum % 1).toFixed(2) : '0.00';
+          feeEl.textContent = parseFloat(paise) > 0 ? `₹${paise}` : '₹0.00';
+        }
       }
       if (data.orderId || data.id) {
         const oId = data.orderId || data.id;
