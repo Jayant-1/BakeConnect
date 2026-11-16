@@ -329,31 +329,55 @@ export default function RetailerPortalPage() {
             </div>
           </div>
 
-          {/* Category Filter Pills & Reset */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 pt-0.5 scrollbar-none text-xs">
+          {/* Category Filter Options & Reset (100% visible, no horizontal sliding) */}
+          <div className="flex flex-wrap items-center gap-2 pt-1 text-xs">
+            <span className="text-xs font-bold text-[#342421]/70 mr-1 flex items-center gap-1.5 flex-shrink-0">
+              <Layers className="w-3.5 h-3.5 text-[#FF7836]" />
+              <span>Bakery Lines:</span>
+            </span>
+
             <button
               type="button"
               onClick={() => setSelectedCategory('ALL')}
-              className={`px-3.5 py-1.5 rounded-full font-bold border-2 border-[#342421] transition-all flex-shrink-0 text-xs ${
+              className={`px-3 py-1.5 rounded-full font-bold border-2 border-[#342421] transition-all text-xs flex items-center gap-1.5 ${
                 selectedCategory === 'ALL'
                   ? 'bg-[#342421] text-white shadow-[2px_2px_0px_#342421]'
                   : 'bg-white text-[#342421] shadow-[1px_1px_0px_#342421] hover:bg-[#FFF7EB]'
               }`}
             >
-              All Lines ({products.length})
+              <span>All Lines</span>
+              <span
+                className={`px-1.5 py-0.5 rounded-full text-[10px] font-mono leading-none ${
+                  selectedCategory === 'ALL'
+                    ? 'bg-white/20 text-white'
+                    : 'bg-[#FFF7EB] text-[#342421] border border-[#342421]/20'
+                }`}
+              >
+                {products.length}
+              </span>
             </button>
+
             {categoryOptions.map((cat) => (
               <button
                 key={cat.id}
                 type="button"
                 onClick={() => setSelectedCategory(cat.id)}
-                className={`px-3.5 py-1.5 rounded-full font-bold border-2 border-[#342421] transition-all flex-shrink-0 text-xs ${
+                className={`px-3 py-1.5 rounded-full font-bold border-2 border-[#342421] transition-all text-xs flex items-center gap-1.5 ${
                   selectedCategory === cat.id
                     ? 'bg-[#342421] text-white shadow-[2px_2px_0px_#342421]'
                     : 'bg-white text-[#342421] shadow-[1px_1px_0px_#342421] hover:bg-[#FFF7EB]'
                 }`}
               >
-                {cat.name} ({cat.count})
+                <span>{cat.name}</span>
+                <span
+                  className={`px-1.5 py-0.5 rounded-full text-[10px] font-mono leading-none ${
+                    selectedCategory === cat.id
+                      ? 'bg-white/20 text-white'
+                      : 'bg-[#FFF7EB] text-[#342421] border border-[#342421]/20'
+                  }`}
+                >
+                  {cat.count}
+                </span>
               </button>
             ))}
 
@@ -361,7 +385,7 @@ export default function RetailerPortalPage() {
               <button
                 type="button"
                 onClick={handleResetFilters}
-                className="ml-auto text-xs font-bold text-[#FF7836] hover:text-[#FF6A1F] underline flex-shrink-0 flex items-center gap-1 pl-2"
+                className="ml-auto text-xs font-bold text-[#FF7836] hover:text-[#FF6A1F] underline flex items-center gap-1 pl-2"
               >
                 <X className="w-3.5 h-3.5" />
                 <span>Reset Filters</span>

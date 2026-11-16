@@ -469,7 +469,7 @@ export default function CheckoutAttemptPage() {
                   {/* Mobile 1-Tap Quick Launch Pad */}
                   <div className="space-y-2">
                     <span className="text-[10px] font-bold uppercase tracking-wider text-[#342421]/60 block text-center">
-                      Or 1-Tap Instant Launch on this Device
+                      1-Tap Instant Launch on this Device
                     </span>
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                       <a
