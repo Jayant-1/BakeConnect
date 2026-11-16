@@ -88,17 +88,33 @@ async function request<T>(
       return null as T;
     }
 
-    const json = (await res.json()) as ApiResponse<T>;
+    const rawText = await res.text();
+    let json: ApiResponse<T> | null = null;
+    if (rawText) {
+      try {
+        json = JSON.parse(rawText) as ApiResponse<T>;
+      } catch {
+        json = null;
+      }
+    }
 
-    if (!res.ok || json.success === false) {
+    if (!res.ok || (json && json.success === false)) {
+      const fallbackMsg =
+        res.status === 502 || res.status === 503 || res.status === 504
+          ? `Backend service unreachable (${res.status}). Please ensure the tunnel or backend is running.`
+          : `Request failed with status ${res.status}`;
       throw new ApiError(
-        json.message || `Request failed with status ${res.status}`,
+        json?.message || fallbackMsg,
         res.status,
-        json.errors
+        json?.errors
       );
     }
 
-    return json.data;
+    if (!json) {
+      return null as T;
+    }
+
+    return (json.data !== undefined ? json.data : (json as unknown as T));
   } catch (err: unknown) {
     if (err instanceof ApiError) throw err;
     throw new ApiError(

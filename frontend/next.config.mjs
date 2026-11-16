@@ -21,6 +21,10 @@ const nextConfig = {
         source: '/api/v1/:path*',
         destination: `${backendTarget}/api/v1/:path*`,
       },
+      {
+        source: '/checkout/:path*',
+        destination: `${backendTarget}/checkout/:path*`,
+      },
     ];
   },
 };
