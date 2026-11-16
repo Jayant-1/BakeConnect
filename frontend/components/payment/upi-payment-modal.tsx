@@ -18,6 +18,7 @@ import {
   RefreshCw,
   Sparkles,
   Info,
+  CreditCard,
 } from 'lucide-react';
 
 interface UpiPaymentModalProps {
@@ -373,35 +374,54 @@ export function UpiPaymentModal({
           ) : (
             /* Active QR & Payment State */
             <>
-              {/* Dynamic Amount Banner (Option A) */}
-              <div className="p-4 rounded-2xl bg-[#FFF7EB] border-2 border-[#342421] shadow-[2px_2px_0px_#342421] text-center space-y-1">
-                <div className="text-[10px] uppercase font-bold tracking-wider text-[#342421]/60">
-                  Total Payable via UPI
-                </div>
-                <div className="text-3xl font-display font-extrabold text-[#342421] tracking-tight">
-                  {formatCurrency(totalAmount)}
+              {/* Dynamic Amount Banner with Stageshow Digit-Centering */}
+              <div className="p-5 rounded-2xl bg-[#FFF7EB] border-2 border-[#342421] shadow-[3px_3px_0px_#342421] text-center space-y-2">
+                <div className="text-[10px] uppercase font-bold tracking-widest text-[#342421]/60">
+                  Exact Authoritative Amount Payable
                 </div>
 
-                {/* Fee Breakdown */}
-                <div className="pt-2 border-t border-[#342421]/15 flex items-center justify-center gap-3 text-[11px] text-[#342421]/70">
-                  <span>Order Total: <strong>{formatCurrency(baseAmount)}</strong></span>
-                  <span>•</span>
-                  <span>Verification Fee: <strong className="text-[#FF7836]">+{formatCurrency(dynamicFee)}</strong></span>
+                {/* Stageshow craft: currency hangs off the left, digits are the centered anchor */}
+                <div className="flex justify-center items-baseline my-1">
+                  <div className="relative inline-flex items-baseline">
+                    <span className="absolute right-full mr-1.5 text-2xl font-display font-black text-[#FF7836] select-none top-0">
+                      ₹
+                    </span>
+                    <span className="text-4xl sm:text-5xl font-display font-black tracking-tight text-[#342421]">
+                      {Math.floor(totalAmount)}
+                    </span>
+                    <span className="text-xl sm:text-2xl font-display font-bold text-[#342421]/70 ml-1">
+                      .{(totalAmount % 1).toFixed(2).slice(2)}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Perforated Satellite Fee Breakdown */}
+                <div className="pt-2.5 border-t border-dashed border-[#342421]/20 flex items-center justify-between text-xs text-[#342421]/80 px-2">
+                  <span>Base Order: <strong>{formatCurrency(baseAmount)}</strong></span>
+                  <span className="text-emerald-700 font-bold">•</span>
+                  <span className="text-[#FF7836] font-bold">Verification Paise: +₹{dynamicFee.toFixed(2)}</span>
                 </div>
               </div>
 
-              {/* Exact Paise Notice */}
+              {/* Exact Paise Notice Pill */}
               <div className="p-3 rounded-xl bg-amber-50 border-2 border-amber-300 text-[11px] text-amber-900 leading-relaxed flex items-start gap-2">
                 <Info className="w-4 h-4 shrink-0 text-amber-700 mt-0.5" />
                 <div>
-                  <strong>Pay exact amount with paise:</strong> The fractional paise (+₹{dynamicFee.toFixed(2)}) is your unique digital transaction signature. It allows our automated bank observer to instantly confirm your payment without delay.
+                  <strong>Pay exact amount with paise:</strong> The fractional paise (+₹{dynamicFee.toFixed(2)}) guarantees instant bank reconciliation without manual UTR submission.
                 </div>
               </div>
 
-              {/* QR Code Container */}
+              {/* High-Precision QR Code Viewfinder Chamber */}
               <div className="flex flex-col items-center justify-center pt-1">
-                <div className="relative p-3 bg-white rounded-2xl border-2 border-[#342421] shadow-[4px_4px_0px_#342421]">
+                <div className="relative p-3.5 bg-white rounded-2xl border-2 border-[#342421] shadow-[4px_4px_0px_#342421] inline-block">
+                  {/* 4 Corner Targeting Brackets */}
+                  <span className="absolute -top-1 -left-1 w-3.5 h-3.5 border-t-2 border-l-2 border-[#FF7836]" />
+                  <span className="absolute -top-1 -right-1 w-3.5 h-3.5 border-t-2 border-r-2 border-[#FF7836]" />
+                  <span className="absolute -bottom-1 -left-1 w-3.5 h-3.5 border-b-2 border-l-2 border-[#FF7836]" />
+                  <span className="absolute -bottom-1 -right-1 w-3.5 h-3.5 border-b-2 border-r-2 border-[#FF7836]" />
+
                   {qrDataUrl ? (
+                    /* eslint-disable-next-line @next/next/no-img-element */
                     <img
                       src={qrDataUrl}
                       alt={`UPI QR code for exact payment of ${formatCurrency(totalAmount)}`}
@@ -413,7 +433,10 @@ export function UpiPaymentModal({
                     </div>
                   )}
 
-                  <div className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 bg-[#342421] text-white text-[9px] font-bold uppercase tracking-wider px-3 py-0.5 rounded-full border border-white">
+                  {/* Scan beam */}
+                  <div className="absolute inset-x-3 top-3 h-0.5 bg-gradient-to-r from-transparent via-[#FF7836]/60 to-transparent animate-pulse pointer-events-none" />
+
+                  <div className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 bg-[#342421] text-white text-[9px] font-bold uppercase tracking-wider px-3 py-0.5 rounded-full border border-white whitespace-nowrap shadow-xs">
                     Scan with any UPI App
                   </div>
                 </div>
@@ -432,7 +455,7 @@ export function UpiPaymentModal({
               <div className="space-y-2 pt-1 text-xs">
                 <div className="flex items-center justify-between p-2.5 rounded-xl bg-white border border-[#342421]/20">
                   <div className="truncate mr-2">
-                    <span className="text-[10px] text-[#342421]/60 block font-bold">UPI ID (VPA)</span>
+                    <span className="text-[10px] text-[#342421]/60 block font-bold">Payee UPI VPA</span>
                     <span className="font-mono font-bold text-[#342421] truncate">{upiId}</span>
                   </div>
                   <button
@@ -451,7 +474,7 @@ export function UpiPaymentModal({
 
                 <div className="flex items-center justify-between p-2.5 rounded-xl bg-white border border-[#342421]/20">
                   <div className="truncate mr-2">
-                    <span className="text-[10px] text-[#342421]/60 block font-bold">Exact Payable Amount</span>
+                    <span className="text-[10px] text-[#342421]/60 block font-bold">Exact Payable Sum</span>
                     <span className="font-mono font-bold text-[#342421] text-sm">
                       ₹{totalAmount.toFixed(2)}
                     </span>
@@ -473,54 +496,66 @@ export function UpiPaymentModal({
 
               {/* Direct Open in Full YOUPI PG Portal */}
               {session?.checkoutUrl && (
-                <div className="pt-2">
+                <div className="pt-1">
                   <a
                     href={session.checkoutUrl}
                     className="w-full py-2.5 px-4 rounded-full bg-[#FF7836] hover:bg-[#FF6A1F] text-white text-xs font-bold uppercase tracking-wider border-2 border-[#342421] shadow-[2px_2px_0px_#342421] active:translate-x-0.5 active:translate-y-0.5 transition-all flex items-center justify-center gap-2"
                   >
-                    <span>Proceed to YOUPI Payment Gateway</span>
+                    <span>Proceed to Full Payment Gateway</span>
                     <ExternalLink className="w-4 h-4" />
                   </a>
                 </div>
               )}
 
               {/* Mobile Deep Links */}
-              <div className="pt-2">
-                <div className="text-[10px] uppercase font-bold text-[#342421]/60 text-center mb-2">
-                  Or pay directly on this device
+              <div className="pt-1 space-y-1.5">
+                <div className="text-[10px] uppercase font-bold text-[#342421]/60 text-center">
+                  Or 1-tap launch on this phone
                 </div>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
                   <a
-                    href={upiIntentUrl}
-                    className="py-2 px-3 rounded-full bg-white hover:bg-[#FFF7EB] border-2 border-[#342421] shadow-[2px_2px_0px_#342421] text-xs font-bold text-[#342421] text-center flex items-center justify-center gap-1.5 active:translate-x-0.5 active:translate-y-0.5 transition-all"
+                    href={`phonepe://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(payeeName)}&am=${totalAmount.toFixed(2)}&cu=INR&tn=${encodeURIComponent(`Order ${orderNumber}`)}`}
+                    className="py-2 px-2 rounded-xl bg-white hover:bg-[#D9EAF3] border-2 border-[#342421] shadow-[2px_2px_0px_#342421] text-xs font-bold text-[#342421] text-center flex items-center justify-center gap-1 active:translate-x-0.5 active:translate-y-0.5 transition-all"
                   >
-                    <Smartphone className="w-3.5 h-3.5 text-[#FF7836]" />
-                    <span>Open UPI App</span>
+                    <Smartphone className="w-3.5 h-3.5 text-[#5f259f]" />
+                    <span>PhonePe</span>
                   </a>
 
                   <a
-                    href={`phonepe://pay?pa=${encodeURIComponent(
-                      upiId
-                    )}&pn=${encodeURIComponent(payeeName)}&am=${totalAmount.toFixed(
-                      2
-                    )}&cu=INR&tn=${encodeURIComponent(`Order ${orderNumber}`)}`}
-                    className="py-2 px-3 rounded-full bg-white hover:bg-[#FFF7EB] border-2 border-[#342421] shadow-[2px_2px_0px_#342421] text-xs font-bold text-[#342421] text-center flex items-center justify-center gap-1.5 active:translate-x-0.5 active:translate-y-0.5 transition-all"
+                    href={`gpay://upi/pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(payeeName)}&am=${totalAmount.toFixed(2)}&cu=INR&tn=${encodeURIComponent(`Order ${orderNumber}`)}`}
+                    className="py-2 px-2 rounded-xl bg-white hover:bg-[#D9EAF3] border-2 border-[#342421] shadow-[2px_2px_0px_#342421] text-xs font-bold text-[#342421] text-center flex items-center justify-center gap-1 active:translate-x-0.5 active:translate-y-0.5 transition-all"
                   >
-                    <ExternalLink className="w-3.5 h-3.5 text-indigo-600" />
-                    <span>PhonePe / GPay</span>
+                    <Smartphone className="w-3.5 h-3.5 text-[#4285F4]" />
+                    <span>GPay</span>
+                  </a>
+
+                  <a
+                    href={`paytmmp://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(payeeName)}&am=${totalAmount.toFixed(2)}&cu=INR&tn=${encodeURIComponent(`Order ${orderNumber}`)}`}
+                    className="py-2 px-2 rounded-xl bg-white hover:bg-[#D9EAF3] border-2 border-[#342421] shadow-[2px_2px_0px_#342421] text-xs font-bold text-[#342421] text-center flex items-center justify-center gap-1 active:translate-x-0.5 active:translate-y-0.5 transition-all"
+                  >
+                    <Smartphone className="w-3.5 h-3.5 text-[#00baf2]" />
+                    <span>Paytm</span>
+                  </a>
+
+                  <a
+                    href={upiIntentUrl}
+                    className="py-2 px-2 rounded-xl bg-white hover:bg-[#D9EAF3] border-2 border-[#342421] shadow-[2px_2px_0px_#342421] text-xs font-bold text-[#342421] text-center flex items-center justify-center gap-1 active:translate-x-0.5 active:translate-y-0.5 transition-all"
+                  >
+                    <CreditCard className="w-3.5 h-3.5 text-[#FF7836]" />
+                    <span>Any UPI</span>
                   </a>
                 </div>
               </div>
 
               {/* Heartbeat Status Indicator */}
-              <div className="p-3 rounded-xl bg-cream-base border border-[#342421]/20 flex items-center justify-between text-xs text-[#342421]/70">
+              <div className="p-2.5 rounded-xl bg-emerald-50 border border-emerald-300 flex items-center justify-between text-xs text-emerald-900">
                 <div className="flex items-center gap-2">
                   <span className="relative flex h-2.5 w-2.5">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
                     <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500" />
                   </span>
                   <span className="text-[11px] font-medium">
-                    Autonomous bank observation active on 9699197282@ibl...
+                    Autonomous bank observation active on {upiId}...
                   </span>
                 </div>
                 <ShieldCheck className="w-4 h-4 text-emerald-700 shrink-0" />
