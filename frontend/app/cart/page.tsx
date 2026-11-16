@@ -213,7 +213,7 @@ export default function CartPage() {
 
           {/* Order Summary & Authoritative Pricing (4 cols) */}
           <div className="lg:col-span-4 bg-[#FFF7EB] rounded-3xl border-2 border-[#342421] p-6 shadow-[5px_5px_0px_#342421] space-y-6">
-            <h2 className="font-display uppercase text-xl font-bold text-[#342421] pb-3 border-b-2 border-[#342421]/15">
+            <h2 className="font-sans text-lg sm:text-xl font-bold text-[#342421] tracking-tight pb-3 border-b-2 border-[#342421]/15">
               Authoritative Summary
             </h2>
 

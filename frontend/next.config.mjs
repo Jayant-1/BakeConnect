@@ -16,14 +16,19 @@ const nextConfig = {
         ? (process.env.BACKEND_INTERNAL_URL || 'http://localhost:8080')
         : (process.env.BACKEND_INTERNAL_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080');
 
+    const checkoutApiTarget =
+      process.env.NODE_ENV === 'development'
+        ? (process.env.YOUPI_CHECKOUT_URL || 'http://localhost:7000')
+        : backendTarget;
+
     return [
+      {
+        source: '/api/v1/checkout/:path*',
+        destination: `${checkoutApiTarget}/api/v1/checkout/:path*`,
+      },
       {
         source: '/api/v1/:path*',
         destination: `${backendTarget}/api/v1/:path*`,
-      },
-      {
-        source: '/checkout/:path*',
-        destination: `${backendTarget}/checkout/:path*`,
       },
       {
         source: '/css/:path*',

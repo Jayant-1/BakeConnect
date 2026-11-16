@@ -132,7 +132,7 @@ export default function OrderTrackingPage() {
           <div className="w-16 h-16 rounded-full bg-cream-subtle flex items-center justify-center text-crust-muted mx-auto mb-4">
             <AlertCircle className="w-8 h-8 opacity-40 text-status-warning" />
           </div>
-          <h2 className="font-display text-2xl font-semibold text-crust-dark mb-2">Order Record Not Found</h2>
+          <h2 className="font-sans text-xl sm:text-2xl font-bold text-crust-dark mb-2">Order Record Not Found</h2>
           <p className="text-sm text-crust-muted mb-6">
             No active order matching #{orderId} was retrieved from the database.
           </p>
@@ -178,7 +178,7 @@ export default function OrderTrackingPage() {
               {order.orderType === 'BUSINESS' ? 'Wholesale Dispatch' : 'Daily Bakery Order'}
             </Badge>
           </div>
-          <h1 className="font-display text-2xl sm:text-3xl font-semibold text-crust-dark">
+          <h1 className="font-sans text-2xl sm:text-3xl font-bold tracking-tight text-crust-dark">
             {order.status === 'CONFIRMED' || order.status === 'PROCESSING'
               ? 'Your Hearth Batch is Scheduled'
               : order.status === 'DELAYED'
@@ -217,21 +217,21 @@ export default function OrderTrackingPage() {
 
       {/* Payment Required Action Alert for UPI Orders (PENDING) */}
       {order.paymentStatus === 'PENDING' && order.paymentMethod === 'YOUPI_PG' && (
-        <div className="mb-8 p-6 rounded-3xl bg-[#FFF7EB] border-2 border-[#342421] shadow-[4px_4px_0px_#342421] flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-in fade-in">
+        <div className="mb-8 p-5 sm:p-6 rounded-2xl bg-[#FFF7EB] border-2 border-[#342421] shadow-[3px_3px_0px_#342421] flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-in fade-in">
           <div className="flex items-start gap-3.5">
-            <div className="w-10 h-10 rounded-full bg-[#FF7836] text-white border-2 border-[#342421] shadow-[2px_2px_0px_#342421] flex items-center justify-center shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-[#FF7836] text-white border-2 border-[#342421] shadow-[2px_2px_0px_#342421] flex items-center justify-center shrink-0">
               <CreditCard className="w-5 h-5" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <h3 className="font-display text-lg uppercase font-bold text-[#342421]">
+              <div className="flex items-center gap-2.5">
+                <h3 className="font-sans text-base sm:text-lg font-bold text-[#342421] tracking-tight">
                   UPI Payment Awaiting Confirmation
                 </h3>
-                <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 text-[10px] font-bold border border-amber-300">
+                <span className="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 text-[11px] font-semibold border border-amber-300">
                   Action Required
                 </span>
               </div>
-              <p className="text-xs text-[#342421]/70 mt-1 max-w-xl">
+              <p className="text-xs text-[#342421]/75 mt-1 max-w-xl leading-relaxed">
                 Scan the dynamic verification QR code with any UPI app to confirm your order. Includes a nominal verification fee for instant bank matching.
               </p>
             </div>
@@ -262,26 +262,26 @@ export default function OrderTrackingPage() {
 
       {/* Payment Observed & Authorized Banner (AUTHORIZED or PAID) */}
       {(order.paymentStatus === 'AUTHORIZED' || order.paymentStatus === 'PAID') && (
-        <div className="mb-8 p-6 rounded-3xl bg-[#F0FDF4] border-2 border-[#166534] shadow-[4px_4px_0px_#166534] flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-in fade-in">
+        <div className="mb-8 p-5 sm:p-6 rounded-2xl bg-[#F0FDF4] border-2 border-[#15803D] shadow-[3px_3px_0px_#15803D] flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-in fade-in">
           <div className="flex items-start gap-3.5">
-            <div className="w-10 h-10 rounded-full bg-[#16A34A] text-white border-2 border-[#166534] shadow-[2px_2px_0px_#166534] flex items-center justify-center shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-[#16A34A] text-white border-2 border-[#15803D] shadow-[2px_2px_0px_#15803D] flex items-center justify-center shrink-0">
               <ShieldCheck className="w-5 h-5" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <h3 className="font-display text-lg uppercase font-bold text-[#166534]">
+              <div className="flex items-center gap-2.5">
+                <h3 className="font-sans text-base sm:text-lg font-bold text-[#14532D] tracking-tight">
                   UPI Payment Verified · Batch Scheduled
                 </h3>
-                <span className="px-2 py-0.5 rounded-full bg-green-100 text-green-900 text-[10px] font-bold border border-green-300">
+                <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-semibold border border-emerald-300">
                   Payment Received
                 </span>
               </div>
-              <p className="text-xs text-[#166534]/80 mt-1 max-w-xl">
+              <p className="text-xs text-[#166534] mt-1 max-w-xl leading-relaxed font-medium">
                 Your UPI transaction was successfully received and verified by our automated banking observer. Your order is confirmed in the bakery schedule.
               </p>
             </div>
           </div>
-          <Badge variant="success" className="px-3 py-1.5 font-bold shrink-0">
+          <Badge variant="success" className="px-3.5 py-1.5 font-semibold text-xs shrink-0">
             Payment Verified
           </Badge>
         </div>
@@ -310,7 +310,7 @@ export default function OrderTrackingPage() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* Left Column: Authoritative Timeline (7 cols) */}
         <div className="lg:col-span-7 bg-cream-surface rounded-3xl p-6 sm:p-8 border border-cream-border shadow-xs space-y-6">
-          <h2 className="font-display text-xl font-semibold text-crust-dark pb-3 border-b border-cream-border flex items-center justify-between">
+          <h2 className="font-sans text-lg sm:text-xl font-bold tracking-tight text-crust-dark pb-3 border-b border-cream-border flex items-center justify-between">
             <span>Authoritative Fulfillment Timeline</span>
             <span className="text-xs font-normal text-crust-muted">Updated via Spring Boot</span>
           </h2>
@@ -375,7 +375,7 @@ export default function OrderTrackingPage() {
 
         {/* Right Column: Invoice Items & Pricing (5 cols) */}
         <div className="lg:col-span-5 bg-cream-surface rounded-3xl p-6 sm:p-8 border border-cream-border shadow-xs space-y-6">
-          <h2 className="font-display text-xl font-semibold text-crust-dark pb-3 border-b border-cream-border">
+          <h2 className="font-sans text-lg sm:text-xl font-bold tracking-tight text-crust-dark pb-3 border-b border-cream-border">
             Line Items ({order.items.length})
           </h2>
 

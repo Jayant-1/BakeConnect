@@ -34,6 +34,18 @@ public class CorsConfigurationTest {
     }
 
     @Test
+    @DisplayName("CORS preflight from custom domain bakeconnect.jayant.codes is allowed")
+    void testCorsAllowedForJayantCodesDomain() throws Exception {
+        mockMvc.perform(options("/api/v1/auth/login")
+                        .header(HttpHeaders.ORIGIN, "https://bakeconnect.jayant.codes")
+                        .header(HttpHeaders.ACCESS_CONTROL_REQUEST_METHOD, "POST")
+                        .header(HttpHeaders.ACCESS_CONTROL_REQUEST_HEADERS, "authorization,content-type"))
+                .andExpect(status().isOk())
+                .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "https://bakeconnect.jayant.codes"))
+                .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_CREDENTIALS, "true"));
+    }
+
+    @Test
     @DisplayName("CORS preflight from preview Vercel wildcard subdomain is allowed")
     void testCorsAllowedForPreviewVercelSubdomain() throws Exception {
         mockMvc.perform(options("/api/v1/auth/login")

@@ -7,6 +7,7 @@ import Image from 'next/image';
 import { useCart } from '../../lib/store/cart-context';
 import { useAuth } from '../../lib/store/auth-context';
 import { StorefrontLayout } from '../../components/layout/storefront-layout';
+import { BakeryProcessingSuite } from '../../components/checkout/bakery-processing-suite';
 import { apiClient } from '../../lib/api/client';
 import { formatCurrency, validateGST } from '../../lib/utils';
 import { OrderType, PaymentMethod, Address } from '../../lib/api/types';
@@ -133,6 +134,13 @@ export default function CheckoutPage() {
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(channel === 'B2B' ? 'CREDIT_CYCLE' : 'YOUPI_PG');
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [processingStep, setProcessingStep] = useState<1 | 2 | 3 | 4>(1);
+  const [processingOrderInfo, setProcessingOrderInfo] = useState<{
+    orderNumber?: string;
+    totalAmount?: number;
+    itemCount?: number;
+    fulfillmentType?: 'DELIVERY' | 'PICKUP';
+  } | null>(null);
   const [orderError, setOrderError] = useState<string | null>(null);
 
   const subtotal =
@@ -162,6 +170,12 @@ export default function CheckoutPage() {
     }
 
     setIsSubmitting(true);
+    setProcessingStep(1);
+    setProcessingOrderInfo({
+      totalAmount: total,
+      itemCount: items.reduce((sum, i) => sum + i.quantity, 0),
+      fulfillmentType,
+    });
 
     try {
       // Auto-save address if adding new and user opted to save
@@ -231,8 +245,16 @@ export default function CheckoutPage() {
         couponCode: couponCode || undefined,
       };
 
+      setProcessingStep(2);
       const created = await apiClient.createOrder(orderPayload);
+      setProcessingOrderInfo((prev) => ({
+        ...prev,
+        orderNumber: created.orderNumber,
+        totalAmount: created.totalAmount,
+      }));
+      setProcessingStep(3);
       clearCart();
+
       if (paymentMethod === 'YOUPI_PG') {
         try {
           const session = await apiClient.initiatePayment({
@@ -240,6 +262,7 @@ export default function CheckoutPage() {
             provider: 'YOUPI_PG',
             baseAmount: created.totalAmount,
           } as any);
+          setProcessingStep(4);
           const targetUrl = session.checkoutUrl || session.paymentUrl;
           if (targetUrl && (targetUrl.startsWith('http://') || targetUrl.startsWith('https://') || targetUrl.startsWith('/'))) {
             window.location.href = targetUrl;
@@ -248,8 +271,10 @@ export default function CheckoutPage() {
         } catch (payErr) {
           console.error('[Checkout] Failed to initiate YouPi PG session directly:', payErr);
         }
+        setProcessingStep(4);
         router.push(`/order/${created.orderNumber}?pay=true`);
       } else {
+        setProcessingStep(4);
         router.push(`/order/${created.orderNumber}`);
       }
     } catch (err: any) {
@@ -265,6 +290,20 @@ export default function CheckoutPage() {
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#FF7836] mx-auto mb-4"></div>
           <p className="text-sm font-semibold text-[#342421]/70">Checking authentication...</p>
         </div>
+      </StorefrontLayout>
+    );
+  }
+
+  if (isSubmitting) {
+    return (
+      <StorefrontLayout>
+        <BakeryProcessingSuite
+          step={processingStep}
+          orderNumber={processingOrderInfo?.orderNumber}
+          totalAmount={processingOrderInfo?.totalAmount ?? total}
+          itemCount={processingOrderInfo?.itemCount ?? items.length}
+          fulfillmentType={fulfillmentType}
+        />
       </StorefrontLayout>
     );
   }
@@ -318,7 +357,7 @@ export default function CheckoutPage() {
                 <div className="w-8 h-8 rounded-full bg-[#FF7836] text-white border-2 border-[#342421] shadow-[2px_2px_0px_#342421] flex items-center justify-center font-bold text-xs">
                   1
                 </div>
-                <h2 className="font-display text-lg uppercase tracking-wide text-[#342421]">
+                <h2 className="font-sans text-base sm:text-lg font-bold text-[#342421] tracking-tight">
                   Customer Contact & Identification
                 </h2>
               </div>
@@ -375,7 +414,7 @@ export default function CheckoutPage() {
                   <div className="w-8 h-8 rounded-full bg-[#FF7836] text-white border-2 border-[#342421] shadow-[2px_2px_0px_#342421] flex items-center justify-center font-bold text-xs">
                     2
                   </div>
-                  <h2 className="font-display text-lg uppercase tracking-wide text-[#342421]">
+                  <h2 className="font-sans text-base sm:text-lg font-bold text-[#342421] tracking-tight">
                     Wholesale Business Invoicing & GST
                   </h2>
                 </div>
@@ -427,7 +466,7 @@ export default function CheckoutPage() {
                 <div className="w-8 h-8 rounded-full bg-[#FF7836] text-white border-2 border-[#342421] shadow-[2px_2px_0px_#342421] flex items-center justify-center font-bold text-xs">
                   {channel === 'B2B' ? 3 : 2}
                 </div>
-                <h2 className="font-display text-lg uppercase tracking-wide text-[#342421]">
+                <h2 className="font-sans text-base sm:text-lg font-bold text-[#342421] tracking-tight">
                   Fulfillment & Destination
                 </h2>
               </div>
@@ -709,7 +748,7 @@ export default function CheckoutPage() {
                 <div className="w-8 h-8 rounded-full bg-[#FF7836] text-white border-2 border-[#342421] shadow-[2px_2px_0px_#342421] flex items-center justify-center font-bold text-xs">
                   {channel === 'B2B' ? 4 : 3}
                 </div>
-                <h2 className="font-display text-lg uppercase tracking-wide text-[#342421]">
+                <h2 className="font-sans text-base sm:text-lg font-bold text-[#342421] tracking-tight">
                   Authorized Payment Gateway
                 </h2>
               </div>
@@ -780,7 +819,7 @@ export default function CheckoutPage() {
 
           {/* Right Column: Order Summary & Place Order (5 cols) */}
           <div className="lg:col-span-5 bg-[#FFF7EB] rounded-3xl p-6 sm:p-7 border-2 border-[#342421] shadow-[5px_5px_0px_#342421] space-y-6 sticky top-28">
-            <h2 className="font-display uppercase text-xl font-bold text-[#342421] pb-3 border-b-2 border-[#342421]/15">
+            <h2 className="font-sans text-lg sm:text-xl font-bold text-[#342421] tracking-tight pb-3 border-b-2 border-[#342421]/15">
               Order Review ({items.length} Items)
             </h2>
 
