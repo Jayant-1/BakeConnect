@@ -72,8 +72,7 @@ export class GoogleMessagesAutomator {
   }
 
   isObserverEnabled() {
-    return process.env.ENABLE_GOOGLE_MESSAGES_SERVER === 'true'
-      || process.env.ENABLE_LEGACY_CHROME_OBSERVERS === 'true';
+    return process.env.ENABLE_GOOGLE_MESSAGES_SERVER !== 'false';
   }
 
   async fetchActivePaymentAmounts() {
@@ -121,7 +120,7 @@ export class GoogleMessagesAutomator {
         if (data.paired) return true;
       }
 
-      if (backupTar) {
+      if (backupTar || fs.existsSync(path.join(this.profileDir, 'Default'))) {
         this.saveStoredPairedState(true);
         return true;
       }
@@ -413,70 +412,79 @@ export class GoogleMessagesAutomator {
     if (this.checkTimer) clearInterval(this.checkTimer);
     this.unpairedCounter = 0;
 
+    this.missingProcessTicks = 0;
     this.checkTimer = setInterval(async () => {
       try {
         const targets = await BrowserLauncher.getTargets(this.debuggingPort);
         const msgTarget = targets.find(t => isGoogleMessagesUrl(t.url));
 
-        if (msgTarget) {
-          this.lastSeenAt = new Date();
+        if (!msgTarget) {
+          this.missingProcessTicks = (this.missingProcessTicks || 0) + 1;
+          // Auto-relaunch Chrome in background if target missing for 10s and profile is paired
+          if (this.missingProcessTicks >= 5) {
+            this.missingProcessTicks = 0;
+            if (this.isPaired) {
+              console.log('[Google Messages Automator] Chrome target not responding. Auto-recovering background browser...');
+              this.launchBackgroundObserver();
+            }
+          }
+          return;
+        }
 
-          const isPairedUrl = isPairedMessagesUrl(msgTarget.url);
+        this.missingProcessTicks = 0;
+        this.lastSeenAt = new Date();
 
-          if (isPairedUrl) {
+        const isPairedUrl = isPairedMessagesUrl(msgTarget.url);
+
+        if (isPairedUrl) {
+          this.unpairedCounter = 0;
+          if (!this.isPaired || this.mode !== 'BACKGROUND') {
+            // Pairing confirmed!
+            this.isPaired = true;
+            this.saveStoredPairedState(true);
+            this.mode = 'BACKGROUND';
+            console.log('[Google Messages Automator] Pairing confirmed! Running in autonomous background mode...');
+            this.startExtractionLoop();
+            this.startKeepAlive();
+          }
+        } else if (this.isPaired) {
+          if (msgTarget.url.includes('/unableToConnect') && msgTarget.webSocketDebuggerUrl) {
+            this.unableToConnectTicks = (this.unableToConnectTicks || 0) + 1;
+            if (this.unableToConnectTicks % 6 === 0) {
+              // If stuck on unableToConnect for 12s, navigate directly to conversations to force fresh handshake
+              try {
+                await BrowserLauncher.sendCommand(msgTarget.webSocketDebuggerUrl, 'Page.navigate', {
+                  url: 'https://messages.google.com/web/conversations'
+                });
+              } catch {}
+            } else if (this.unableToConnectTicks % 3 === 0) {
+              try {
+                await BrowserLauncher.evaluate(msgTarget.webSocketDebuggerUrl, `
+                  (() => {
+                    const btn = Array.from(document.querySelectorAll("button, a")).find(b => b.innerText && b.innerText.includes("Refresh"));
+                    if (btn) btn.click();
+                  })()
+                `);
+              } catch {}
+            }
+          } else {
+            this.unableToConnectTicks = 0;
+          }
+
+          const isExplicitAuthPage = msgTarget.url.includes('/welcome') || msgTarget.url.includes('/authentication') || msgTarget.url.includes('/pair');
+          if (isExplicitAuthPage) {
+            this.unpairedCounter = (this.unpairedCounter || 0) + 1;
+            // Attempt to recover by navigating directly to /conversations every 5 ticks (10s)
+            if (this.unpairedCounter % 5 === 0 && msgTarget.webSocketDebuggerUrl) {
+              try {
+                await BrowserLauncher.sendCommand(msgTarget.webSocketDebuggerUrl, 'Page.navigate', {
+                  url: 'https://messages.google.com/web/conversations'
+                });
+              } catch {}
+            }
+            // Retain paired session profile - do not destroy saved tokens on temporary network transitions
+          } else {
             this.unpairedCounter = 0;
-            if (!this.isPaired) {
-              // Pairing confirmed!
-              this.saveStoredPairedState(true);
-              this.mode = 'BACKGROUND';
-              console.log('[Google Messages Automator] Pairing confirmed! Running in autonomous background mode...');
-              this.startExtractionLoop();
-              this.startKeepAlive();
-            }
-          } else if (this.isPaired) {
-            if (msgTarget.url.includes('/unableToConnect') && msgTarget.webSocketDebuggerUrl) {
-              this.unableToConnectTicks = (this.unableToConnectTicks || 0) + 1;
-              if (this.unableToConnectTicks % 6 === 0) {
-                // If stuck on unableToConnect for 12s, navigate directly to conversations to force fresh handshake
-                try {
-                  await BrowserLauncher.sendCommand(msgTarget.webSocketDebuggerUrl, 'Page.navigate', {
-                    url: 'https://messages.google.com/web/conversations'
-                  });
-                } catch {}
-              } else if (this.unableToConnectTicks % 3 === 0) {
-                try {
-                  await BrowserLauncher.evaluate(msgTarget.webSocketDebuggerUrl, `
-                    (() => {
-                      const btn = Array.from(document.querySelectorAll("button, a")).find(b => b.innerText && b.innerText.includes("Refresh"));
-                      if (btn) btn.click();
-                    })()
-                  `);
-                } catch {}
-              }
-            } else {
-              this.unableToConnectTicks = 0;
-            }
-
-            const isExplicitAuthPage = msgTarget.url.includes('/welcome') || msgTarget.url.includes('/authentication');
-            if (isExplicitAuthPage) {
-              this.unpairedCounter = (this.unpairedCounter || 0) + 1;
-              // Attempt to recover by navigating directly to /conversations every 5 ticks
-              if (this.unpairedCounter % 5 === 0 && msgTarget.webSocketDebuggerUrl) {
-                try {
-                  await BrowserLauncher.sendCommand(msgTarget.webSocketDebuggerUrl, 'Page.navigate', {
-                    url: 'https://messages.google.com/web/conversations'
-                  });
-                } catch {}
-              }
-              if (this.unpairedCounter >= 30) {
-                // Confirmed unlinked after 30 consecutive polls (60 seconds)
-                this.saveStoredPairedState(false);
-                this.mode = 'AWAITING_PAIRING';
-                console.log('[Google Messages Automator] Session unlinked after extended timeout. Ready for re-pairing via /pair...');
-              }
-            } else {
-              this.unpairedCounter = 0;
-            }
           }
         }
       } catch {
@@ -488,7 +496,7 @@ export class GoogleMessagesAutomator {
 
   /**
    * Periodic keep-alive ping to ensure Google Messages WebSocket does not time out.
-   * Runs every 25 seconds to maintain active WebRTC/FCM channel with phone.
+   * Runs every 20 seconds to maintain active WebRTC/FCM channel with phone.
    */
   startKeepAlive() {
     if (this.keepAliveTimer) clearInterval(this.keepAliveTimer);
@@ -500,6 +508,11 @@ export class GoogleMessagesAutomator {
           await BrowserLauncher.evaluate(target.webSocketDebuggerUrl, `
             (() => {
               try {
+                // Dismiss banner overlays like "Using mobile data" or notifications toasts
+                const closeBtns = Array.from(document.querySelectorAll('button[aria-label*="Close" i], button[aria-label*="Dismiss" i], .banner-close, mws-toast button, [data-e2e-banner-close]'));
+                for (const btn of closeBtns) {
+                  try { btn.click(); } catch {}
+                }
                 window.dispatchEvent(new Event('focus'));
                 return document.title;
               } catch {
@@ -508,6 +521,7 @@ export class GoogleMessagesAutomator {
             })()
           `);
           this.lastSeenAt = new Date();
+          // Keep gateway device heartbeat permanently fresh
           try {
             fetch(`${this.apiBaseUrl}/api/v1/pollers/android/heartbeat`, {
               method: 'POST',
@@ -520,7 +534,7 @@ export class GoogleMessagesAutomator {
           } catch {}
         }
       } catch {}
-    }, 25000); // Every 25 seconds
+    }, 20000); // Every 20 seconds
     if (this.keepAliveTimer.unref) this.keepAliveTimer.unref();
   }
 

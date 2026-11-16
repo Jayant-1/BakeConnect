@@ -183,6 +183,18 @@ export class ProcessManager extends EventEmitter {
       svc.pid = null;
       svc.startTime = null;
       this.emit('status_change', { id: svc.id, status: svc.status });
+
+      // Resilient auto-restart for crashed or unexpected exited services
+      if (!svc.isStopping && svc.autoRestart !== false) {
+        this.appendLog(svc.id, 'system', `Service ${svc.name} died unexpectedly. Auto-recovering in 2s...`);
+        setTimeout(() => {
+          if (!svc.isStopping && svc.status === 'STOPPED') {
+            this.startService(svc.id).catch(err => {
+              this.appendLog(svc.id, 'error', `Auto-restart failed: ${err.message}`);
+            });
+          }
+        }, 2000);
+      }
     });
 
     this.appendLog(svc.id, 'system', `Started ${svc.name} on PID ${svc.pid} (port ${svc.port})`);
@@ -207,6 +219,7 @@ export class ProcessManager extends EventEmitter {
       return svc;
     }
 
+    svc.isStopping = true;
     this.appendLog(svc.id, 'system', `Stopping ${svc.name} (PID ${svc.pid})...`);
 
     const child = svc.child;
@@ -240,6 +253,7 @@ export class ProcessManager extends EventEmitter {
       await stopping;
     } finally {
       if (svc.stopPromise === stopping) svc.stopPromise = null;
+      svc.isStopping = false;
     }
 
     return svc;
