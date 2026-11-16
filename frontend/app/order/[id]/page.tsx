@@ -165,7 +165,7 @@ export default function OrderTrackingPage() {
         return (
           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FEF9EB] text-[#B45309] border-2 border-[#B45309] shadow-[2px_2px_0px_#B45309] text-xs font-bold whitespace-nowrap">
             <Flame className="w-3.5 h-3.5 text-[#B45309]" />
-            <span>Hearth Baking in Progress</span>
+            <span>Baking in Progress</span>
           </span>
         );
       case 'DELAYED':
@@ -244,10 +244,10 @@ export default function OrderTrackingPage() {
       return 'Order Placed';
     }
     if (status === 'CONFIRMED' || note.includes('confirmed') || note.includes('scheduled')) {
-      return 'Hearth Batch Scheduled';
+      return 'Bakery Batch Scheduled';
     }
     if (status === 'PROCESSING' || note.includes('baking') || note.includes('oven')) {
-      return 'Hearth Baking in Progress';
+      return 'Baking in Progress';
     }
     if (status === 'OUT_FOR_DELIVERY' || note.includes('out for delivery')) {
       return 'Out for Morning Delivery';
@@ -312,7 +312,7 @@ export default function OrderTrackingPage() {
 
             <h1 className="font-sans text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-[#342421] leading-tight">
               {order.status === 'CONFIRMED' || order.status === 'PROCESSING'
-                ? 'Your Hearth Batch is Scheduled'
+                ? 'Your Bakery Batch is Scheduled'
                 : order.status === 'DELAYED'
                 ? 'Order Schedule Update from Bakery'
                 : 'Order Status & Live Timeline'}
@@ -436,7 +436,7 @@ export default function OrderTrackingPage() {
           </div>
           <p className="text-crust-dark/80">
             {order.delayReason ||
-              'Our head baker rescheduled this batch due to morning stone hearth capacity. A revised dispatch confirmation was sent to your email.'}
+              'Our head baker rescheduled this batch due to morning oven capacity. A revised dispatch confirmation was sent to your email.'}
           </p>
           {order.estimatedDeliveryDate && (
             <div className="font-semibold text-crust-dark pt-1">
