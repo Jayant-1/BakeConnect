@@ -133,6 +133,13 @@ export const backendClient = {
     fullName: string;
     phone?: string;
     role: UserRole;
+    businessName?: string;
+    gstNumber?: string;
+    addressLine1?: string;
+    addressLine2?: string;
+    city?: string;
+    state?: string;
+    postalCode?: string;
   }): Promise<{ token: string; id: string; email: string; fullName: string; role: UserRole }> {
     return request('/api/v1/auth/register', {
       method: 'POST',

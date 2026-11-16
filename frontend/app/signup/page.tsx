@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '../../lib/store/auth-context';
 import { UserRole } from '../../lib/api/types-v2';
+import { backendClient } from '../../lib/api/backend-client';
 import {
   User,
   Store,
@@ -20,6 +21,8 @@ import {
   EyeOff,
   ShieldCheck,
   Sparkles,
+  MapPin,
+  Truck,
 } from 'lucide-react';
 
 function SignupForm() {
@@ -36,6 +39,11 @@ function SignupForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [businessName, setBusinessName] = useState('');
   const [gstNumber, setGstNumber] = useState('');
+  const [addressLine1, setAddressLine1] = useState('');
+  const [addressLine2, setAddressLine2] = useState('');
+  const [city, setCity] = useState('Pune');
+  const [state, setState] = useState('Maharashtra');
+  const [postalCode, setPostalCode] = useState('');
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -53,6 +61,37 @@ function SignupForm() {
     setError(null);
     setIsSubmitting(true);
 
+    if (role === 'RETAILER') {
+      if (!businessName.trim()) {
+        setError('Please enter your Shop / Cafe Name.');
+        setIsSubmitting(false);
+        return;
+      }
+      if (!phone.trim()) {
+        setError('Please provide a contact phone number for wholesale morning delivery dispatch.');
+        setIsSubmitting(false);
+        return;
+      }
+      if (!addressLine1.trim()) {
+        setError('Please provide your shop street address for morning wholesale delivery.');
+        setIsSubmitting(false);
+        return;
+      }
+      if (!city.trim() || !postalCode.trim()) {
+        setError('Please provide city and PIN code for your shop delivery.');
+        setIsSubmitting(false);
+        return;
+      }
+      if (gstNumber.trim()) {
+        const gstRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
+        if (!gstRegex.test(gstNumber.trim().toUpperCase())) {
+          setError('Invalid GSTIN format (e.g. 27AABCU9603R1ZM). Please enter a valid 15-character GSTIN or leave blank if unregistered.');
+          setIsSubmitting(false);
+          return;
+        }
+      }
+    }
+
     try {
       const createdUser = await register({
         fullName: fullName.trim(),
@@ -60,10 +99,45 @@ function SignupForm() {
         password,
         phone: phone.trim() || undefined,
         role,
+        businessName: role === 'RETAILER' ? businessName.trim() : undefined,
+        gstNumber: role === 'RETAILER' && gstNumber.trim() ? gstNumber.trim().toUpperCase() : undefined,
+        addressLine1: role === 'RETAILER' ? addressLine1.trim() : undefined,
+        addressLine2: role === 'RETAILER' && addressLine2.trim() ? addressLine2.trim() : undefined,
+        city: role === 'RETAILER' ? city.trim() : undefined,
+        state: role === 'RETAILER' ? state.trim() : undefined,
+        postalCode: role === 'RETAILER' ? postalCode.trim() : undefined,
       });
 
       if (role === 'RETAILER') {
-        router.push('/retailer/onboarding');
+        // Fallback sync to guarantee profile and shipping address are persisted
+        try {
+          await backendClient.submitProfile({
+            businessName: businessName.trim(),
+            gstNumber: gstNumber.trim() ? gstNumber.trim().toUpperCase() : undefined,
+            contactPersonName: fullName.trim(),
+            contactPhone: phone.trim(),
+          });
+        } catch {
+          // Already saved in register endpoint
+        }
+        if (addressLine1.trim()) {
+          try {
+            await backendClient.createAddress({
+              type: 'SHIPPING',
+              contactName: fullName.trim(),
+              contactPhone: phone.trim(),
+              addressLine1: addressLine1.trim(),
+              addressLine2: addressLine2.trim() || undefined,
+              city: city.trim(),
+              state: state.trim() || 'Maharashtra',
+              postalCode: postalCode.trim(),
+              isDefault: true,
+            });
+          } catch {
+            // Already saved in register endpoint
+          }
+        }
+        router.push('/retailer');
       } else {
         router.push(getRedirectForRole(createdUser.role));
       }
@@ -269,55 +343,177 @@ function SignupForm() {
             </div>
 
             {role === 'RETAILER' && (
-              <div className="p-4 bg-[#D9EAF3]/40 rounded-2xl border-2 border-[#342421] space-y-3 shadow-[2px_2px_0px_#342421]">
-                <div className="text-[11px] font-bold uppercase tracking-wider text-[#1D5C96] flex items-center gap-1.5">
-                  <Store className="w-3.5 h-3.5" />
-                  Wholesale Shop Details
-                </div>
+              <div className="space-y-4">
+                {/* Section: Shop & Business Information */}
+                <div className="p-4 bg-[#D9EAF3]/40 rounded-2xl border-2 border-[#342421] space-y-3 shadow-[2px_2px_0px_#342421]">
+                  <div className="text-[11px] font-bold uppercase tracking-wider text-[#1D5C96] flex items-center justify-between">
+                    <span className="flex items-center gap-1.5">
+                      <Store className="w-3.5 h-3.5" />
+                      Shop & Business Information
+                    </span>
+                    <span className="text-[10px] bg-white text-[#1D5C96] font-bold px-2 py-0.5 rounded-full border border-[#1D5C96]/30">
+                      Wholesale Desk
+                    </span>
+                  </div>
 
-                <div>
-                  <label
-                    htmlFor="businessName"
-                    className="block text-xs font-bold uppercase tracking-wider text-[#342421] mb-1.5"
-                  >
-                    Shop / Cafe Name *
-                  </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#342421]/50">
-                      <Building className="h-4 w-4" />
+                  <div>
+                    <label
+                      htmlFor="businessName"
+                      className="block text-xs font-bold uppercase tracking-wider text-[#342421] mb-1.5"
+                    >
+                      Shop / Cafe Name *
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#342421]/50">
+                        <Building className="h-4 w-4" />
+                      </div>
+                      <input
+                        id="businessName"
+                        name="businessName"
+                        type="text"
+                        required={role === 'RETAILER'}
+                        value={businessName}
+                        onChange={(e) => setBusinessName(e.target.value)}
+                        placeholder="e.g. Irani Chai & Cafe FC Road"
+                        className="block w-full pl-10 pr-4 py-2.5 border-2 border-[#342421] rounded-2xl text-xs font-bold text-[#342421] placeholder:text-[#342421]/40 focus:outline-hidden focus:ring-2 focus:ring-[#FF7836] bg-white shadow-[1px_1px_0px_#342421]"
+                      />
                     </div>
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="gstNumber"
+                      className="block text-xs font-bold uppercase tracking-wider text-[#342421] mb-1.5"
+                    >
+                      GSTIN (Optional)
+                    </label>
                     <input
-                      id="businessName"
-                      name="businessName"
+                      id="gstNumber"
+                      name="gstNumber"
                       type="text"
-                      required={role === 'RETAILER'}
-                      value={businessName}
-                      onChange={(e) => setBusinessName(e.target.value)}
-                      placeholder="e.g. Irani Chai & Cafe FC Road"
-                      className="block w-full pl-10 pr-4 py-2.5 border-2 border-[#342421] rounded-2xl text-xs font-bold text-[#342421] placeholder:text-[#342421]/40 focus:outline-hidden focus:ring-2 focus:ring-[#FF7836] bg-white"
+                      maxLength={15}
+                      value={gstNumber}
+                      onChange={(e) => setGstNumber(e.target.value.toUpperCase())}
+                      placeholder="27AABCU9603R1ZM"
+                      className="block w-full px-3.5 py-2.5 border-2 border-[#342421] rounded-2xl text-xs font-bold text-[#342421] placeholder:text-[#342421]/40 focus:outline-hidden focus:ring-2 focus:ring-[#FF7836] bg-white uppercase font-mono tracking-wider shadow-[1px_1px_0px_#342421]"
                     />
+                    <p className="mt-1 text-[10px] text-[#342421]/60 font-medium">
+                      Enables wholesale Net pricing and GST input tax credit (ITC) commercial invoices.
+                    </p>
                   </div>
                 </div>
 
-                <div>
-                  <label
-                    htmlFor="gstNumber"
-                    className="block text-xs font-bold uppercase tracking-wider text-[#342421] mb-1.5"
-                  >
-                    GSTIN Number (Optional)
-                  </label>
-                  <input
-                    id="gstNumber"
-                    name="gstNumber"
-                    type="text"
-                    value={gstNumber}
-                    onChange={(e) => setGstNumber(e.target.value.toUpperCase())}
-                    placeholder="27AABCU9603R1ZM"
-                    className="block w-full px-3.5 py-2.5 border-2 border-[#342421] rounded-2xl text-xs font-bold text-[#342421] placeholder:text-[#342421]/40 focus:outline-hidden focus:ring-2 focus:ring-[#FF7836] bg-white uppercase font-mono tracking-wider"
-                  />
-                  <p className="mt-1 text-[10px] text-[#342421]/60 font-medium">
-                    Enables ITC input tax credit invoices on wholesale bakery deliveries.
-                  </p>
+                {/* Section: Morning Wholesale Delivery Destination */}
+                <div className="p-4 bg-white/70 rounded-2xl border-2 border-[#342421] space-y-3 shadow-[2px_2px_0px_#342421]">
+                  <div className="text-[11px] font-bold uppercase tracking-wider text-[#342421] flex items-center justify-between">
+                    <span className="flex items-center gap-1.5">
+                      <Truck className="w-3.5 h-3.5 text-[#FF7836]" />
+                      Morning Wholesale Delivery Address
+                    </span>
+                    <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full border border-emerald-300">
+                      Pre-Dawn 5:30 AM
+                    </span>
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="addressLine1"
+                      className="block text-xs font-bold uppercase tracking-wider text-[#342421] mb-1.5"
+                    >
+                      Shop Street Address / Building *
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#342421]/50">
+                        <MapPin className="h-4 w-4" />
+                      </div>
+                      <input
+                        id="addressLine1"
+                        name="addressLine1"
+                        type="text"
+                        required={role === 'RETAILER'}
+                        value={addressLine1}
+                        onChange={(e) => setAddressLine1(e.target.value)}
+                        placeholder="Shop #4, Indiranagar FC Road"
+                        className="block w-full pl-10 pr-4 py-2.5 border-2 border-[#342421] rounded-2xl text-xs font-bold text-[#342421] placeholder:text-[#342421]/40 focus:outline-hidden focus:ring-2 focus:ring-[#FF7836] bg-white shadow-[1px_1px_0px_#342421]"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="addressLine2"
+                      className="block text-xs font-bold uppercase tracking-wider text-[#342421] mb-1.5"
+                    >
+                      Landmark / Area (Optional)
+                    </label>
+                    <input
+                      id="addressLine2"
+                      name="addressLine2"
+                      type="text"
+                      value={addressLine2}
+                      onChange={(e) => setAddressLine2(e.target.value)}
+                      placeholder="Near Goodluck Chowk / Shivaji Nagar"
+                      className="block w-full px-3.5 py-2.5 border-2 border-[#342421] rounded-2xl text-xs font-bold text-[#342421] placeholder:text-[#342421]/40 focus:outline-hidden focus:ring-2 focus:ring-[#FF7836] bg-white shadow-[1px_1px_0px_#342421]"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-2.5">
+                    <div>
+                      <label
+                        htmlFor="city"
+                        className="block text-[11px] font-bold uppercase tracking-wider text-[#342421] mb-1"
+                      >
+                        City *
+                      </label>
+                      <input
+                        id="city"
+                        name="city"
+                        type="text"
+                        required={role === 'RETAILER'}
+                        value={city}
+                        onChange={(e) => setCity(e.target.value)}
+                        className="block w-full px-3 py-2 border-2 border-[#342421] rounded-xl text-xs font-bold text-[#342421] bg-white shadow-[1px_1px_0px_#342421]"
+                      />
+                    </div>
+
+                    <div>
+                      <label
+                        htmlFor="state"
+                        className="block text-[11px] font-bold uppercase tracking-wider text-[#342421] mb-1"
+                      >
+                        State *
+                      </label>
+                      <input
+                        id="state"
+                        name="state"
+                        type="text"
+                        required={role === 'RETAILER'}
+                        value={state}
+                        onChange={(e) => setState(e.target.value)}
+                        className="block w-full px-3 py-2 border-2 border-[#342421] rounded-xl text-xs font-bold text-[#342421] bg-white shadow-[1px_1px_0px_#342421]"
+                      />
+                    </div>
+
+                    <div>
+                      <label
+                        htmlFor="postalCode"
+                        className="block text-[11px] font-bold uppercase tracking-wider text-[#342421] mb-1"
+                      >
+                        PIN Code *
+                      </label>
+                      <input
+                        id="postalCode"
+                        name="postalCode"
+                        type="text"
+                        maxLength={6}
+                        required={role === 'RETAILER'}
+                        value={postalCode}
+                        onChange={(e) => setPostalCode(e.target.value.replace(/\D/g, ''))}
+                        placeholder="411004"
+                        className="block w-full px-3 py-2 border-2 border-[#342421] rounded-xl text-xs font-bold text-[#342421] bg-white shadow-[1px_1px_0px_#342421]"
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
@@ -362,9 +558,9 @@ function SignupForm() {
             >
               <span>
                 {isSubmitting
-                  ? 'Creating Account...'
+                  ? 'Setting Up Account...'
                   : role === 'RETAILER'
-                  ? 'Register Shop & Continue'
+                  ? 'Register Shop & Enter Wholesale Portal'
                   : 'Create Customer Account'}
               </span>
               <ArrowRight className="w-4 h-4 ml-1" />

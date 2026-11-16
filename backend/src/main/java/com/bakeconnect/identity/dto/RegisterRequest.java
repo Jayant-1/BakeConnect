@@ -21,5 +21,21 @@ public record RegisterRequest(
         String phone,
 
         @NotNull(message = "Role is required")
-        UserRole role
-) {}
+        UserRole role,
+
+        @Size(max = 255, message = "Business name must not exceed 255 characters")
+        String businessName,
+
+        @Size(max = 15, message = "GST number must not exceed 15 characters")
+        String gstNumber,
+
+        String addressLine1,
+        String addressLine2,
+        String city,
+        String state,
+        String postalCode
+) {
+    public RegisterRequest(String email, String password, String fullName, String phone, UserRole role) {
+        this(email, password, fullName, phone, role, null, null, null, null, null, null, null);
+    }
+}

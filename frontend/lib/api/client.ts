@@ -95,7 +95,23 @@ function getStoredToken(): string | null {
 
 async function getAuthToken(role: 'CUSTOMER' | 'RETAILER' | 'ADMIN' = 'CUSTOMER'): Promise<string | null> {
   const userToken = getStoredToken();
-  if (userToken) return userToken;
+  if (userToken) {
+    try {
+      const storedUserStr = localStorage.getItem('bakeconnect_user_v1');
+      if (storedUserStr) {
+        const u = JSON.parse(storedUserStr);
+        const matches =
+          (role === 'RETAILER' && u.role === 'RETAILER') ||
+          (role === 'CUSTOMER' && u.role === 'DIRECT_CUSTOMER') ||
+          (role === 'ADMIN' && (u.role === 'BAKERY_ADMIN' || u.role === 'BAKERY_MANAGER'));
+        if (matches) return userToken;
+      } else {
+        return userToken;
+      }
+    } catch {
+      return userToken;
+    }
+  }
   if (tokenCache[role]) return tokenCache[role];
 
   const creds = {
@@ -727,9 +743,9 @@ export const apiClient = {
     return localOrders.find((o) => o.orderNumber === orderNumberOrId || o.id === orderNumberOrId) || null;
   },
 
-  async getMyOrders(): Promise<Order[]> {
+  async getMyOrders(role: 'CUSTOMER' | 'RETAILER' = 'CUSTOMER'): Promise<Order[]> {
     try {
-      const token = await getAuthToken('CUSTOMER');
+      const token = await getAuthToken(role);
       if (token) {
         const res = await fetch(`${getBaseUrl()}/api/v1/orders?size=20`, {
           headers: { Authorization: `Bearer ${token}` },
@@ -750,7 +766,9 @@ export const apiClient = {
     if (userToken) {
       return [];
     }
-    return localOrders.filter((o) => o.orderType === 'PERSONAL' || !o.businessGst);
+    return localOrders.filter((o) =>
+      role === 'RETAILER' ? o.orderType === 'BUSINESS' : o.orderType === 'PERSONAL' || !o.businessGst
+    );
   },
 
   async getAllOrders(): Promise<Order[]> {

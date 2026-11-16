@@ -253,22 +253,13 @@ export default function RetailerLayout({ children }: { children: React.ReactNode
                         <Receipt className="w-4 h-4 text-[#FF7836]" />
                         <span className="text-xs font-bold text-[#342421]">Outstanding Dues</span>
                       </div>
-                      <span className="text-xs font-black font-mono text-[#342421]">
+                      <span className="text-xs font-black font-mono text-[#342421]" suppressHydrationWarning>
                         {formatCurrency(outstandingAmount)}
                       </span>
                     </div>
 
-                    {/* Dropdown Items (ONLY things not on the navbar) */}
+                    {/* Dropdown Items */}
                     <div className="py-1 space-y-1">
-                      <Link
-                        href="/retailer/onboarding"
-                        onClick={() => setAccountMenuOpen(false)}
-                        className="flex items-center gap-2.5 px-3 py-2 text-xs font-bold text-[#342421] hover:bg-white rounded-xl transition-colors"
-                        role="menuitem"
-                      >
-                        <ShieldCheck className="w-4 h-4 text-[#342421]" />
-                        <span>Shop Profile & Documents</span>
-                      </Link>
                       <Link
                         href="/shop"
                         onClick={() => setAccountMenuOpen(false)}
@@ -334,7 +325,7 @@ export default function RetailerLayout({ children }: { children: React.ReactNode
                 </div>
                 <div className="flex items-center justify-between pt-1 border-t border-[#342421]/15 text-xs">
                   <span className="font-medium text-[#342421]/80">Outstanding Dues</span>
-                  <span className="font-black font-mono text-[#342421]">
+                  <span className="font-black font-mono text-[#342421]" suppressHydrationWarning>
                     {formatCurrency(outstandingAmount)}
                   </span>
                 </div>
@@ -359,13 +350,6 @@ export default function RetailerLayout({ children }: { children: React.ReactNode
                   </Link>
                 );
               })}
-              <Link
-                href="/retailer/onboarding"
-                onClick={() => setMobileMenuOpen(false)}
-                className="px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider border-2 border-[#342421] bg-white text-[#342421] shadow-[1px_1px_0px_#342421] hover:bg-[#FFF7EB]"
-              >
-                Shop Profile & Documents
-              </Link>
             </div>
 
             <div className="pt-2 border-t-2 border-[#342421]/20 flex items-center justify-between">
@@ -402,15 +386,12 @@ export default function RetailerLayout({ children }: { children: React.ReactNode
                 <AlertCircle className="w-4 h-4 text-[#342421]" />
               </div>
               <span className="text-xs font-medium">
-                <strong className="font-bold">Shopkeeper verification in progress:</strong> Your business documents and credit terms are being reviewed by the bakery dispatch team. Wholesale orders will unlock immediately upon verification.
+                <strong className="font-bold">Shopkeeper verification in progress:</strong> Your registered shop details ({profile.businessName}) and wholesale terms are being reviewed by the bakery dispatch team. Wholesale ordering will unlock once verified.
               </span>
             </div>
-            <Link
-              href="/retailer/onboarding"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#FF7836] text-[#342421] font-black text-xs uppercase tracking-wider border-2 border-[#342421] shadow-[1.5px_1.5px_0px_#342421] hover:bg-[#ff8a4f] transition-all whitespace-nowrap"
-            >
-              Review Shop Details →
-            </Link>
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-100 text-[#342421] font-bold text-xs border border-[#342421]/30 shadow-[1px_1px_0px_#342421] whitespace-nowrap">
+              Pending Bakery Approval
+            </span>
           </div>
         </div>
       )}

@@ -22,6 +22,11 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import com.bakeconnect.common.exception.BusinessRuleException;
+import com.bakeconnect.identity.entity.Address;
+import com.bakeconnect.identity.repository.AddressRepository;
+import com.bakeconnect.retailer.entity.RetailerProfile;
+import com.bakeconnect.retailer.repository.RetailerProfileRepository;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
@@ -37,11 +42,17 @@ class AuthServiceTest {
     @Mock
     private JwtService jwtService;
 
+    @Mock
+    private RetailerProfileRepository retailerProfileRepository;
+
+    @Mock
+    private AddressRepository addressRepository;
+
     private AuthService authService;
 
     @BeforeEach
     void setUp() {
-        authService = new AuthService(userRepository, passwordEncoder, jwtService);
+        authService = new AuthService(userRepository, passwordEncoder, jwtService, retailerProfileRepository, addressRepository);
     }
 
     @Test
@@ -62,6 +73,64 @@ class AuthServiceTest {
         assertEquals("mock.jwt.token", response.token());
         assertEquals(UserRole.DIRECT_CUSTOMER, response.role());
         verify(userRepository).save(any(User.class));
+        verify(retailerProfileRepository, never()).save(any());
+        verify(addressRepository, never()).save(any());
+    }
+
+    @Test
+    void shouldRegisterRetailerWithShopDetailsAndAddressSuccessfully() {
+        RegisterRequest request = new RegisterRequest(
+                "retailer@example.com",
+                "Password123!",
+                "Suresh Kumar",
+                "9876543210",
+                UserRole.RETAILER,
+                "Irani Chai & Cafe",
+                "27AABCU9603R1ZM",
+                "Shop 4, FC Road",
+                "Near Goodluck Cafe",
+                "Pune",
+                "Maharashtra",
+                "411004"
+        );
+        when(userRepository.existsByEmail("retailer@example.com")).thenReturn(false);
+        when(passwordEncoder.encode(anyString())).thenReturn("hashed_pass");
+        when(retailerProfileRepository.existsByGstNumber("27AABCU9603R1ZM")).thenReturn(false);
+
+        User savedUser = new User("retailer@example.com", "hashed_pass", "Suresh Kumar", "9876543210", UserRole.RETAILER);
+        savedUser.setId(UUID.randomUUID());
+        when(userRepository.save(any(User.class))).thenReturn(savedUser);
+        when(jwtService.generateToken(any(User.class))).thenReturn("mock.jwt.token");
+
+        AuthResponse response = authService.register(request);
+
+        assertNotNull(response);
+        assertEquals("retailer@example.com", response.email());
+        assertEquals(UserRole.RETAILER, response.role());
+        verify(retailerProfileRepository, times(1)).save(any(RetailerProfile.class));
+        verify(addressRepository, times(1)).save(any(Address.class));
+    }
+
+    @Test
+    void shouldRejectRetailerWithInvalidGst() {
+        RegisterRequest request = new RegisterRequest(
+                "retailer@example.com",
+                "Password123!",
+                "Suresh Kumar",
+                "9876543210",
+                UserRole.RETAILER,
+                "Irani Chai & Cafe",
+                "INVALID_GST",
+                null, null, null, null, null
+        );
+        when(userRepository.existsByEmail("retailer@example.com")).thenReturn(false);
+        when(passwordEncoder.encode(anyString())).thenReturn("hashed_pass");
+
+        User savedUser = new User("retailer@example.com", "hashed_pass", "Suresh Kumar", "9876543210", UserRole.RETAILER);
+        savedUser.setId(UUID.randomUUID());
+        when(userRepository.save(any(User.class))).thenReturn(savedUser);
+
+        assertThrows(BusinessRuleException.class, () -> authService.register(request));
     }
 
     @Test

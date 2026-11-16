@@ -33,7 +33,7 @@ export default function RetailerOrdersPage() {
     async function loadData() {
       try {
         const [allOrders, prods] = await Promise.all([
-          apiClient.getAllOrders(),
+          apiClient.getMyOrders('RETAILER'),
           apiClient.getProducts({ channel: 'B2B' }),
         ]);
         const wholesaleOrders = allOrders.filter((o) => o.orderType === 'BUSINESS');

@@ -12,8 +12,14 @@ import com.bakeconnect.identity.dto.RegisterRequest;
 import com.bakeconnect.identity.dto.ResetPasswordRequest;
 import com.bakeconnect.identity.entity.User;
 import com.bakeconnect.identity.entity.UserRole;
+import com.bakeconnect.common.exception.BusinessRuleException;
+import com.bakeconnect.common.util.GstValidator;
+import com.bakeconnect.identity.entity.Address;
+import com.bakeconnect.identity.repository.AddressRepository;
 import com.bakeconnect.identity.repository.UserRepository;
 import com.bakeconnect.identity.security.JwtService;
+import com.bakeconnect.retailer.entity.RetailerProfile;
+import com.bakeconnect.retailer.repository.RetailerProfileRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,13 +34,19 @@ public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private final RetailerProfileRepository retailerProfileRepository;
+    private final AddressRepository addressRepository;
 
     public AuthService(UserRepository userRepository,
                        PasswordEncoder passwordEncoder,
-                       JwtService jwtService) {
+                       JwtService jwtService,
+                       RetailerProfileRepository retailerProfileRepository,
+                       AddressRepository addressRepository) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
+        this.retailerProfileRepository = retailerProfileRepository;
+        this.addressRepository = addressRepository;
     }
 
     @Transactional
@@ -57,6 +69,45 @@ public class AuthService {
         );
         user.setVerificationToken(UUID.randomUUID().toString());
         User savedUser = userRepository.save(user);
+
+        // If retailer registering with shop details, persist retailer profile & default delivery address
+        if (request.role() == UserRole.RETAILER && request.businessName() != null && !request.businessName().isBlank()) {
+            String gstNumber = null;
+            if (request.gstNumber() != null && !request.gstNumber().isBlank()) {
+                gstNumber = request.gstNumber().trim().toUpperCase();
+                if (!GstValidator.isValid(gstNumber)) {
+                    throw new BusinessRuleException("Invalid GSTIN format: " + gstNumber);
+                }
+                if (retailerProfileRepository.existsByGstNumber(gstNumber)) {
+                    throw new ConflictException("A retailer profile with this GSTIN already exists: " + gstNumber);
+                }
+            }
+            RetailerProfile profile = new RetailerProfile(
+                    savedUser,
+                    request.businessName().trim(),
+                    gstNumber,
+                    request.fullName().trim(),
+                    request.phone() != null ? request.phone().trim() : null
+            );
+            retailerProfileRepository.save(profile);
+
+            if (request.addressLine1() != null && !request.addressLine1().isBlank() &&
+                    request.city() != null && !request.city().isBlank()) {
+                Address address = new Address(
+                        savedUser,
+                        request.fullName().trim(),
+                        request.phone() != null ? request.phone().trim() : "",
+                        request.addressLine1().trim(),
+                        request.addressLine2() != null ? request.addressLine2().trim() : null,
+                        request.city().trim(),
+                        request.state() != null && !request.state().isBlank() ? request.state().trim() : "Maharashtra",
+                        request.postalCode() != null ? request.postalCode().trim() : "411001",
+                        "Wholesale Morning Delivery Desk",
+                        true
+                );
+                addressRepository.save(address);
+            }
+        }
 
         String token = jwtService.generateToken(savedUser);
         return new AuthResponse(token, savedUser.getId(), savedUser.getEmail(), savedUser.getFullName(), savedUser.getRole());

@@ -76,7 +76,7 @@ export default function WholesalePage() {
 
           <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link
-              href="/signup"
+              href="/signup?role=RETAILER"
               className="w-full sm:w-auto px-6 py-3.5 rounded-full bg-[#FF7836] hover:bg-[#FF6A1F] text-white font-bold text-xs uppercase tracking-wider border-2 border-[#342421] shadow-[3px_3px_0px_#342421] active:translate-x-0.5 active:translate-y-0.5 transition-all flex items-center justify-center gap-2"
             >
               <span>Register Shopkeeper Account</span>

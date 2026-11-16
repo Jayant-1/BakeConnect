@@ -32,6 +32,7 @@ import {
   SlidersHorizontal,
   SearchX,
   Filter,
+  Layers,
 } from 'lucide-react';
 
 export default function RetailerPortalPage() {
@@ -141,7 +142,7 @@ export default function RetailerPortalPage() {
         const [userProfile, prods, orders] = await Promise.all([
           apiClient.getCurrentUser('RETAILER'),
           apiClient.getProducts({ channel: 'B2B' }),
-          apiClient.getAllOrders(),
+          apiClient.getMyOrders('RETAILER'),
         ]);
         if (userProfile.retailerProfile) {
           setProfile(userProfile.retailerProfile);
@@ -208,7 +209,7 @@ export default function RetailerPortalPage() {
           <p className="text-xs text-[#342421]/70 font-medium">
             GSTIN: <strong className="font-mono text-[#342421]">{profile?.gstNumber || '27AABCU9603R1ZM'}</strong> •
             Payment Terms: <strong className="text-[#342421]">Net-15 Invoice Settlement</strong> • Credit Limit:{' '}
-            <strong className="text-[#342421]">{formatCurrency(profile?.creditLimit || 150000)}</strong>
+            <strong className="text-[#342421]" suppressHydrationWarning>{formatCurrency(profile?.creditLimit || 150000)}</strong>
           </p>
         </div>
 
@@ -435,34 +436,59 @@ export default function RetailerPortalPage() {
                   </td>
                 </tr>
               ) : (
-                paginatedProducts.map((product) => {
-                const qty = orderGuideQuantities[product.id] || product.moq;
-                const lineTotal = product.wholesalePrice * qty;
-                const marginPercentage = Math.round(
-                  ((product.retailPrice - product.wholesalePrice) / product.retailPrice) * 100
-                );
-                const isAdded = addedSuccessId === product.id;
+                paginatedProducts.map((product, idx) => {
+                  const qty = orderGuideQuantities[product.id] || product.moq;
+                  const lineTotal = product.wholesalePrice * qty;
+                  const marginPercentage = Math.round(
+                    ((product.retailPrice - product.wholesalePrice) / product.retailPrice) * 100
+                  );
+                  const isAdded = addedSuccessId === product.id;
+                  const categoryName = product.categoryName || 'Bakery Products';
+                  const prevCategory = idx > 0 ? (paginatedProducts[idx - 1].categoryName || 'Bakery Products') : null;
+                  const showCategoryHeader = (sortBy === 'FEATURED' || selectedCategory !== 'ALL') && categoryName !== prevCategory;
 
-                return (
-                  <tr key={product.id} className="hover:bg-[#FFF7EB]/50 transition-colors">
-                    {/* Product / Thumbnail */}
-                    <td className="py-4 px-6 flex items-center gap-3">
-                      <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-[#FFF7EB] flex-shrink-0 border-2 border-[#342421] p-1 flex items-center justify-center">
-                        <Image
-                          src={product.imageUrl}
-                          alt={product.name}
-                          fill
-                          className="object-contain p-0.5"
-                          sizes="48px"
-                        />
-                      </div>
-                      <div>
-                        <div className="font-bold text-[#342421] text-sm">{product.name}</div>
-                        <div className="text-[10px] text-[#342421]/60 font-mono uppercase">
-                          SKU: {product.slug.slice(0, 10).toUpperCase()}
-                        </div>
-                      </div>
-                    </td>
+                  return (
+                    <React.Fragment key={product.id}>
+                      {showCategoryHeader && (
+                        <tr className="bg-[#FFF7EB] border-y-2 border-[#342421]/30">
+                          <td colSpan={8} className="py-2.5 px-6">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <span className="w-2.5 h-2.5 rounded-full bg-[#FF7836] border border-[#342421]" />
+                                <span className="font-display uppercase tracking-wider text-xs font-bold text-[#342421]">
+                                  {categoryName}
+                                </span>
+                              </div>
+                              <span className="text-[10px] font-bold text-[#342421]/60 font-mono uppercase bg-white px-2.5 py-0.5 rounded-full border border-[#342421]/20">
+                                Fresh Oven Batch
+                              </span>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                      <tr className="hover:bg-[#FFF7EB]/50 transition-colors">
+                        {/* Product / Thumbnail */}
+                        <td className="py-4 px-6">
+                          <div className="flex items-center gap-3">
+                            <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-[#FFF7EB] flex-shrink-0 border-2 border-[#342421] p-1 flex items-center justify-center">
+                              <Image
+                                src={product.imageUrl}
+                                alt={product.name}
+                                fill
+                                className="object-contain p-0.5"
+                                sizes="48px"
+                              />
+                            </div>
+                            <div>
+                              <div className="font-bold text-[#342421] text-sm">{product.name}</div>
+                              <div className="text-[10px] text-[#342421]/60 font-mono uppercase flex items-center gap-1.5 mt-0.5">
+                                <span>SKU: {product.slug.slice(0, 10).toUpperCase()}</span>
+                                <span>•</span>
+                                <span className="text-[#FF7836] font-semibold">{product.categoryName || 'Bakery'}</span>
+                              </div>
+                            </div>
+                          </div>
+                        </td>
 
                     {/* Unit Spec */}
                     <td className="py-4 px-4 text-[#342421]/70 font-medium">
@@ -470,13 +496,13 @@ export default function RetailerPortalPage() {
                     </td>
 
                     {/* Retail MSRP */}
-                    <td className="py-4 px-4 text-[#342421]/50 line-through font-mono">
+                    <td className="py-4 px-4 text-[#342421]/50 line-through font-mono" suppressHydrationWarning>
                       {formatCurrency(product.retailPrice)}
                     </td>
 
                     {/* Net Wholesale Rate */}
                     <td className="py-4 px-4">
-                      <div className="font-bold text-sm text-[#FF7836] font-mono">
+                      <div className="font-bold text-sm text-[#FF7836] font-mono" suppressHydrationWarning>
                         {formatCurrency(product.wholesalePrice)}
                       </div>
                       <span className="text-[10px] text-emerald-700 font-bold">
@@ -515,7 +541,7 @@ export default function RetailerPortalPage() {
                     </td>
 
                     {/* Line Total */}
-                    <td className="py-4 px-4 text-right font-bold text-[#342421] font-mono text-sm">
+                    <td className="py-4 px-4 text-right font-bold text-[#342421] font-mono text-sm" suppressHydrationWarning>
                       {formatCurrency(lineTotal)}
                     </td>
 
@@ -544,8 +570,9 @@ export default function RetailerPortalPage() {
                       </button>
                     </td>
                   </tr>
-                  );
-                })
+                </React.Fragment>
+                );
+              })
               )}
             </tbody>
           </table>

@@ -17,6 +17,13 @@ interface AuthContextType {
     fullName: string;
     phone?: string;
     role: UserRole;
+    businessName?: string;
+    gstNumber?: string;
+    addressLine1?: string;
+    addressLine2?: string;
+    city?: string;
+    state?: string;
+    postalCode?: string;
   }) => Promise<User>;
   logout: () => void;
   refreshUser: () => Promise<void>;
@@ -123,6 +130,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     fullName: string;
     phone?: string;
     role: UserRole;
+    businessName?: string;
+    gstNumber?: string;
+    addressLine1?: string;
+    addressLine2?: string;
+    city?: string;
+    state?: string;
+    postalCode?: string;
   }): Promise<User> => {
     setIsLoading(true);
     try {
