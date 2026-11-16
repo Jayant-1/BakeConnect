@@ -569,7 +569,7 @@ export default function OrderTrackingPage() {
             </div>
 
             <div className="pt-3 border-t-2 border-[#342421]/15 flex justify-between text-lg font-extrabold text-[#342421]">
-              <span>Authoritative Total</span>
+              <span>Total</span>
               <span className="text-[#FF7836]">{formatCurrency(order.totalAmount)}</span>
             </div>
           </div>
