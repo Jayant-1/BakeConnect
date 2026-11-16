@@ -17,12 +17,17 @@ import {
   Package,
   Printer,
   ArrowRight,
+  ArrowLeft,
   ShieldCheck,
   Building,
   User,
   MapPin,
   RefreshCw,
   ExternalLink,
+  Mail,
+  Sparkles,
+  Store,
+  Flame,
 } from 'lucide-react';
 
 import { StorefrontLayout } from '../../../components/layout/storefront-layout';
@@ -150,22 +155,66 @@ export default function OrderTrackingPage() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'CONFIRMED':
-        return <Badge variant="success">Confirmed & Scheduled</Badge>;
+        return (
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#DCFCE7] text-[#15803D] border-2 border-[#15803D] shadow-[2px_2px_0px_#15803D] text-xs font-bold whitespace-nowrap">
+            <CheckCircle2 className="w-3.5 h-3.5" />
+            <span>Confirmed & Scheduled</span>
+          </span>
+        );
       case 'PROCESSING':
-        return <Badge variant="warning">Hearth Baking in Progress</Badge>;
+        return (
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FEF9EB] text-[#B45309] border-2 border-[#B45309] shadow-[2px_2px_0px_#B45309] text-xs font-bold whitespace-nowrap">
+            <Flame className="w-3.5 h-3.5 text-[#B45309]" />
+            <span>Hearth Baking in Progress</span>
+          </span>
+        );
       case 'DELAYED':
-        return <Badge variant="error">Delayed by Operations</Badge>;
+        return (
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FEE2E2] text-[#B91C1C] border-2 border-[#B91C1C] shadow-[2px_2px_0px_#B91C1C] text-xs font-bold whitespace-nowrap">
+            <AlertCircle className="w-3.5 h-3.5 text-[#B91C1C]" />
+            <span>Delayed by Operations</span>
+          </span>
+        );
       case 'OUT_FOR_DELIVERY':
-        return <Badge variant="info">Out for Morning Delivery</Badge>;
+        return (
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FFF0E8] text-[#FF7836] border-2 border-[#FF7836] shadow-[2px_2px_0px_#FF7836] text-xs font-bold whitespace-nowrap">
+            <Truck className="w-3.5 h-3.5 text-[#FF7836]" />
+            <span>Out for Morning Delivery</span>
+          </span>
+        );
+      case 'READY_FOR_PICKUP':
+        return (
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#E0F2FE] text-[#0369A1] border-2 border-[#0369A1] shadow-[2px_2px_0px_#0369A1] text-xs font-bold whitespace-nowrap">
+            <Store className="w-3.5 h-3.5 text-[#0369A1]" />
+            <span>Ready at Counter</span>
+          </span>
+        );
       case 'DELIVERED':
-        return <Badge variant="success">Delivered</Badge>;
+        return (
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#DCFCE7] text-[#15803D] border-2 border-[#15803D] shadow-[2px_2px_0px_#15803D] text-xs font-bold whitespace-nowrap">
+            <CheckCircle2 className="w-3.5 h-3.5" />
+            <span>Delivered Successfully</span>
+          </span>
+        );
       case 'PENDING_REVIEW':
       case 'PENDING':
-        return order?.paymentStatus === 'PAID' || order?.paymentStatus === 'AUTHORIZED'
-          ? <Badge variant="success">Payment Verified · In Queue</Badge>
-          : <Badge variant="default">Awaiting Payment Confirmation</Badge>;
+        return order?.paymentStatus === 'PAID' || order?.paymentStatus === 'AUTHORIZED' ? (
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#DCFCE7] text-[#15803D] border-2 border-[#15803D] shadow-[2px_2px_0px_#15803D] text-xs font-bold whitespace-nowrap">
+            <CheckCircle2 className="w-3.5 h-3.5" />
+            <span>Payment Verified · In Queue</span>
+          </span>
+        ) : (
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FEF3C7] text-[#92400E] border-2 border-[#92400E] shadow-[2px_2px_0px_#92400E] text-xs font-bold whitespace-nowrap">
+            <Clock className="w-3.5 h-3.5 text-[#92400E] animate-pulse" />
+            <span>Awaiting Payment Confirmation</span>
+          </span>
+        );
       default:
-        return <Badge variant="default">Pending Bakery Review</Badge>;
+        return (
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#F6EEE3] text-[#342421] border-2 border-[#342421] shadow-[2px_2px_0px_#342421] text-xs font-bold whitespace-nowrap">
+            <span>Pending Bakery Review</span>
+          </span>
+        );
     }
   };
 
@@ -220,55 +269,91 @@ export default function OrderTrackingPage() {
 
   return (
     <StorefrontLayout>
-      <div className="py-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-      {/* Header Banner */}
-      <div className="bg-cream-surface rounded-3xl p-6 sm:p-8 border border-cream-border shadow-xs mb-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div>
-          <div className="flex items-center gap-3 mb-2">
-            <span className="text-xs uppercase tracking-widest text-crust-muted font-bold">
-              Order #{order.orderNumber}
-            </span>
-            {getStatusBadge(order.status)}
-            <Badge variant={order.orderType === 'BUSINESS' ? 'sea' : 'default'}>
-              {order.orderType === 'BUSINESS' ? 'Wholesale Dispatch' : 'Daily Bakery Order'}
-            </Badge>
+      <div className="py-8 sm:py-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Navigation Breadcrumb */}
+        <div className="flex items-center justify-between gap-4 mb-5">
+          <Link
+            href="/account/orders"
+            className="inline-flex items-center gap-1.5 text-xs text-[#342421]/70 hover:text-[#FF7836] font-bold uppercase tracking-wider transition-colors"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            <span>Back to My Orders</span>
+          </Link>
+          <Link
+            href="/shop"
+            className="inline-flex items-center gap-1.5 text-xs text-[#342421]/70 hover:text-[#FF7836] font-bold uppercase tracking-wider transition-colors"
+          >
+            <span>Browse Fresh Bakes</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </Link>
+        </div>
+
+        {/* Craftsman Header Card */}
+        <div className="bg-white rounded-3xl p-6 sm:p-8 border-2 border-[#342421] shadow-[4px_4px_0px_#342421] mb-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="space-y-3">
+            <div className="flex flex-wrap items-center gap-2.5">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FFF7EB] text-[#342421] border-2 border-[#342421] shadow-[2px_2px_0px_#342421] text-xs font-bold font-mono tracking-wide whitespace-nowrap">
+                <span className="text-[#FF7836] font-bold">ORDER</span>
+                <span>#{order.orderNumber}</span>
+              </span>
+              {getStatusBadge(order.status)}
+              {order.orderType === 'BUSINESS' ? (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#D9EAF3] text-[#342421] border-2 border-[#342421] shadow-[2px_2px_0px_#342421] text-xs font-bold whitespace-nowrap">
+                  <Store className="w-3.5 h-3.5 text-[#548FA8]" />
+                  <span>Wholesale Dispatch</span>
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#D9EAF3] text-[#342421] border-2 border-[#342421] shadow-[2px_2px_0px_#342421] text-xs font-bold whitespace-nowrap">
+                  <Sparkles className="w-3.5 h-3.5 text-[#FF7836]" />
+                  <span>Daily Bakery Order</span>
+                </span>
+              )}
+            </div>
+
+            <h1 className="font-sans text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-[#342421] leading-tight">
+              {order.status === 'CONFIRMED' || order.status === 'PROCESSING'
+                ? 'Your Hearth Batch is Scheduled'
+                : order.status === 'DELAYED'
+                ? 'Order Schedule Update from Bakery'
+                : 'Order Status & Live Timeline'}
+            </h1>
+
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs text-[#342421]/75 font-medium">
+              <div className="flex items-center gap-1.5">
+                <Clock className="w-3.5 h-3.5 text-[#FF7836]" />
+                <span>Placed <span suppressHydrationWarning>{formatDate(order.createdAt)}</span></span>
+              </div>
+              <span className="hidden sm:inline text-[#342421]/30">•</span>
+              <div className="flex items-center gap-1.5">
+                <Mail className="w-3.5 h-3.5 text-[#548FA8]" />
+                <span>Confirmation to <strong className="text-[#342421] font-semibold">{order.customerEmail}</strong></span>
+              </div>
+            </div>
           </div>
-          <h1 className="font-sans text-2xl sm:text-3xl font-bold tracking-tight text-crust-dark">
-            {order.status === 'CONFIRMED' || order.status === 'PROCESSING'
-              ? 'Your Hearth Batch is Scheduled'
-              : order.status === 'DELAYED'
-              ? 'Order Schedule Update from Bakery'
-              : 'Order Status & Live Timeline'}
-          </h1>
-          <p className="text-xs text-crust-muted mt-1">
-            Placed on <span suppressHydrationWarning>{formatDate(order.createdAt)}</span> • Email confirmation sent to{' '}
-            <strong className="text-crust-dark">{order.customerEmail}</strong>
-          </p>
-        </div>
 
-        <div className="flex items-center gap-3">
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={handleRefresh}
-            isLoading={isRefreshing}
-            className="flex items-center gap-1.5"
-          >
-            <RefreshCw className="w-3.5 h-3.5" />
-            <span>Refresh Status</span>
-          </Button>
+          <div className="flex items-center gap-3 shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-[#342421]/10">
+            <button
+              type="button"
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-full font-bold text-xs uppercase tracking-wider bg-white text-[#342421] border-2 border-[#342421] shadow-[2px_2px_0px_#342421] hover:bg-[#F6EEE3] hover:translate-x-0.5 hover:translate-y-0.5 active:translate-x-1 active:translate-y-1 active:shadow-none transition-all whitespace-nowrap disabled:opacity-50 cursor-pointer"
+              title="Refresh order and payment status"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 text-[#342421] ${isRefreshing ? 'animate-spin' : ''}`} />
+              <span>{isRefreshing ? 'Checking...' : 'Refresh Status'}</span>
+            </button>
 
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setIsInvoiceModalOpen(true)}
-            className="flex items-center gap-1.5"
-          >
-            <Printer className="w-3.5 h-3.5" />
-            <span>Print Invoice</span>
-          </Button>
+            <button
+              type="button"
+              onClick={() => setIsInvoiceModalOpen(true)}
+              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-full font-bold text-xs uppercase tracking-wider bg-[#FF7836] text-[#342421] border-2 border-[#342421] shadow-[2px_2px_0px_#342421] hover:bg-[#E86322] hover:translate-x-0.5 hover:translate-y-0.5 active:translate-x-1 active:translate-y-1 active:shadow-none transition-all whitespace-nowrap cursor-pointer"
+              title="View and print official GST invoice"
+            >
+              <Printer className="w-3.5 h-3.5 text-[#342421]" />
+              <span>Print Invoice</span>
+            </button>
+          </div>
         </div>
-      </div>
 
       {/* Payment Required Action Alert for UPI Orders (PENDING) */}
       {order.paymentStatus === 'PENDING' && order.paymentMethod === 'YOUPI_PG' && (
@@ -364,23 +449,23 @@ export default function OrderTrackingPage() {
       {/* Main Grid: Live Timeline & Order Breakdown */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* Left Column: Authoritative Timeline (7 cols) */}
-        <div className="lg:col-span-7 bg-cream-surface rounded-3xl p-6 sm:p-8 border border-cream-border shadow-xs space-y-6">
-          <h2 className="font-sans text-lg sm:text-xl font-bold tracking-tight text-crust-dark pb-3 border-b border-cream-border flex items-center justify-between">
+        <div className="lg:col-span-7 bg-white rounded-3xl p-6 sm:p-8 border-2 border-[#342421] shadow-[4px_4px_0px_#342421] space-y-6">
+          <h2 className="font-sans text-lg sm:text-xl font-bold tracking-tight text-[#342421] pb-3 border-b-2 border-[#342421]/15 flex items-center justify-between">
             <span>Authoritative Fulfillment Timeline</span>
-            <span className="text-xs font-normal text-crust-muted">Updated via Spring Boot</span>
+            <span className="text-xs font-bold text-[#342421]/60 uppercase tracking-wider">Live Updates</span>
           </h2>
 
-          <div className="relative pl-6 space-y-8 before:absolute before:left-2.5 before:top-3 before:bottom-3 before:w-0.5 before:bg-cream-border">
+          <div className="relative pl-6 space-y-8 before:absolute before:left-2.5 before:top-3 before:bottom-3 before:w-0.5 before:bg-[#342421]/20">
             {order.timeline.map((event, idx) => (
               <div key={idx} className="relative">
                 {/* Timeline node */}
                 <div
-                  className={`absolute -left-6 top-1 w-5 h-5 rounded-full border-2 flex items-center justify-center bg-cream-surface ${
+                  className={`absolute -left-6 top-1 w-5 h-5 rounded-full border-2 flex items-center justify-center bg-white ${
                     getTimelineEventTitle(event) === 'Payment Received & Verified' || event.status === 'CONFIRMED'
                       ? 'border-[#15803D] text-[#15803D] shadow-xs'
                       : idx === order.timeline.length - 1
-                      ? 'border-berry-jam text-berry-jam shadow-xs'
-                      : 'border-status-success text-status-success'
+                      ? 'border-[#FF7836] text-[#FF7836] shadow-xs'
+                      : 'border-[#15803D] text-[#15803D]'
                   }`}
                 >
                   <div
@@ -388,23 +473,23 @@ export default function OrderTrackingPage() {
                       getTimelineEventTitle(event) === 'Payment Received & Verified' || event.status === 'CONFIRMED'
                         ? 'bg-[#15803D]'
                         : idx === order.timeline.length - 1
-                        ? 'bg-berry-jam'
-                        : 'bg-status-success'
+                        ? 'bg-[#FF7836]'
+                        : 'bg-[#15803D]'
                     }`}
                   />
                 </div>
 
                 <div>
                   <div className="flex items-baseline justify-between gap-2">
-                    <span className="text-sm font-bold text-crust-dark">
+                    <span className="text-sm font-bold text-[#342421]">
                       {getTimelineEventTitle(event)}
                     </span>
-                    <span suppressHydrationWarning className="text-[11px] text-crust-muted font-mono">
+                    <span suppressHydrationWarning className="text-[11px] text-[#342421]/60 font-mono font-medium">
                       {formatDate(event.timestamp)}
                     </span>
                   </div>
                   {event.note && (
-                    <p className="text-xs text-crust-muted mt-1 leading-relaxed">
+                    <p className="text-xs text-[#342421]/75 mt-1 leading-relaxed">
                       {event.note}
                     </p>
                   )}
@@ -415,17 +500,17 @@ export default function OrderTrackingPage() {
 
           {/* Delivery Destination Box */}
           {order.shippingAddress && (
-            <div className="pt-6 border-t border-cream-border space-y-2">
-              <h3 className="text-xs uppercase tracking-wider font-bold text-crust-muted flex items-center gap-1.5">
-                <MapPin className="w-3.5 h-3.5 text-berry-jam" />
+            <div className="pt-6 border-t-2 border-[#342421]/15 space-y-2.5">
+              <h3 className="text-xs uppercase tracking-wider font-bold text-[#342421]/70 flex items-center gap-1.5">
+                <MapPin className="w-3.5 h-3.5 text-[#FF7836]" />
                 <span>Destination Coordinates</span>
               </h3>
-              <div className="text-xs text-crust-dark leading-relaxed">
-                <div className="font-bold">{order.shippingAddress.contactName} ({order.shippingAddress.contactPhone})</div>
+              <div className="p-4 rounded-2xl bg-[#FFF7EB] border-2 border-[#342421] shadow-[2px_2px_0px_#342421] text-xs text-[#342421] leading-relaxed space-y-1">
+                <div className="font-bold text-sm text-[#342421]">{order.shippingAddress.contactName} ({order.shippingAddress.contactPhone})</div>
                 <div>{order.shippingAddress.addressLine1}, {order.shippingAddress.addressLine2}</div>
                 <div>{order.shippingAddress.city}, {order.shippingAddress.state} - {order.shippingAddress.postalCode}</div>
                 {order.shippingAddress.deliveryInstructions && (
-                  <div className="text-crust-muted mt-1 italic">
+                  <div className="text-[#342421]/70 mt-1 italic font-medium">
                     Note: &quot;{order.shippingAddress.deliveryInstructions}&quot;
                   </div>
                 )}
@@ -435,33 +520,33 @@ export default function OrderTrackingPage() {
         </div>
 
         {/* Right Column: Invoice Items & Pricing (5 cols) */}
-        <div className="lg:col-span-5 bg-cream-surface rounded-3xl p-6 sm:p-8 border border-cream-border shadow-xs space-y-6">
-          <h2 className="font-sans text-lg sm:text-xl font-bold tracking-tight text-crust-dark pb-3 border-b border-cream-border">
+        <div className="lg:col-span-5 bg-white rounded-3xl p-6 sm:p-8 border-2 border-[#342421] shadow-[4px_4px_0px_#342421] space-y-6">
+          <h2 className="font-sans text-lg sm:text-xl font-bold tracking-tight text-[#342421] pb-3 border-b-2 border-[#342421]/15">
             Line Items ({order.items.length})
           </h2>
 
-          <div className="divide-y divide-cream-border/60 text-xs">
+          <div className="divide-y-2 divide-[#342421]/10 text-xs">
             {order.items.map((item) => (
               <div key={item.id} className="py-3 flex justify-between items-center">
                 <div className="pr-3">
-                  <div className="font-bold text-crust-dark">{item.productName}</div>
-                  <div className="text-crust-muted">
+                  <div className="font-bold text-[#342421]">{item.productName}</div>
+                  <div className="text-[#342421]/60">
                     {item.quantity} × {formatCurrency(item.unitPrice)}
                   </div>
                 </div>
-                <div className="font-bold text-crust-dark">{formatCurrency(item.lineTotal)}</div>
+                <div className="font-bold text-[#342421]">{formatCurrency(item.lineTotal)}</div>
               </div>
             ))}
           </div>
 
-          <div className="space-y-2 pt-4 border-t border-cream-border text-xs text-crust-muted">
+          <div className="space-y-2 pt-4 border-t-2 border-[#342421]/15 text-xs text-[#342421]/70">
             <div className="flex justify-between">
               <span>Subtotal</span>
-              <span className="font-semibold text-crust-dark">{formatCurrency(order.subtotal)}</span>
+              <span className="font-semibold text-[#342421]">{formatCurrency(order.subtotal)}</span>
             </div>
 
             {order.discountAmount > 0 && (
-              <div className="flex justify-between text-berry-jam font-semibold">
+              <div className="flex justify-between text-[#FF7836] font-semibold">
                 <span>Discounts ({order.appliedDiscountName || 'Applied'})</span>
                 <span>-{formatCurrency(order.discountAmount)}</span>
               </div>
@@ -469,31 +554,31 @@ export default function OrderTrackingPage() {
 
             <div className="flex justify-between">
               <span>Bakery GST (5%)</span>
-              <span className="font-semibold text-crust-dark">{formatCurrency(order.taxAmount)}</span>
+              <span className="font-semibold text-[#342421]">{formatCurrency(order.taxAmount)}</span>
             </div>
 
             <div className="flex justify-between">
               <span>Fulfillment ({order.fulfillmentType})</span>
-              <span className="font-semibold text-crust-dark">
+              <span className="font-semibold text-[#342421]">
                 {order.deliveryFee === 0 ? (
-                  <span className="text-status-success font-bold">FREE</span>
+                  <span className="text-[#15803D] font-bold">FREE</span>
                 ) : (
                   formatCurrency(order.deliveryFee)
                 )}
               </span>
             </div>
 
-            <div className="pt-3 border-t border-cream-border flex justify-between text-lg font-bold text-crust-dark">
+            <div className="pt-3 border-t-2 border-[#342421]/15 flex justify-between text-lg font-extrabold text-[#342421]">
               <span>Authoritative Total</span>
-              <span className="text-berry-jam">{formatCurrency(order.totalAmount)}</span>
+              <span className="text-[#FF7836]">{formatCurrency(order.totalAmount)}</span>
             </div>
           </div>
 
-          <div className="p-4 rounded-2xl bg-cream-base border border-cream-border text-xs">
+          <div className="p-4 rounded-2xl bg-[#FFF7EB] border-2 border-[#342421] shadow-[2px_2px_0px_#342421] text-xs">
             <div className="space-y-2.5">
               <div className="flex justify-between items-center">
-                <span className="text-crust-muted font-medium">Payment Method:</span>
-                <span className="font-bold text-crust-dark flex items-center gap-1.5">
+                <span className="text-[#342421]/70 font-medium">Payment Method:</span>
+                <span className="font-bold text-[#342421] flex items-center gap-1.5">
                   {order.paymentMethod === 'CREDIT_CYCLE' ? (
                     'Net-15 Invoice Cycle'
                   ) : (
@@ -506,10 +591,10 @@ export default function OrderTrackingPage() {
               </div>
 
               <div className="flex justify-between items-center">
-                <span className="text-crust-muted font-medium">Payment Status:</span>
+                <span className="text-[#342421]/70 font-medium">Payment Status:</span>
                 {order.paymentStatus === 'PAID' || order.paymentStatus === 'AUTHORIZED' ? (
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-green-100 text-green-800 border border-green-300">
-                    <CheckCircle2 className="w-3 h-3 text-green-600" />
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#DCFCE7] text-[#15803D] border border-[#15803D]/40">
+                    <CheckCircle2 className="w-3 h-3 text-[#15803D]" />
                     <span>PAID</span>
                   </span>
                 ) : order.paymentStatus === 'FAILED' ? (
@@ -518,28 +603,28 @@ export default function OrderTrackingPage() {
                     <span>FAILED</span>
                   </span>
                 ) : (
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-900 border border-amber-300">
-                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#FEF3C7] text-[#92400E] border border-[#92400E]/40">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#D97706] animate-pulse" />
                     <span>PENDING</span>
                   </span>
                 )}
               </div>
 
               {order.businessGst && (
-                <div className="flex justify-between items-center pt-1.5 border-t border-cream-border/60">
-                  <span className="text-crust-muted font-medium">GSTIN:</span>
-                  <span className="font-mono font-bold text-crust-dark">{order.businessGst}</span>
+                <div className="flex justify-between items-center pt-1.5 border-t border-[#342421]/15">
+                  <span className="text-[#342421]/70 font-medium">GSTIN:</span>
+                  <span className="font-mono font-bold text-[#342421]">{order.businessGst}</span>
                 </div>
               )}
             </div>
 
             {order.paymentStatus !== 'PAID' && order.paymentStatus !== 'AUTHORIZED' && order.paymentMethod === 'YOUPI_PG' && (
-              <div className="mt-3.5 pt-3.5 border-t border-cream-border">
+              <div className="mt-3.5 pt-3.5 border-t-2 border-[#342421]/15">
                 <button
                   type="button"
                   onClick={() => handlePayViaYouPi(order)}
                   disabled={isRedirectingToGateway}
-                  className="w-full py-2.5 px-4 rounded-xl font-bold text-xs uppercase tracking-wider text-white bg-[#FF7836] hover:bg-[#FF6A1F] border-2 border-[#342421] shadow-[2px_2px_0px_#342421] active:translate-x-0.5 active:translate-y-0.5 transition-all flex items-center justify-center gap-2 group cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
+                  className="w-full py-2.5 px-4 rounded-xl font-bold text-xs uppercase tracking-wider text-[#342421] bg-[#FF7836] hover:bg-[#FF6A1F] border-2 border-[#342421] shadow-[2px_2px_0px_#342421] active:translate-x-0.5 active:translate-y-0.5 transition-all flex items-center justify-center gap-2 group cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
                 >
                   {isRedirectingToGateway ? (
                     <>
@@ -554,7 +639,7 @@ export default function OrderTrackingPage() {
                     </>
                   )}
                 </button>
-                <p className="text-[10px] text-crust-muted text-center mt-1.5">
+                <p className="text-[10px] text-[#342421]/60 text-center mt-1.5 font-medium">
                   Instant QR &bull; 256-Bit Bank Verification
                 </p>
               </div>
@@ -563,7 +648,7 @@ export default function OrderTrackingPage() {
 
           <Link
             href={order.orderType === 'BUSINESS' ? '/retailer' : '/shop'}
-            className="w-full inline-flex items-center justify-center font-medium transition-all duration-150 px-5 py-2 text-sm rounded-full min-h-[44px] bg-cream-surface text-crust-dark border border-cream-border hover:bg-cream-subtle hover:border-crust-faint"
+            className="w-full inline-flex items-center justify-center gap-2 py-3 px-6 rounded-full font-bold text-xs uppercase tracking-wider bg-white text-[#342421] border-2 border-[#342421] shadow-[2px_2px_0px_#342421] hover:bg-[#F6EEE3] hover:translate-x-0.5 hover:translate-y-0.5 active:translate-x-1 active:translate-y-1 active:shadow-none transition-all"
           >
             <span>{order.orderType === 'BUSINESS' ? 'Return to Wholesale Desk' : 'Order More Fresh Bakes'}</span>
             <ArrowRight className="w-4 h-4 ml-1.5" />

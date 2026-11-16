@@ -280,7 +280,7 @@ export default function HomePage() {
                 </span>
                 <Link
                   href={khariProduct ? `/products/${khariProduct.slug}` : '/products/pure-butter-khari'}
-                  className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-[#FF7836] hover:bg-[#FF6A1F] text-[#342421] font-bold text-xs uppercase tracking-wider border-2 border-[#342421] shadow-[2px_2px_0px_#342421] active:translate-x-0.5 active:translate-y-0.5 transition-all"
+                  className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-[#FF7836] hover:bg-[#FF6A1F] text-[#342421] font-bold text-xs uppercase tracking-wider border-2 border-[#342421] shadow-[2px_2px_0px_#342421] active:translate-x-0.5 active:translate-y-0.5 transition-all whitespace-nowrap"
                 >
                   <span>Order Butter Khari</span>
                   <ArrowRight className="w-3.5 h-3.5 text-[#342421]" />
@@ -416,14 +416,14 @@ export default function HomePage() {
                   <>
                     <Link
                       href="/wholesale"
-                      className="w-full text-center py-3.5 px-6 rounded-full bg-[#FF7836] hover:bg-[#FF6A1F] text-[#342421] font-bold text-sm uppercase tracking-wider border-2 border-white/20 shadow-[2px_2px_0px_rgba(0,0,0,0.3)] transition-all flex items-center justify-center gap-2"
+                      className="w-full text-center py-3.5 px-6 rounded-full bg-[#FF7836] hover:bg-[#FF6A1F] text-[#342421] font-bold text-sm uppercase tracking-wider border-2 border-white/20 shadow-[2px_2px_0px_rgba(0,0,0,0.3)] transition-all flex items-center justify-center gap-2 whitespace-nowrap"
                     >
                       <span>Explore Wholesale Pricing</span>
                       <ArrowRight className="w-4 h-4 text-[#342421]" />
                     </Link>
                     <Link
                       href="/signup"
-                      className="w-full text-center py-3.5 px-6 rounded-full bg-transparent hover:bg-white/10 text-white font-bold text-sm uppercase tracking-wider border-2 border-white/30 transition-all"
+                      className="w-full text-center py-3.5 px-6 rounded-full bg-transparent hover:bg-white/10 text-white font-bold text-sm uppercase tracking-wider border-2 border-white/30 transition-all whitespace-nowrap"
                     >
                       <span>Register Shopkeeper Account</span>
                     </Link>

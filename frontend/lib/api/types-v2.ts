@@ -226,12 +226,15 @@ export interface Invoice {
 }
 
 export interface BillingSummary {
-  totalOutstanding: number;
-  overdueAmount: number;
+  totalOutstanding?: number;
+  totalOutstandingBalance?: number;
+  overdueAmount?: number;
+  totalOverdueAmount?: number;
   creditLimit: number;
   availableCredit: number;
-  unpaidInvoicesCount: number;
-  overdueInvoicesCount: number;
+  unpaidInvoicesCount?: number;
+  openInvoicesCount?: number;
+  overdueInvoicesCount?: number;
 }
 
 export interface PaymentSession {

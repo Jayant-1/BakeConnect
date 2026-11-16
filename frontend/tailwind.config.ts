@@ -70,7 +70,16 @@ const config: Config = {
       },
       fontFamily: {
         display: ['var(--font-anton)', 'Impact', 'sans-serif'],
-        sans: ['var(--font-roboto)', 'system-ui', 'sans-serif'],
+        sans: [
+          'var(--font-roboto)',
+          '-apple-system',
+          'BlinkMacSystemFont',
+          '"Segoe UI"',
+          'Roboto',
+          '"Helvetica Neue"',
+          'Arial',
+          'sans-serif',
+        ],
         mono: ['var(--font-mono)', 'monospace'],
       },
       animation: {

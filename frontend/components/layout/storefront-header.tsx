@@ -7,7 +7,7 @@ import { useAuth } from '../../lib/store/auth-context';
 import { useCart } from '../../lib/store/cart-context';
 import { ShoppingBag, Menu, X, User, Store, HelpCircle, Package, FileText, ShoppingCart, ChevronDown, LogOut, MapPin } from 'lucide-react';
 
-function getNetflixAvatar(seed: string) {
+export function getNetflixAvatar(seed: string) {
   // Vibrant Netflix-style profile palette with accessible face stroke colors
   const palettes = [
     { bg: '#E50914', face: '#FFFFFF' }, // Netflix Iconic Red
@@ -27,7 +27,7 @@ function getNetflixAvatar(seed: string) {
   return palettes[index];
 }
 
-function NetflixAvatar({ seed, className = 'w-8 h-8' }: { seed: string; className?: string }) {
+export function NetflixAvatar({ seed, className = 'w-8 h-8' }: { seed: string; className?: string }) {
   const avatar = getNetflixAvatar(seed);
   return (
     <div

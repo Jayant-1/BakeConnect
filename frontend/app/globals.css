@@ -47,7 +47,7 @@
 body {
   color: var(--color-chocolate-dark);
   background-color: var(--color-cream-base);
-  font-family: var(--font-roboto), system-ui, -apple-system, sans-serif;
+  font-family: var(--font-roboto), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }

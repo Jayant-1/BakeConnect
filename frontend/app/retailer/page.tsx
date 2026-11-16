@@ -24,6 +24,14 @@ import {
   ShieldCheck,
   ArrowRight,
   TrendingUp,
+  ChevronLeft,
+  ChevronRight,
+  Package,
+  Search,
+  X,
+  SlidersHorizontal,
+  SearchX,
+  Filter,
 } from 'lucide-react';
 
 export default function RetailerPortalPage() {
@@ -35,6 +43,94 @@ export default function RetailerPortalPage() {
   const [orderGuideQuantities, setOrderGuideQuantities] = useState<Record<string, number>>({});
   const [addedSuccessId, setAddedSuccessId] = useState<string | null>(null);
   const [recentOrders, setRecentOrders] = useState<Order[]>([]);
+
+  // Search, Category Filter, and Sort State
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
+  const [sortBy, setSortBy] = useState<'FEATURED' | 'MARGIN_DESC' | 'PRICE_ASC' | 'PRICE_DESC' | 'NAME_ASC'>('FEATURED');
+
+  // Derive unique categories with SKU counts
+  const categoryOptions = React.useMemo(() => {
+    const map = new Map<string, { id: string; name: string; count: number }>();
+    products.forEach((p) => {
+      const catKey = p.categoryId || p.categoryName || 'other';
+      const catName = p.categoryName || 'Other Bakes';
+      const existing = map.get(catKey);
+      if (existing) {
+        existing.count += 1;
+      } else {
+        map.set(catKey, { id: catKey, name: catName, count: 1 });
+      }
+    });
+    return Array.from(map.values()).sort((a, b) => b.count - a.count);
+  }, [products]);
+
+  // Real-time filtered and sorted products
+  const filteredProducts = React.useMemo(() => {
+    let result = products.filter((p) => {
+      // Category filter
+      if (selectedCategory !== 'ALL') {
+        const catKey = p.categoryId || p.categoryName;
+        if (catKey !== selectedCategory && p.categoryName !== selectedCategory) {
+          return false;
+        }
+      }
+
+      // Search query filter (matches name, SKU/slug, description, or category)
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase().trim();
+        const matchesName = p.name.toLowerCase().includes(q);
+        const matchesSku = p.slug.toLowerCase().includes(q);
+        const matchesDesc = (p.description || '').toLowerCase().includes(q);
+        const matchesCat = (p.categoryName || '').toLowerCase().includes(q);
+        if (!matchesName && !matchesSku && !matchesDesc && !matchesCat) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+
+    // Sort order
+    switch (sortBy) {
+      case 'MARGIN_DESC':
+        return [...result].sort((a, b) => {
+          const marginA = (a.retailPrice - a.wholesalePrice) / a.retailPrice;
+          const marginB = (b.retailPrice - b.wholesalePrice) / b.retailPrice;
+          return marginB - marginA;
+        });
+      case 'PRICE_ASC':
+        return [...result].sort((a, b) => a.wholesalePrice - b.wholesalePrice);
+      case 'PRICE_DESC':
+        return [...result].sort((a, b) => b.wholesalePrice - a.wholesalePrice);
+      case 'NAME_ASC':
+        return [...result].sort((a, b) => a.name.localeCompare(b.name));
+      case 'FEATURED':
+      default:
+        return result;
+    }
+  }, [products, searchQuery, selectedCategory, sortBy]);
+
+  // Pagination state (10 items per page)
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const pageSize = 10;
+
+  // Reset to page 1 whenever filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, selectedCategory, sortBy]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredProducts.length / pageSize));
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = startIndex + pageSize;
+  const paginatedProducts = filteredProducts.slice(startIndex, endIndex);
+
+  const handleResetFilters = () => {
+    setSearchQuery('');
+    setSelectedCategory('ALL');
+    setSortBy('FEATURED');
+    setCurrentPage(1);
+  };
 
   useEffect(() => {
     // Automatically switch cart context to B2B mode when entering retailer portal
@@ -182,6 +278,96 @@ export default function RetailerPortalPage() {
             <span className="px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300 text-xs font-bold">
               All Pune Hearth Lines Active
             </span>
+            <span className="px-3 py-1 rounded-full bg-white text-[#342421] border border-[#342421]/30 text-xs font-bold font-mono">
+              Page {currentPage} of {totalPages} • {filteredProducts.length} {filteredProducts.length === 1 ? 'SKU' : 'SKUs'}
+            </span>
+          </div>
+        </div>
+
+        {/* Search, Filter & Sort Toolbar */}
+        <div className="p-4 sm:p-5 bg-[#FFF7EB] border-b-2 border-[#342421]/15 space-y-3.5">
+          <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+            {/* Search Input */}
+            <div className="relative flex-1">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#342421]/50" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search by SKU, product name, or description..."
+                className="w-full pl-10 pr-10 py-2.5 rounded-2xl bg-white border-2 border-[#342421] text-xs font-medium text-[#342421] placeholder-[#342421]/40 shadow-[2px_2px_0px_#342421] focus:outline-none focus:ring-2 focus:ring-[#FF7836]"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-[#FFF7EB] hover:bg-[#342421] hover:text-white border border-[#342421]/30 text-[#342421] flex items-center justify-center transition-colors"
+                  aria-label="Clear search"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              )}
+            </div>
+
+            {/* Sort Dropdown */}
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <label htmlFor="retailer-sort" className="text-xs font-bold text-[#342421]/70 flex items-center gap-1.5">
+                <SlidersHorizontal className="w-3.5 h-3.5 text-[#342421]" />
+                <span>Sort by:</span>
+              </label>
+              <select
+                id="retailer-sort"
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as any)}
+                className="rounded-2xl bg-white border-2 border-[#342421] px-3.5 py-2 text-xs font-bold text-[#342421] shadow-[2px_2px_0px_#342421] focus:outline-none focus:ring-2 focus:ring-[#FF7836] cursor-pointer"
+              >
+                <option value="FEATURED">Featured Catalog</option>
+                <option value="MARGIN_DESC">Highest Margin %</option>
+                <option value="PRICE_ASC">Wholesale Price: Low to High</option>
+                <option value="PRICE_DESC">Wholesale Price: High to Low</option>
+                <option value="NAME_ASC">Product Name: A to Z</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Category Filter Pills & Reset */}
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 pt-0.5 scrollbar-none text-xs">
+            <button
+              type="button"
+              onClick={() => setSelectedCategory('ALL')}
+              className={`px-3.5 py-1.5 rounded-full font-bold border-2 border-[#342421] transition-all flex-shrink-0 text-xs ${
+                selectedCategory === 'ALL'
+                  ? 'bg-[#342421] text-white shadow-[2px_2px_0px_#342421]'
+                  : 'bg-white text-[#342421] shadow-[1px_1px_0px_#342421] hover:bg-[#FFF7EB]'
+              }`}
+            >
+              All Lines ({products.length})
+            </button>
+            {categoryOptions.map((cat) => (
+              <button
+                key={cat.id}
+                type="button"
+                onClick={() => setSelectedCategory(cat.id)}
+                className={`px-3.5 py-1.5 rounded-full font-bold border-2 border-[#342421] transition-all flex-shrink-0 text-xs ${
+                  selectedCategory === cat.id
+                    ? 'bg-[#342421] text-white shadow-[2px_2px_0px_#342421]'
+                    : 'bg-white text-[#342421] shadow-[1px_1px_0px_#342421] hover:bg-[#FFF7EB]'
+                }`}
+              >
+                {cat.name} ({cat.count})
+              </button>
+            ))}
+
+            {(searchQuery || selectedCategory !== 'ALL' || sortBy !== 'FEATURED') && (
+              <button
+                type="button"
+                onClick={handleResetFilters}
+                className="ml-auto text-xs font-bold text-[#FF7836] hover:text-[#FF6A1F] underline flex-shrink-0 flex items-center gap-1 pl-2"
+              >
+                <X className="w-3.5 h-3.5" />
+                <span>Reset Filters</span>
+              </button>
+            )}
           </div>
         </div>
 
@@ -201,7 +387,32 @@ export default function RetailerPortalPage() {
               </tr>
             </thead>
             <tbody className="divide-y-2 divide-[#342421]/10 text-[#342421] bg-white">
-              {products.map((product) => {
+              {paginatedProducts.length === 0 ? (
+                <tr>
+                  <td colSpan={8} className="py-14 px-6 text-center text-[#342421]">
+                    <div className="max-w-md mx-auto space-y-3">
+                      <div className="w-12 h-12 mx-auto rounded-2xl bg-[#FFF7EB] border-2 border-[#342421] flex items-center justify-center text-[#342421] shadow-[2px_2px_0px_#342421]">
+                        <SearchX className="w-6 h-6 text-[#FF7836]" />
+                      </div>
+                      <h4 className="font-bold text-sm text-[#342421]">No wholesale SKUs found</h4>
+                      <p className="text-xs text-[#342421]/70">
+                        {searchQuery
+                          ? `No items match "${searchQuery}". Check your spelling or clear your category selection.`
+                          : 'No items match the selected category filter.'}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={handleResetFilters}
+                        className="px-4 py-2 rounded-full bg-[#FF7836] text-white font-bold text-xs uppercase tracking-wider border-2 border-[#342421] shadow-[2px_2px_0px_#342421] hover:bg-[#FF6A1F] active:translate-x-0.5 active:translate-y-0.5 transition-all inline-flex items-center gap-1.5"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                        <span>Clear All Filters</span>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                paginatedProducts.map((product) => {
                 const qty = orderGuideQuantities[product.id] || product.moq;
                 const lineTotal = product.wholesalePrice * qty;
                 const marginPercentage = Math.round(
@@ -310,11 +521,58 @@ export default function RetailerPortalPage() {
                       </button>
                     </td>
                   </tr>
-                );
-              })}
+                  );
+                })
+              )}
             </tbody>
           </table>
         </div>
+
+        {/* Pagination Controls */}
+        {totalPages > 1 && (
+          <div className="p-4 sm:p-5 bg-[#FFF7EB] border-t-2 border-[#342421]/15 flex items-center justify-center gap-4 text-xs">
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className="px-3.5 py-1.5 rounded-xl border-2 border-[#342421] bg-white text-[#342421] font-bold text-xs shadow-[2px_2px_0px_#342421] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#FFF7EB] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all flex items-center gap-1.5"
+                aria-label="Previous Page"
+              >
+                <ChevronLeft className="w-4 h-4" />
+                <span>Previous</span>
+              </button>
+
+              <div className="flex items-center gap-1">
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
+                  <button
+                    key={pageNum}
+                    type="button"
+                    onClick={() => setCurrentPage(pageNum)}
+                    className={`w-8 h-8 rounded-xl font-mono font-bold text-xs border-2 border-[#342421] transition-all flex items-center justify-center ${
+                      currentPage === pageNum
+                        ? 'bg-[#342421] text-white shadow-[2px_2px_0px_#342421]'
+                        : 'bg-white text-[#342421] shadow-[1px_1px_0px_#342421] hover:bg-[#FFF7EB] active:translate-x-0.5 active:translate-y-0.5'
+                    }`}
+                  >
+                    {pageNum}
+                  </button>
+                ))}
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+                className="px-3.5 py-1.5 rounded-xl border-2 border-[#342421] bg-white text-[#342421] font-bold text-xs shadow-[2px_2px_0px_#342421] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#FFF7EB] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all flex items-center gap-1.5"
+                aria-label="Next Page"
+              >
+                <span>Next</span>
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
