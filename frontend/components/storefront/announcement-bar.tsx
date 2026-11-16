@@ -6,12 +6,14 @@ import { Sparkles, Clock, ArrowRight, Truck } from 'lucide-react';
 import { getBakeryBatch, BakeryBatch } from '../../lib/bakery-schedule';
 import { useAuth } from '../../lib/store/auth-context';
 
+const DEFAULT_BATCH: BakeryBatch = { batchName: 'Morning Batch', timeString: '6:00 AM' };
+
 export function AnnouncementBar() {
   const { role } = useAuth();
-  const [batch, setBatch] = useState<BakeryBatch>(() => getBakeryBatch());
+  const [batch, setBatch] = useState<BakeryBatch>(DEFAULT_BATCH);
 
   useEffect(() => {
-    // Sync with local client clock on mount
+    // Sync with local client clock only after mount (prevents SSR hydration mismatch)
     setBatch(getBakeryBatch());
 
     // Update dynamically as time advances
@@ -54,7 +56,7 @@ export function AnnouncementBar() {
               <span className="flex items-center gap-1.5 text-white/90">
                 <Clock className="w-3.5 h-3.5 text-[#D4973B] inline shrink-0" />
                 <span suppressHydrationWarning>
-                  <strong>{batch.batchName}:</strong> Warm ladi pav, butter khari &amp; mawa cakes fresh out of oven by {batch.timeString}
+                  <strong suppressHydrationWarning>{batch.batchName}:</strong> Warm ladi pav, butter khari &amp; mawa cakes fresh out of oven by {batch.timeString}
                 </span>
               </span>
             </div>
@@ -76,7 +78,7 @@ export function AnnouncementBar() {
               <span className="flex items-center gap-1.5 text-white/90">
                 <Clock className="w-3.5 h-3.5 text-[#D4973B] inline shrink-0" />
                 <span suppressHydrationWarning>
-                  <strong>{batch.batchName}:</strong> Warm ladi pav, butter khari &amp; mawa cakes fresh out of oven by {batch.timeString}
+                  <strong suppressHydrationWarning>{batch.batchName}:</strong> Warm ladi pav, butter khari &amp; mawa cakes fresh out of oven by {batch.timeString}
                 </span>
               </span>
             </div>
