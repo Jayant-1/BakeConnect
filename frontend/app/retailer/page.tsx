@@ -130,14 +130,12 @@ export default function RetailerPortalPage() {
               Daily <span className="text-[#FF7836]">5:30 AM Delivery</span>
             </div>
           </div>
-          <Link href="/retailer/invoices">
-            <button
-              type="button"
-              className="ml-2 px-3 py-1.5 rounded-full bg-white text-[#342421] border-2 border-[#342421] text-xs font-bold hover:bg-[#FFF7EB] transition-all flex items-center gap-1"
-            >
-              <FileText className="w-3.5 h-3.5" />
-              <span>Invoices</span>
-            </button>
+          <Link
+            href="/retailer/invoices"
+            className="ml-2 px-3 py-1.5 rounded-full bg-white text-[#342421] border-2 border-[#342421] text-xs font-bold hover:bg-[#FFF7EB] transition-all flex items-center gap-1"
+          >
+            <FileText className="w-3.5 h-3.5" />
+            <span>Invoices</span>
           </Link>
         </div>
       </div>

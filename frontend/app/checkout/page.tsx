@@ -319,13 +319,11 @@ export default function CheckoutPage() {
           <p className="text-sm text-[#342421]/70 mb-6">
             Your cart was cleared or has no active bakes. Please add items before checking out.
           </p>
-          <Link href="/shop">
-            <button
-              type="button"
-              className="px-6 py-2.5 rounded-full bg-[#FF7836] hover:bg-[#FF6A1F] text-white font-bold text-xs uppercase tracking-wider border-2 border-[#342421] shadow-[2px_2px_0px_#342421] active:translate-x-0.5 active:translate-y-0.5 transition-all"
-            >
-              Return to Catalog
-            </button>
+          <Link
+            href="/shop"
+            className="inline-block px-6 py-2.5 rounded-full bg-[#FF7836] hover:bg-[#FF6A1F] text-white font-bold text-xs uppercase tracking-wider border-2 border-[#342421] shadow-[2px_2px_0px_#342421] active:translate-x-0.5 active:translate-y-0.5 transition-all"
+          >
+            Return to Catalog
           </Link>
         </div>
       </StorefrontLayout>

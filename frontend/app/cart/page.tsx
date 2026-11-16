@@ -78,10 +78,11 @@ export default function CartPage() {
               ? 'Load your daily shop inventory from our wholesale digital order guide with commercial net pricing.'
               : 'Browse our fresh morning ladi pav, pure butter khari, and tea cakes fresh out of the oven.'}
           </p>
-          <Link href={channel === 'B2B' ? '/retailer' : '/shop'}>
-            <Button variant="primary" size="lg">
-              {channel === 'B2B' ? 'Open Wholesale Order Guide' : "Explore Today's Fresh Bakes"}
-            </Button>
+          <Link
+            href={channel === 'B2B' ? '/retailer' : '/shop'}
+            className="inline-flex items-center justify-center font-medium transition-all duration-150 h-12 px-7 text-base rounded-full min-h-[48px] bg-berry-jam text-cream-base hover:bg-berry-hover shadow-sm active:bg-berry-hover"
+          >
+            {channel === 'B2B' ? 'Open Wholesale Order Guide' : "Explore Today's Fresh Bakes"}
           </Link>
         </div>
       </StorefrontLayout>
@@ -329,19 +330,16 @@ export default function CartPage() {
 
             <Link
               href="/checkout"
-              className={channel === 'B2B' && !isMoqMet ? 'pointer-events-none opacity-50 block' : 'block'}
+              aria-disabled={Boolean(channel === 'B2B' && !isMoqMet)}
+              className={`w-full justify-between py-4 px-6 rounded-full bg-[#FF7836] hover:bg-[#FF6A1F] text-white font-bold text-xs uppercase tracking-wider border-2 border-[#342421] shadow-[3px_3px_0px_#342421] active:translate-x-0.5 active:translate-y-0.5 transition-all flex items-center ${
+                channel === 'B2B' && !isMoqMet ? 'pointer-events-none opacity-50' : ''
+              }`}
             >
-              <button
-                type="button"
-                disabled={Boolean(channel === 'B2B' && !isMoqMet)}
-                className="w-full justify-between py-4 px-6 rounded-full bg-[#FF7836] hover:bg-[#FF6A1F] text-white font-bold text-xs uppercase tracking-wider border-2 border-[#342421] shadow-[3px_3px_0px_#342421] active:translate-x-0.5 active:translate-y-0.5 disabled:opacity-50 transition-all flex items-center"
-              >
-                <span>Proceed to Checkout</span>
-                <div className="flex items-center gap-1">
-                  <span>{formatCurrency(total)}</span>
-                  <ArrowRight className="w-4 h-4 ml-1" />
-                </div>
-              </button>
+              <span>Proceed to Checkout</span>
+              <div className="flex items-center gap-1">
+                <span>{formatCurrency(total)}</span>
+                <ArrowRight className="w-4 h-4 ml-1" />
+              </div>
             </Link>
 
             <div className="flex items-center justify-center gap-1.5 text-xs text-[#342421]/60 font-semibold">

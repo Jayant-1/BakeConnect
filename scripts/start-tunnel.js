@@ -21,10 +21,10 @@ async function syncWithVercel(newUrl) {
   isSyncing = true;
   console.log(`[Tunnel Manager] Syncing new URL (${newUrl}) with Vercel...`);
   try {
-    const cmd = `printf '%s' "${newUrl}" | vercel env add BACKEND_INTERNAL_URL production --force && ` +
-      `printf '%s' "${newUrl}" | vercel env add NEXT_PUBLIC_API_URL production --force && ` +
-      `printf '%s' "${newUrl}" | vercel env add BACKEND_INTERNAL_URL preview --force && ` +
-      `printf '%s' "${newUrl}" | vercel env add NEXT_PUBLIC_API_URL preview --force && ` +
+    const cmd = `vercel env add BACKEND_INTERNAL_URL production --value "${newUrl}" --force --yes && ` +
+      `vercel env add NEXT_PUBLIC_API_URL production --value "${newUrl}" --force --yes && ` +
+      `vercel env add BACKEND_INTERNAL_URL preview --value "${newUrl}" --force --yes && ` +
+      `vercel env add NEXT_PUBLIC_API_URL preview --value "${newUrl}" --force --yes && ` +
       `vercel deploy --prod --yes`;
     const { stdout } = await execAsync(cmd, { cwd: frontendDir, shell: '/bin/bash' });
     console.log(`[Tunnel Manager] Vercel redeployment complete:\n${stdout}`);

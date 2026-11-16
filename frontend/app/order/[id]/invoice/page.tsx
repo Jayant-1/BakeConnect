@@ -50,8 +50,11 @@ export default function OrderInvoiceStandalonePage() {
         <p className="text-xs text-[#342421]/70 mb-4">
           Could not locate order #{orderId}.
         </p>
-        <Link href="/shop">
-          <Button variant="primary">Return to Catalog</Button>
+        <Link
+          href="/shop"
+          className="inline-flex items-center justify-center font-medium transition-all duration-150 px-5 py-2 text-sm rounded-full min-h-[44px] bg-berry-jam text-cream-base hover:bg-berry-hover shadow-sm"
+        >
+          Return to Catalog
         </Link>
       </div>
     );

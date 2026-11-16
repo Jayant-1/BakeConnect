@@ -125,21 +125,18 @@ export function Navbar() {
             </div>
 
             {/* Cart Button */}
-            <Link href="/cart">
-              <Button
-                variant="primary"
-                size="default"
-                className="relative flex items-center gap-2 bg-berry-jam hover:bg-berry-hover text-cream-base"
-                aria-label={`Open shopping basket with ${itemCount} items`}
-              >
-                <ShoppingBag className="w-4 h-4" />
-                <span className="font-semibold">{itemCount}</span>
-                {itemCount > 0 && (
-                  <span className="hidden sm:inline border-l border-white/20 pl-2 text-xs">
-                    {formatCurrency(subtotal)}
-                  </span>
-                )}
-              </Button>
+            <Link
+              href="/cart"
+              className="relative inline-flex items-center justify-center font-medium transition-all duration-150 h-10 px-5 py-2 text-sm rounded-full min-h-[44px] gap-2 bg-berry-jam hover:bg-berry-hover text-cream-base shadow-sm"
+              aria-label={`Open shopping basket with ${itemCount} items`}
+            >
+              <ShoppingBag className="w-4 h-4" />
+              <span className="font-semibold">{itemCount}</span>
+              {itemCount > 0 && (
+                <span className="hidden sm:inline border-l border-white/20 pl-2 text-xs">
+                  {formatCurrency(subtotal)}
+                </span>
+              )}
             </Link>
 
             {/* Mobile menu toggle */}

@@ -136,8 +136,11 @@ export default function OrderTrackingPage() {
           <p className="text-sm text-crust-muted mb-6">
             No active order matching #{orderId} was retrieved from the database.
           </p>
-          <Link href="/shop">
-            <Button variant="primary">Return to Catalog</Button>
+          <Link
+            href="/shop"
+            className="inline-flex items-center justify-center font-medium transition-all duration-150 px-5 py-2 text-sm rounded-full min-h-[44px] bg-berry-jam text-cream-base hover:bg-berry-hover shadow-sm"
+          >
+            Return to Catalog
           </Link>
         </div>
       </StorefrontLayout>
@@ -558,11 +561,12 @@ export default function OrderTrackingPage() {
             )}
           </div>
 
-          <Link href={order.orderType === 'BUSINESS' ? '/retailer' : '/shop'} className="block">
-            <Button variant="secondary" size="default" className="w-full justify-center">
-              <span>{order.orderType === 'BUSINESS' ? 'Return to Wholesale Desk' : 'Order More Fresh Bakes'}</span>
-              <ArrowRight className="w-4 h-4 ml-1.5" />
-            </Button>
+          <Link
+            href={order.orderType === 'BUSINESS' ? '/retailer' : '/shop'}
+            className="w-full inline-flex items-center justify-center font-medium transition-all duration-150 px-5 py-2 text-sm rounded-full min-h-[44px] bg-cream-surface text-crust-dark border border-cream-border hover:bg-cream-subtle hover:border-crust-faint"
+          >
+            <span>{order.orderType === 'BUSINESS' ? 'Return to Wholesale Desk' : 'Order More Fresh Bakes'}</span>
+            <ArrowRight className="w-4 h-4 ml-1.5" />
           </Link>
         </div>
       </div>

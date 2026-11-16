@@ -282,17 +282,19 @@ export default function AdminProductsPage() {
         </div>
 
         <div className="flex items-center gap-3">
-          <Link href="/admin/orders">
-            <Button variant="secondary" size="sm">
-              <Clock className="w-3.5 h-3.5 mr-1.5" />
-              <span>Orders Dispatch</span>
-            </Button>
+          <Link
+            href="/admin/orders"
+            className="inline-flex items-center justify-center font-medium transition-all duration-150 h-8 px-3 text-xs rounded-full min-h-[36px] bg-cream-surface text-crust-dark border border-cream-border hover:bg-cream-subtle"
+          >
+            <Clock className="w-3.5 h-3.5 mr-1.5" />
+            <span>Orders Dispatch</span>
           </Link>
-          <Link href="/admin/reports">
-            <Button variant="outline" size="sm">
-              <TrendingUp className="w-3.5 h-3.5 mr-1.5" />
-              <span>Financials</span>
-            </Button>
+          <Link
+            href="/admin/reports"
+            className="inline-flex items-center justify-center font-medium transition-all duration-150 h-8 px-3 text-xs rounded-full min-h-[36px] border border-berry-jam text-berry-jam bg-transparent hover:bg-berry-subtle"
+          >
+            <TrendingUp className="w-3.5 h-3.5 mr-1.5" />
+            <span>Financials</span>
           </Link>
           <Button
             variant="primary"

@@ -109,14 +109,12 @@ export default function RetailerOrdersPage() {
           </p>
         </div>
 
-        <Link href="/retailer">
-          <button
-            type="button"
-            className="px-5 py-2.5 rounded-full bg-[#FF7836] hover:bg-[#FF6A1F] text-white font-bold text-xs uppercase tracking-wider border-2 border-[#342421] shadow-[2px_2px_0px_#342421] active:translate-x-0.5 active:translate-y-0.5 transition-all flex items-center gap-2"
-          >
-            <Package className="w-4 h-4" />
-            <span>New Bulk Stock Order</span>
-          </button>
+        <Link
+          href="/retailer"
+          className="px-5 py-2.5 rounded-full bg-[#FF7836] hover:bg-[#FF6A1F] text-white font-bold text-xs uppercase tracking-wider border-2 border-[#342421] shadow-[2px_2px_0px_#342421] active:translate-x-0.5 active:translate-y-0.5 transition-all flex items-center gap-2"
+        >
+          <Package className="w-4 h-4" />
+          <span>New Bulk Stock Order</span>
         </Link>
       </div>
 
@@ -216,14 +214,12 @@ export default function RetailerOrdersPage() {
                     <span>Repeat Order</span>
                   </button>
 
-                  <Link href={`/order/${order.id}`}>
-                    <button
-                      type="button"
-                      className="px-4 py-2 rounded-full bg-white hover:bg-stone-50 text-[#342421] font-bold text-xs border-2 border-[#342421] shadow-[1.5px_1.5px_0px_#342421] flex items-center gap-1.5 transition-all"
-                    >
-                      <FileText className="w-3.5 h-3.5" />
-                      <span>View Receipt</span>
-                    </button>
+                  <Link
+                    href={`/order/${order.id}`}
+                    className="px-4 py-2 rounded-full bg-white hover:bg-stone-50 text-[#342421] font-bold text-xs border-2 border-[#342421] shadow-[1.5px_1.5px_0px_#342421] flex items-center gap-1.5 transition-all"
+                  >
+                    <FileText className="w-3.5 h-3.5" />
+                    <span>View Receipt</span>
                   </Link>
                 </div>
               </div>

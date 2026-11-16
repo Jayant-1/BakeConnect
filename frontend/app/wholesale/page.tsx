@@ -75,22 +75,18 @@ export default function WholesalePage() {
           </p>
 
           <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link href="/signup">
-              <button
-                type="button"
-                className="w-full sm:w-auto px-6 py-3.5 rounded-full bg-[#FF7836] hover:bg-[#FF6A1F] text-white font-bold text-xs uppercase tracking-wider border-2 border-[#342421] shadow-[3px_3px_0px_#342421] active:translate-x-0.5 active:translate-y-0.5 transition-all flex items-center justify-center gap-2"
-              >
-                <span>Register Shopkeeper Account</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
+            <Link
+              href="/signup"
+              className="w-full sm:w-auto px-6 py-3.5 rounded-full bg-[#FF7836] hover:bg-[#FF6A1F] text-white font-bold text-xs uppercase tracking-wider border-2 border-[#342421] shadow-[3px_3px_0px_#342421] active:translate-x-0.5 active:translate-y-0.5 transition-all flex items-center justify-center gap-2"
+            >
+              <span>Register Shopkeeper Account</span>
+              <ArrowRight className="w-4 h-4" />
             </Link>
-            <Link href="/retailer">
-              <button
-                type="button"
-                className="w-full sm:w-auto px-6 py-3.5 rounded-full bg-white hover:bg-[#FFF7EB] text-[#342421] font-bold text-xs uppercase tracking-wider border-2 border-[#342421] shadow-[2px_2px_0px_#342421] active:translate-x-0.5 active:translate-y-0.5 transition-all"
-              >
-                <span>Existing Partner Portal</span>
-              </button>
+            <Link
+              href="/retailer"
+              className="w-full sm:w-auto px-6 py-3.5 rounded-full bg-white hover:bg-[#FFF7EB] text-[#342421] font-bold text-xs uppercase tracking-wider border-2 border-[#342421] shadow-[2px_2px_0px_#342421] active:translate-x-0.5 active:translate-y-0.5 transition-all flex items-center justify-center"
+            >
+              <span>Existing Partner Portal</span>
             </Link>
           </div>
         </div>
@@ -153,13 +149,11 @@ export default function WholesalePage() {
                 Thank you, <strong>{businessName}</strong>. Our morning dispatch desk has received your request and will reach out to schedule your sample crate in Pune.
               </p>
               <div className="pt-2">
-                <Link href="/signup">
-                  <button
-                    type="button"
-                    className="px-6 py-2.5 rounded-full bg-[#FF7836] hover:bg-[#FF6A1F] text-white font-bold text-xs uppercase tracking-wider border-2 border-[#342421] shadow-[2px_2px_0px_#342421]"
-                  >
-                    Complete Full Registration Now →
-                  </button>
+                <Link
+                  href="/signup"
+                  className="inline-block px-6 py-2.5 rounded-full bg-[#FF7836] hover:bg-[#FF6A1F] text-white font-bold text-xs uppercase tracking-wider border-2 border-[#342421] shadow-[2px_2px_0px_#342421]"
+                >
+                  Complete Full Registration Now →
                 </Link>
               </div>
             </div>

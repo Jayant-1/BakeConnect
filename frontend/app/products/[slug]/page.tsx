@@ -109,8 +109,11 @@ export default function ProductDetailPage() {
           <p className="text-sm text-[#7A685D] mb-6">
             The requested bakery item is currently unavailable in today&apos;s batch schedule.
           </p>
-          <Link href="/shop">
-            <Button className="bg-[#9C3D2B] hover:bg-[#7A2C1D] text-white">Back to Bakery Counter</Button>
+          <Link
+            href="/shop"
+            className="inline-flex items-center justify-center font-medium transition-all duration-150 px-5 py-2 text-sm rounded-full min-h-[44px] bg-[#9C3D2B] hover:bg-[#7A2C1D] text-white shadow-sm"
+          >
+            Back to Bakery Counter
           </Link>
         </div>
       </StorefrontLayout>

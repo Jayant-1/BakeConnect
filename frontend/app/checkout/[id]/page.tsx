@@ -395,14 +395,10 @@ export default function CheckoutAttemptPage() {
                     ? `/order/${checkoutState.orderNumber}?success=true`
                     : '/account/orders'
                 }
+                className="px-6 py-3 rounded-full bg-[#FF7836] hover:bg-[#FF6A1F] text-[#342421] font-bold text-xs uppercase tracking-wider border-2 border-[#342421] shadow-[3px_3px_0px_#342421] transition-all flex items-center justify-center gap-2 mx-auto"
               >
-                <button
-                  type="button"
-                  className="px-6 py-3 rounded-full bg-[#FF7836] hover:bg-[#FF6A1F] text-[#342421] font-bold text-xs uppercase tracking-wider border-2 border-[#342421] shadow-[3px_3px_0px_#342421] transition-all flex items-center justify-center gap-2 mx-auto"
-                >
-                  <span>Go to Order Receipt</span>
-                  <ArrowRight className="w-4 h-4 text-[#342421]" />
-                </button>
+                <span>Go to Order Receipt</span>
+                <ArrowRight className="w-4 h-4 text-[#342421]" />
               </Link>
             </div>
           </div>
@@ -785,21 +781,17 @@ export default function CheckoutAttemptPage() {
               'This checkout session has already transitioned to fulfillment or was cleared. You can track your confirmed bakes in My Orders.'}
           </p>
           <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-3">
-            <Link href="/account/orders">
-              <button
-                type="button"
-                className="w-full sm:w-auto px-6 py-2.5 rounded-full bg-[#FF7836] hover:bg-[#FF6A1F] text-[#342421] font-bold text-xs uppercase tracking-wider border-2 border-[#342421] shadow-[2px_2px_0px_#342421] transition-all"
-              >
-                View My Orders
-              </button>
+            <Link
+              href="/account/orders"
+              className="w-full sm:w-auto px-6 py-2.5 rounded-full bg-[#FF7836] hover:bg-[#FF6A1F] text-[#342421] font-bold text-xs uppercase tracking-wider border-2 border-[#342421] shadow-[2px_2px_0px_#342421] transition-all text-center"
+            >
+              View My Orders
             </Link>
-            <Link href="/shop">
-              <button
-                type="button"
-                className="w-full sm:w-auto px-6 py-2.5 rounded-full bg-white hover:bg-[#FFF7EB] text-[#342421] font-bold text-xs uppercase tracking-wider border-2 border-[#342421] shadow-[2px_2px_0px_#342421] transition-all"
-              >
-                Return to Catalog
-              </button>
+            <Link
+              href="/shop"
+              className="w-full sm:w-auto px-6 py-2.5 rounded-full bg-white hover:bg-[#FFF7EB] text-[#342421] font-bold text-xs uppercase tracking-wider border-2 border-[#342421] shadow-[2px_2px_0px_#342421] transition-all text-center"
+            >
+              Return to Catalog
             </Link>
           </div>
         </div>

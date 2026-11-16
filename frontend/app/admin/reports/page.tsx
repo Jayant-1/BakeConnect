@@ -526,10 +526,11 @@ export default function AdminReportsPage() {
               Live invoice settlement status from partner cafes and supermarkets
             </p>
           </div>
-          <Link href="/retailer/invoices">
-            <Button variant="ghost" size="sm" className="text-xs">
-              <span>View Retailer Portal</span>
-            </Button>
+          <Link
+            href="/retailer/invoices"
+            className="inline-flex items-center justify-center font-medium transition-all duration-150 h-8 px-3 text-xs rounded-full min-h-[36px] text-crust-dark hover:bg-cream-subtle hover:text-berry-jam"
+          >
+            <span>View Retailer Portal</span>
           </Link>
         </div>
 
