@@ -98,31 +98,6 @@ export function Navbar() {
               <Search className="w-5 h-5" />
             </Link>
 
-            {/* B2C vs B2B Mode Switcher */}
-            <div className="hidden sm:flex items-center bg-cream-subtle p-1 rounded-full border border-cream-border text-xs font-semibold">
-              <button
-                type="button"
-                onClick={() => setChannel('B2C')}
-                className={`px-3 py-1 rounded-full transition-all ${
-                  channel === 'B2C'
-                    ? 'bg-berry-jam text-cream-base shadow-xs'
-                    : 'text-crust-muted hover:text-crust-dark'
-                }`}
-              >
-                Retail B2C
-              </button>
-              <button
-                type="button"
-                onClick={() => setChannel('B2B')}
-                className={`px-3 py-1 rounded-full transition-all ${
-                  channel === 'B2B'
-                    ? 'bg-sea-tide text-white shadow-xs'
-                    : 'text-crust-muted hover:text-crust-dark'
-                }`}
-              >
-                Wholesale B2B
-              </button>
-            </div>
 
             {/* Cart Button */}
             <Link
@@ -155,35 +130,7 @@ export function Navbar() {
       {/* Mobile Drawer Menu */}
       {mobileMenuOpen && (
         <div className="lg:hidden border-t border-cream-border bg-cream-surface px-6 py-6 space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-cream-border">
-            <span className="text-xs uppercase tracking-wider text-crust-muted font-bold">Channel Mode</span>
-            <div className="flex items-center bg-cream-subtle p-1 rounded-full border border-cream-border text-xs font-semibold">
-              <button
-                type="button"
-                onClick={() => {
-                  setChannel('B2C');
-                  setMobileMenuOpen(false);
-                }}
-                className={`px-3 py-1 rounded-full ${
-                  channel === 'B2C' ? 'bg-berry-jam text-cream-base' : 'text-crust-muted'
-                }`}
-              >
-                Retail B2C
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setChannel('B2B');
-                  setMobileMenuOpen(false);
-                }}
-                className={`px-3 py-1 rounded-full ${
-                  channel === 'B2B' ? 'bg-sea-tide text-white' : 'text-crust-muted'
-                }`}
-              >
-                Wholesale B2B
-              </button>
-            </div>
-          </div>
+
           <div className="flex flex-col space-y-3 text-base font-semibold text-crust-dark">
             <Link
               href="/shop"

@@ -25,6 +25,8 @@ import {
   ChevronDown,
   Receipt,
   User,
+  HelpCircle,
+  MapPin,
 } from 'lucide-react';
 import { formatCurrency } from '../../lib/utils';
 import { NetflixAvatar } from '../../components/layout/storefront-header';
@@ -261,13 +263,22 @@ export default function RetailerLayout({ children }: { children: React.ReactNode
                     {/* Dropdown Items */}
                     <div className="py-1 space-y-1">
                       <Link
-                        href="/shop"
+                        href="/account/addresses"
                         onClick={() => setAccountMenuOpen(false)}
                         className="flex items-center gap-2.5 px-3 py-2 text-xs font-bold text-[#342421] hover:bg-white rounded-xl transition-colors"
                         role="menuitem"
                       >
-                        <ShoppingBag className="w-4 h-4 text-[#FF7836]" />
-                        <span>Switch to Retail Counter</span>
+                        <MapPin className="w-4 h-4 text-[#FF7836]" />
+                        <span>Delivery Addresses</span>
+                      </Link>
+                      <Link
+                        href="/help"
+                        onClick={() => setAccountMenuOpen(false)}
+                        className="flex items-center gap-2.5 px-3 py-2 text-xs font-bold text-[#342421] hover:bg-white rounded-xl transition-colors"
+                        role="menuitem"
+                      >
+                        <HelpCircle className="w-4 h-4 text-[#FF7836]" />
+                        <span>Help & Support</span>
                       </Link>
                     </div>
 
@@ -354,12 +365,12 @@ export default function RetailerLayout({ children }: { children: React.ReactNode
 
             <div className="pt-2 border-t-2 border-[#342421]/20 flex items-center justify-between">
               <Link
-                href="/shop"
+                href="/help"
                 onClick={() => setMobileMenuOpen(false)}
                 className="inline-flex items-center gap-1.5 text-xs font-bold text-[#342421] hover:text-[#FF7836]"
               >
-                <ShoppingBag className="w-4 h-4 text-[#FF7836]" />
-                <span>Visit Retail Counter</span>
+                <HelpCircle className="w-4 h-4 text-[#FF7836]" />
+                <span>Help & Support</span>
               </Link>
               <button
                 type="button"

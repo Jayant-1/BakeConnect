@@ -1,17 +1,27 @@
 'use client';
 
 import React, { useState, useEffect, useMemo, Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { StorefrontLayout } from '../../components/layout/storefront-layout';
 import { apiClient } from '../../lib/api/client';
 import { Product, Category } from '../../lib/api/types';
 import { ProductCard } from '../../components/storefront/product-card';
 import { Button } from '../../components/ui/button';
 import { Search, SlidersHorizontal, X, Sparkles, Check, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useAuth } from '../../lib/store/auth-context';
 
 function ShopContent() {
+  const router = useRouter();
+  const { role, isAuthenticated, isLoading: authLoading } = useAuth();
   const searchParams = useSearchParams();
   const initialCategory = searchParams.get('category') || 'all';
+
+  // Guard: Retailers are wholesale merchants and cannot access or switch to retail customer counter
+  useEffect(() => {
+    if (!authLoading && isAuthenticated && role === 'RETAILER') {
+      router.replace('/retailer');
+    }
+  }, [authLoading, isAuthenticated, role, router]);
 
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
