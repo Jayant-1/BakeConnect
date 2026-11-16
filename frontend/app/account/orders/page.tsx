@@ -150,7 +150,7 @@ export default function CustomerOrdersPage() {
                   <Clock className="w-7 h-7 animate-spin text-[#FF7836] [animation-duration:3s]" />
                 </div>
                 <h2 className="font-display uppercase text-2xl text-[#342421] tracking-tight">
-                  Checking Hearth Dispatches...
+                  Checking Bakery Dispatches...
                 </h2>
                 <p className="font-sans text-xs sm:text-sm text-[#342421]/70 max-w-md mx-auto">
                   Pulling live Pune morning batch dispatches, delivery milestones, and receipts from Koregaon Park...
@@ -227,7 +227,7 @@ export default function CustomerOrdersPage() {
                 <div className="max-w-2xl space-y-4">
                   <div className="inline-flex items-center gap-2 bg-[#FFF7EB] text-[#342421] border border-[#342421]/30 text-[11px] font-bold uppercase tracking-wider px-3.5 py-1 rounded-full shadow-[2px_2px_0px_#342421]">
                     <Flame className="w-3.5 h-3.5 text-[#FF7836]" />
-                    <span>Hearth-Baked Daily in Koregaon Park</span>
+                    <span>Freshly Baked Daily in Koregaon Park</span>
                   </div>
 
                   <h2 className="font-display uppercase text-3xl sm:text-4xl text-[#342421] tracking-tight">

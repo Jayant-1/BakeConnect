@@ -695,7 +695,7 @@ export const apiClient = {
           note:
             payload.orderType === 'BUSINESS'
               ? 'Wholesale order submitted for bakery review'
-              : 'Order received & queued for hearth baking',
+              : 'Order received & queued for fresh oven baking',
         },
       ],
     };
@@ -1062,7 +1062,7 @@ export const apiClient = {
         provider: data.provider || 'YOUPI_PG',
         status: 'INITIATED',
         upiId: 'bakeconnect@hdfcbank',
-        merchantName: 'BakeConnect Pune Hearth',
+        merchantName: 'BakeConnect Pune Bakery',
         expiresAt: attempt.expiresAt,
         allocatedPaise: Math.round(paiseOffset * 100),
       };

@@ -23,7 +23,7 @@ const STAGES = [
   {
     step: 1,
     title: 'Batch Inventory & Reservation',
-    description: 'Reserving hot items from the active Koregaon Park morning hearth schedule',
+    description: 'Reserving hot items from the active Koregaon Park morning bakery oven schedule',
     icon: Flame,
     pill: 'Ovens Hot',
   },
@@ -36,7 +36,7 @@ const STAGES = [
   },
   {
     step: 3,
-    title: 'Hearth Handshake & Payment Channel',
+    title: 'Bakery Batch Handshake & Payment Channel',
     description: 'Allocating zero-collision dynamic UPI verification session on 9699197282@ibl',
     icon: ShieldCheck,
     pill: 'UPI Dynamic Intent',
@@ -72,7 +72,7 @@ export function BakeryProcessingSuite({
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pb-6 border-b-2 border-[#342421]/15">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#D9EAF3] text-[#342421] border border-[#342421]/30 text-xs font-bold uppercase tracking-wider">
             <Store className="w-3.5 h-3.5 text-[#FF7836]" />
-            <span>BakeConnect Hearth Kitchen • Pune</span>
+            <span>BakeConnect Bakery Kitchen • Pune</span>
           </div>
 
           <div className="inline-flex items-center gap-2 text-xs font-mono font-bold text-[#342421]/80">
@@ -81,10 +81,10 @@ export function BakeryProcessingSuite({
           </div>
         </div>
 
-        {/* Animated Artisan Hearth Visual */}
+        {/* Animated Artisan Oven Visual */}
         <div className="py-8 text-center flex flex-col items-center">
           <div className="relative mb-5">
-            {/* Outer Glowing Pulsing Hearth Ring */}
+            {/* Outer Glowing Pulsing Oven Ring */}
             <div className="w-24 h-24 rounded-3xl bg-[#FF7836]/15 border-2 border-[#342421] shadow-[3px_3px_0px_#342421] flex items-center justify-center animate-bounce duration-1000">
               <Flame className="w-12 h-12 text-[#FF7836] animate-pulse" />
             </div>
@@ -101,7 +101,7 @@ export function BakeryProcessingSuite({
 
           <p className="font-sans text-sm sm:text-base text-[#342421]/75 max-w-lg mx-auto leading-relaxed">
             {customMessage ||
-              'Please keep this window open while our Pune hearth kitchen logs your bakes into the morning dispatch queue.'}
+              'Please keep this window open while our Pune bakery kitchen logs your bakes into the morning dispatch queue.'}
           </p>
 
           {/* Optional Order & Amount Snapshot Card */}
@@ -132,7 +132,7 @@ export function BakeryProcessingSuite({
         {/* Animated Progress Bar */}
         <div className="my-6">
           <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-[#342421]/70 mb-2">
-            <span>Hearth Preparation Progress</span>
+            <span>Bakery Oven Progress</span>
             <span className="font-mono text-[#FF7836] font-black">{Math.round(progressPercent)}%</span>
           </div>
           <div className="w-full h-3.5 bg-white border-2 border-[#342421] rounded-full overflow-hidden p-0.5 shadow-[2px_2px_0px_#342421]">

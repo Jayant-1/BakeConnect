@@ -645,7 +645,7 @@ export default function CheckoutAttemptPage() {
                         Bakery Order Dispatch Slip
                       </span>
                       <h3 className="font-display uppercase text-2xl font-bold text-[#342421]">
-                        Hearth Batch #03
+                        Bakery Oven Batch #03
                       </h3>
                     </div>
 
@@ -727,7 +727,7 @@ export default function CheckoutAttemptPage() {
                       <span className="font-mono">{formatCurrency(order?.taxAmount || 0.00)}</span>
                     </div>
                     <div className="flex justify-between text-emerald-800 font-semibold">
-                      <span>Morning Hearth Delivery</span>
+                      <span>Morning Bakery Delivery</span>
                       <span>FREE</span>
                     </div>
                     <div className="flex justify-between items-center text-[#FF7836] font-bold pt-1">

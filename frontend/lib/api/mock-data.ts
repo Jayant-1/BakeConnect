@@ -186,7 +186,7 @@ export const MOCK_PRODUCTS: Product[] = [
     categoryName: 'Pav & Heritage Breads',
     name: 'Crusty French Baguette (250g)',
     slug: 'french-artisan-baguette',
-    description: 'Hearth-baked European style baguette with a crackling golden crust and light, airy honeycomb interior.',
+    description: 'Fresh oven-baked European style baguette with a crackling golden crust and light, airy honeycomb interior.',
     imageUrl: '/images/products/french-artisan-baguette.png',
     retailPrice: 90,
     wholesalePrice: 65,
@@ -612,7 +612,7 @@ export const MOCK_ORDERS: Order[] = [
     timeline: [
       { status: 'PENDING', timestamp: '2026-10-28T04:15:00Z', note: 'Order placed via online storefront' },
       { status: 'CONFIRMED', timestamp: '2026-10-28T04:20:00Z', note: 'Payment verified via YouPI-PG' },
-      { status: 'PROCESSING', timestamp: '2026-10-28T05:00:00Z', note: 'Morning batch pav pulled from hearth' },
+      { status: 'PROCESSING', timestamp: '2026-10-28T05:00:00Z', note: 'Morning batch pav pulled from fresh oven' },
     ],
   },
   {

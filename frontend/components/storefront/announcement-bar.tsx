@@ -32,7 +32,6 @@ export function AnnouncementBar() {
         {mounted && role === 'RETAILER' ? (
           <>
             <div className="flex items-center gap-2">
-              <span className="flex h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
               <span className="flex items-center gap-1.5 text-white/90">
                 <Truck className="w-3.5 h-3.5 text-emerald-400 inline shrink-0" />
                 <span>
@@ -54,7 +53,6 @@ export function AnnouncementBar() {
         ) : mounted && role === 'DIRECT_CUSTOMER' ? (
           <>
             <div className="flex items-center gap-2">
-              <span className="flex h-2 w-2 rounded-full bg-[#D4973B] animate-pulse" />
               <span className="flex items-center gap-1.5 text-white/90">
                 <Clock className="w-3.5 h-3.5 text-[#D4973B] inline shrink-0" />
                 <span suppressHydrationWarning>
@@ -76,7 +74,6 @@ export function AnnouncementBar() {
         ) : (
           <>
             <div className="flex items-center gap-2">
-              <span className="flex h-2 w-2 rounded-full bg-[#D4973B] animate-pulse" />
               <span className="flex items-center gap-1.5 text-white/90">
                 <Clock className="w-3.5 h-3.5 text-[#D4973B] inline shrink-0" />
                 <span suppressHydrationWarning>

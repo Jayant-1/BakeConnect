@@ -292,7 +292,7 @@ export default function AdminOrdersReviewPage() {
                   onChange={(e) => setDelayPreset(e.target.value as any)}
                   className="w-full px-3 py-2 rounded-xl border border-cream-border bg-cream-surface text-xs text-crust-dark focus:outline-none focus:ring-2 focus:ring-amber-600"
                 >
-                  <option value="PEAK_WORKLOAD">Peak Stone Hearth Workload</option>
+                  <option value="PEAK_WORKLOAD">Peak Bakery Oven Workload</option>
                   <option value="STAFF_SHORTAGE">Bakery Staffing / Proofing Delay</option>
                   <option value="MATERIAL_SHORTAGE">Organic Heritage Grain Supply Delay</option>
                   <option value="WEATHER">Logistics / Weather Disruption</option>

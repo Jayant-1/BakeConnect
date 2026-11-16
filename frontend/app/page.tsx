@@ -318,7 +318,7 @@ export default function HomePage() {
                   <Flame className="w-6 h-6 text-[#FF7836]" />
                 </div>
                 <h3 className="font-display text-xl uppercase text-[#342421] tracking-tight mb-2">
-                  DAILY HEARTH PULLS
+                  FRESH MORNING BAKES
                 </h3>
                 <p className="font-sans text-xs text-[#342421]/75 leading-relaxed">
                   Stone-deck ovens pulled fresh daily so morning ladi pav and artisanal loaves reach your breakfast table warm and fragrant.

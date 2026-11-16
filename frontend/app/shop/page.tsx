@@ -115,7 +115,7 @@ function ShopContent() {
       {/* Page Header */}
       <div className="space-y-3">
         <div className="inline-block bg-[#D9EAF3] text-[#342421] border border-[#342421]/30 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full">
-          Pune Daily Hearth Catalogue
+          Pune Fresh Bakery Catalogue
         </div>
         <h1 className="font-display uppercase text-4xl sm:text-6xl font-bold text-[#342421] tracking-tight">
           FRESH BAKERY COUNTER

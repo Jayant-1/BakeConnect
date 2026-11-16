@@ -18,7 +18,7 @@ export default function NotFound() {
           className="inline-flex items-center justify-center gap-2 py-3 px-6 rounded-full font-bold text-xs uppercase tracking-wider text-white bg-[#FF7836] hover:bg-[#FF6A1F] border-2 border-[#342421] shadow-[3px_3px_0px_#342421] active:translate-x-0.5 active:translate-y-0.5 transition-all"
         >
           <Home className="w-4 h-4" />
-          <span>Back to Hearth</span>
+          <span>Back to Bakery Home</span>
         </Link>
       </div>
     </div>

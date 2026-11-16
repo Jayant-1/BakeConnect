@@ -499,7 +499,7 @@ export default function CheckoutPage() {
                 >
                   <div className="text-xs font-bold flex items-center gap-1.5">
                     <MapPin className="w-4 h-4" />
-                    <span>Bakery Hearth Pickup</span>
+                    <span>Bakery Counter Pickup</span>
                   </div>
                   <div className={`text-[10px] mt-1 font-medium ${fulfillmentType === 'PICKUP' ? 'text-white/80' : 'text-[#342421]/60'}`}>
                     Koregaon Park Counter (Free)

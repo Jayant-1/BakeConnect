@@ -221,7 +221,7 @@ export function InvoiceDocument(props: InvoiceDocumentProps) {
         {/* From */}
         <div>
           <div className="font-bold text-[#342421] mb-1 text-sm">From:</div>
-          <div className="font-semibold text-[#342421]">BakeConnect Artisanal Hearth</div>
+          <div className="font-semibold text-[#342421]">BakeConnect Bakery Kitchen</div>
           <div>12 Koregaon Park Road</div>
           <div>Pune, Maharashtra 411001, India</div>
           <div className="text-[#342421]/70">orders@bakeconnect.com</div>

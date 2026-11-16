@@ -338,7 +338,7 @@ export function UpiPaymentModal({
 
               <div className="text-[11px] text-emerald-700 font-bold flex items-center justify-center gap-1.5">
                 <Sparkles className="w-4 h-4" />
-                <span>Hearth batch scheduled! Updating order timeline...</span>
+                <span>Fresh bakery batch scheduled! Updating order timeline...</span>
               </div>
             </div>
           ) : error ? (

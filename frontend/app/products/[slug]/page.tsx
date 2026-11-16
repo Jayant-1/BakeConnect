@@ -211,7 +211,7 @@ export default function ProductDetailPage() {
             <div className="grid grid-cols-3 gap-3">
               <div className="bg-[#FFF7EB] rounded-2xl p-3.5 border-2 border-[#342421] text-center shadow-[2px_2px_0px_#342421]">
                 <span className="text-[10px] uppercase font-bold text-[#342421]/60 block">Daily Dawn Pull</span>
-                <span className="text-xs font-bold text-[#342421] mt-0.5 block">4:30 AM Morning Hearth</span>
+                <span className="text-xs font-bold text-[#342421] mt-0.5 block">4:30 AM Morning Oven Bake</span>
               </div>
               <div className="bg-[#FFF7EB] rounded-2xl p-3.5 border-2 border-[#342421] text-center shadow-[2px_2px_0px_#342421]">
                 <span className="text-[10px] uppercase font-bold text-[#342421]/60 block">Specification</span>
@@ -296,7 +296,7 @@ export default function ProductDetailPage() {
                       </div>
                     </div>
                     <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-[#D9EAF3] text-[#342421] border border-[#342421]/30 shrink-0">
-                      Hearth Sealed
+                      Bakery Sealed
                     </span>
                   </div>
                 )}
@@ -394,7 +394,7 @@ export default function ProductDetailPage() {
             {/* Fulfillment Guarantee */}
             <div className="pt-3 border-t-2 border-[#342421]/15 flex items-center gap-2 text-xs font-semibold text-[#342421]/80">
               <Truck className="w-4 h-4 text-emerald-700 shrink-0" />
-              <span>Doorstep delivery available across Pune • Freshly pulled from Koregaon Park hearth.</span>
+              <span>Doorstep delivery available across Pune • Freshly pulled from Koregaon Park ovens.</span>
             </div>
           </div>
         </div>

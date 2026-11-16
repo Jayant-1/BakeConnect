@@ -198,7 +198,6 @@ export default function RetailerPortalPage() {
       <div className="bg-[#FFF7EB] border-2 border-[#342421] rounded-3xl p-6 shadow-[4px_4px_0px_#342421] flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
           <div className="flex items-center gap-2.5 mb-1">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-600 animate-pulse" />
             <h1 className="font-display text-2xl uppercase tracking-wide text-[#342421]">
               {profile?.businessName || 'Pune Wholesale Retail Partner'}
             </h1>
@@ -276,7 +275,7 @@ export default function RetailerPortalPage() {
           </div>
           <div className="flex items-center gap-3">
             <span className="px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300 text-xs font-bold">
-              All Pune Hearth Lines Active
+              All Pune Bakery Lines Active
             </span>
             <span className="px-3 py-1 rounded-full bg-white text-[#342421] border border-[#342421]/30 text-xs font-bold font-mono">
               Page {currentPage} of {totalPages} • {filteredProducts.length} {filteredProducts.length === 1 ? 'SKU' : 'SKUs'}

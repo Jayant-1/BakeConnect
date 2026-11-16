@@ -137,10 +137,10 @@ export function Footer() {
               {/* Bakery Craft & Hours (Cols 9-12) */}
               <div className="lg:col-span-4 space-y-3">
                 <h4 className="text-xs uppercase tracking-wider font-bold text-[#FF7836]">
-                  Bakery Timings &amp; Hearth Craft
+                  Bakery Timings &amp; Oven Craft
                 </h4>
                 <p className="text-xs text-white/70 leading-relaxed mb-3">
-                  Hearth-baked daily in Koregaon Park with cultured butter and desi ghee. Warm batches out of the oven every morning at 6:30 AM and 10:00 AM.
+                  Freshly baked daily in Koregaon Park with cultured butter and desi ghee. Warm batches out of the oven every morning at 6:30 AM and 10:00 AM.
                 </p>
                 <div className="space-y-1.5 text-xs text-white/80">
                   <div className="flex items-center gap-2">
@@ -226,7 +226,7 @@ export function Footer() {
           </div>
           <div className="flex items-center gap-2 text-white/70">
             <Heart className="w-3.5 h-3.5 text-[#FF7836] fill-[#FF7836]" />
-            <span>Hearth-Baked Daily with Cultured Butter & Desi Ghee</span>
+            <span>Freshly Baked Daily with Cultured Butter & Desi Ghee</span>
           </div>
         </div>
       </div>

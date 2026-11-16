@@ -158,7 +158,7 @@ export default function StaffLayout({
         <div className="fixed top-5 right-5 z-50 max-w-sm bg-[#342421] text-white p-4 rounded-2xl border-2 border-[#FF7836] shadow-[4px_4px_0px_#FF7836] animate-bounce">
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-[#FF7836] animate-ping" />
+              <span className="w-2.5 h-2.5 rounded-full bg-[#FF7836]" />
               <h4 className="font-bold text-xs uppercase tracking-wider text-[#FF7836]">
                 {newOrderToast.title}
               </h4>

@@ -75,7 +75,7 @@ export default function RetailerOrdersPage() {
       case 'CONFIRMED':
         return (
           <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-300">
-            <Clock className="w-3.5 h-3.5 animate-spin" /> Hearth In Production
+            <Clock className="w-3.5 h-3.5 animate-spin" /> In Oven Baking
           </span>
         );
       default:
@@ -128,7 +128,7 @@ export default function RetailerOrdersPage() {
             {orders.length}
           </div>
           <div className="text-xs text-[#342421]/70 mt-2 font-medium">
-            Dispatched via Koregaon Park bakery hearth.
+            Dispatched fresh from Koregaon Park bakery ovens.
           </div>
         </div>
 

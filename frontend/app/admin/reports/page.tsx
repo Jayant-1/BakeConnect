@@ -391,7 +391,7 @@ export default function AdminReportsPage() {
             <div className="bg-cream-card rounded-xl p-4 border border-cream-border space-y-2">
               <div className="flex items-center justify-between text-xs">
                 <span className="font-bold text-crust-dark flex items-center gap-1.5">
-                  <Package className="w-4 h-4 text-brand-terracotta" /> Direct Hearth Retail (B2C)
+                  <Package className="w-4 h-4 text-brand-terracotta" /> Direct Retail Bakery (B2C)
                 </span>
                 <span className="font-mono font-bold text-crust-dark">
                   {formatCurrency(analytics.b2cRevenue)}
