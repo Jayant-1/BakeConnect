@@ -51,7 +51,8 @@ const server = http.createServer((req, res) => {
     url.startsWith('/youpi.js') ||
     url.startsWith('/sdk/') ||
     url.startsWith('/api/v1/checkout/') ||
-    url.startsWith('/api/v1/customer/')
+    url.startsWith('/api/v1/customer/') ||
+    url.startsWith('/api/v1/devices/')
   ) {
     target = TARGETS.CHECKOUT;
     targetPath = url;

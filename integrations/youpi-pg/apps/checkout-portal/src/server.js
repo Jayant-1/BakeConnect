@@ -117,7 +117,7 @@ export function serializeForScript(value) {
 
 // Placeholders that land inside a <script> block rather than HTML markup.
 const SCRIPT_PLACEHOLDERS = new Set(['PAYMENT_ID', 'API_BASE_URL', 'AMOUNT']);
-const RAW_PLACEHOLDERS = new Set(['RAW_FOOTER_NOTE']);
+const RAW_PLACEHOLDERS = new Set(['RAW_FOOTER_NOTE', 'INITIAL_STATE_JSON']);
 
 /**
  * Replaces {{PLACEHOLDER}} tokens in the checkout template.

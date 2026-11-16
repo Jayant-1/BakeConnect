@@ -1351,7 +1351,11 @@
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ publicKey: publicKeyBase64, signals })
           });
-          const data = await resp.json();
+          if (!resp.ok) {
+            console.warn('[DeviceIdentity] Registration response not ok:', resp.status);
+            return { deviceId: null, deviceToken: null };
+          }
+          const data = await resp.json().catch(() => null);
           if (data?.deviceId) {
             this.currentDeviceId = data.deviceId;
             this.currentDeviceToken = data.deviceToken;
@@ -1368,7 +1372,7 @@
             return { deviceId: data.deviceId, deviceToken: data.deviceToken };
           }
         } catch (err) {
-          console.error('[DeviceIdentity] Registration error:', err);
+          console.warn('[DeviceIdentity] Registration error:', err.message || err);
         }
 
         return { deviceId: null, deviceToken: null };
@@ -1393,7 +1397,11 @@
 
     async function loadState() {
       try {
-        await DeviceIdentity.getOrRegister();
+        try {
+          await DeviceIdentity.getOrRegister();
+        } catch (devErr) {
+          console.warn('[DeviceIdentity] Deferred non-fatal registration:', devErr);
+        }
         const headers = getApiHeaders();
 
         const res = await fetch(`${API_BASE}/api/v1/checkout/${PAYMENT_ID}/state?activate=true`, { headers });
@@ -1406,6 +1414,8 @@
         }
 
         if (!res.ok) {
+          console.warn('loadState returned error status:', res.status, data);
+          setGatewayAuthMode(false);
           dismissSplashScreen();
           return;
         }
@@ -1414,6 +1424,7 @@
         dismissSplashScreen();
       } catch (e) {
         console.warn('loadState error:', e);
+        setGatewayAuthMode(false);
         dismissSplashScreen();
       }
     }
