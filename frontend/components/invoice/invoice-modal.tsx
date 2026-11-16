@@ -64,7 +64,12 @@ export function InvoiceModal({
   const resolvedOrderId = targetOrderId;
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 print:p-0 print:bg-transparent print:static print:inset-auto">
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Tax Invoice Preview"
+      className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 print:p-0 print:bg-transparent print:static print:inset-auto"
+    >
       {/* Container Card */}
       <div className="relative w-full max-w-3xl bg-[#F6EEE3] rounded-3xl border-2 border-[#342421] shadow-[6px_6px_0px_#342421] overflow-hidden my-auto flex flex-col max-h-[92vh] print:max-h-none print:max-w-none print:border-none print:shadow-none print:bg-transparent print:rounded-none">
         

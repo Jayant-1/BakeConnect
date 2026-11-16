@@ -163,12 +163,12 @@ async function runRetailerE2E() {
 
     console.log(`✓ Current Checkout URL: ${page.url()}`);
     // Check that pre-filled business details and address are rendered
-    await page.waitForSelector('h2:has-text("Saved Delivery Address")', { state: 'visible' });
+    await page.waitForSelector('text=Select Delivery Address', { state: 'visible' });
     console.log('✓ Saved Delivery Coordinates loaded for Santosh Shinde');
 
     // Select Net-15 Invoice Settlement
-    const net15Radio = page.locator('input[type="radio"]').nth(1);
-    await net15Radio.check();
+    const net15Option = page.locator('text=B2B Credit Cycle (Net-15 Invoice Settlement)');
+    await net15Option.click();
     console.log('✓ Selected "B2B Credit Cycle (Net-15 Invoice Settlement)" payment method');
 
     // Submit the wholesale order
