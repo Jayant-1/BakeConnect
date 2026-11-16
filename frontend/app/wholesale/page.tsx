@@ -26,6 +26,7 @@ import {
 export default function WholesalePage() {
   const router = useRouter();
   const { role, isLoading } = useAuth();
+  const [mounted, setMounted] = useState(false);
   const [businessName, setBusinessName] = useState('');
   const [gstin, setGstin] = useState('');
   const [email, setEmail] = useState('');
@@ -33,16 +34,20 @@ export default function WholesalePage() {
   const [submitted, setSubmitted] = useState(false);
 
   useEffect(() => {
-    if (!isLoading) {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (mounted && !isLoading) {
       if (role === 'DIRECT_CUSTOMER') {
         router.push('/shop');
       } else if (role === 'RETAILER') {
         router.push('/retailer');
       }
     }
-  }, [role, isLoading, router]);
+  }, [mounted, role, isLoading, router]);
 
-  if (!isLoading && (role === 'DIRECT_CUSTOMER' || role === 'RETAILER')) {
+  if (mounted && !isLoading && (role === 'DIRECT_CUSTOMER' || role === 'RETAILER')) {
     return null;
   }
 

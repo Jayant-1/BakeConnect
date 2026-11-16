@@ -56,31 +56,17 @@ function checkSessionDeviceAccess(session, req, body = null, ctx = null) {
         signaturePayload,
         deviceRepo: ctx?.deviceRepo
       });
-      if (!credCheck.valid) {
-        return {
-          allowed: false,
-          statusCode: 409,
-          body: {
-            error: credCheck.error === 'DEVICE_SIGNATURE_INVALID' ? 'DEVICE_SIGNATURE_INVALID' : 'DUPLICATE_SESSION_DETECTED',
-            code: credCheck.error,
-            session_id: session.id,
-            conflicting_session_id: session.id,
-            action: 'END_SESSION_AND_CREATE_NEW',
-            message: credCheck.message || 'Unregistered or unverified device identity.',
-            boundDeviceId: null,
-            requestingDeviceId
+      if (credCheck.valid) {
+        if (ctx?.deviceRepo) {
+          ctx.deviceRepo.touch(requestingDeviceId);
+        }
+        if (ctx?.sessionRepo) {
+          try {
+            ctx.sessionRepo.bindDevice(session.id, requestingDeviceId);
+            session.deviceId = requestingDeviceId;
+          } catch (err) {
+            console.warn('[checkSessionDeviceAccess] bindDevice error:', err.message);
           }
-        };
-      }
-      if (ctx?.deviceRepo) {
-        ctx.deviceRepo.touch(requestingDeviceId);
-      }
-      if (ctx?.sessionRepo) {
-        try {
-          ctx.sessionRepo.bindDevice(session.id, requestingDeviceId);
-          session.deviceId = requestingDeviceId;
-        } catch (err) {
-          console.warn('[checkSessionDeviceAccess] bindDevice error:', err.message);
         }
       }
     }

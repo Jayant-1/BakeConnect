@@ -36,6 +36,11 @@ const CATEGORIES = [
 
 export default function CustomerHelpPage() {
   const { user, isAuthenticated, isLoading } = useAuth();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // State
   const [issues, setIssues] = useState<CustomerIssue[]>([]);
@@ -162,7 +167,7 @@ export default function CustomerHelpPage() {
             </p>
           </div>
 
-          {isAuthenticated ? (
+          {mounted && isAuthenticated ? (
             <button
               onClick={() => {
                 setFeedback(null);
@@ -259,7 +264,7 @@ export default function CustomerHelpPage() {
         </div>
 
         {/* Support Tickets Section */}
-        {isAuthenticated ? (
+        {mounted && isAuthenticated ? (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
             {/* Left: Tickets List */}
             <div className="lg:col-span-5 bg-white rounded-2xl border-2 border-[#342421] shadow-[4px_4px_0px_#342421] overflow-hidden">

@@ -59,10 +59,15 @@ const TABS: TabConfig[] = [
 
 export default function HomePage() {
   const { role } = useAuth();
+  const [mounted, setMounted] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [activeTab, setActiveTab] = useState<DiscoveryTab>('everyday');
   const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     async function loadData() {
@@ -348,7 +353,7 @@ export default function HomePage() {
       </section>
 
       {/* 5. Wholesale Invitation for Cafes, Chai Points & Grocers - Only shown to Visitors and Wholesale Partners */}
-      {role !== 'DIRECT_CUSTOMER' && (
+      {(!mounted || role !== 'DIRECT_CUSTOMER') && (
         <section className="py-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="bg-[#342421] text-[#FFF7EB] rounded-3xl p-8 sm:p-12 lg:p-14 relative overflow-hidden border-2 border-[#342421] shadow-[6px_6px_0px_#FF7836]">
             <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
@@ -380,7 +385,7 @@ export default function HomePage() {
               </div>
 
               <div className="lg:col-span-4 flex flex-col gap-3 justify-end">
-                {role === 'RETAILER' ? (
+                {mounted && role === 'RETAILER' ? (
                   <Link
                     href="/retailer"
                     className="w-full text-center py-3.5 px-6 rounded-full bg-[#FF7836] hover:bg-[#FF6A1F] text-[#342421] font-bold text-sm uppercase tracking-wider border-2 border-white/20 shadow-[2px_2px_0px_rgba(0,0,0,0.3)] transition-all flex items-center justify-center gap-2"

@@ -1408,6 +1408,22 @@
         const data = await res.json().catch(() => ({}));
 
         if (res.status === 409 || data.error === 'DUPLICATE_SESSION_DETECTED') {
+          if (!data.boundDeviceId || data.code === 'DEVICE_CREDENTIALS_REQUIRED' || data.code === 'DEVICE_REVOKED' || data.code === 'DEVICE_ID_REQUIRED') {
+            try {
+              localStorage.removeItem('ypg_device_id');
+              localStorage.removeItem('ypg_device_token');
+              DeviceIdentity.currentDeviceId = null;
+              DeviceIdentity.currentDeviceToken = null;
+              const retryHeaders = getApiHeaders();
+              const retryRes = await fetch(`${API_BASE}/api/v1/checkout/${PAYMENT_ID}/state?activate=true`, { headers: retryHeaders });
+              if (retryRes.ok) {
+                const retryData = await retryRes.json().catch(() => ({}));
+                renderState(retryData);
+                dismissSplashScreen();
+                return;
+              }
+            } catch {}
+          }
           renderDuplicateSession(data);
           dismissSplashScreen();
           return;

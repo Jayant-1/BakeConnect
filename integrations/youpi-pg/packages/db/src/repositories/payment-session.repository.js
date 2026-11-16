@@ -425,7 +425,10 @@ export class PaymentSessionRepository {
     if (!row) return null;
     const now = new Date();
     const isStale = (row.status === PaymentStatus.ACTIVE && row.expires_at && new Date(row.expires_at) <= now) ||
-      (row.status === PaymentStatus.PROCESSING && row.processing_expires_at && new Date(row.processing_expires_at) <= now);
+      (row.status === PaymentStatus.PROCESSING && row.processing_expires_at && new Date(row.processing_expires_at) <= now) ||
+      (row.status === PaymentStatus.QUEUED && row.expires_at && new Date(row.expires_at) <= now) ||
+      (row.created_at && (now.getTime() - new Date(row.created_at).getTime()) > 15 * 60 * 1000) ||
+      (row.expires_at && new Date(row.expires_at) <= now);
     if (isStale) {
       const terminalStatus = row.status === PaymentStatus.PROCESSING ? PaymentStatus.FAILED : PaymentStatus.EXPIRED;
       this.transitionToTerminal(row.id, terminalStatus);

@@ -259,19 +259,26 @@ export function registerPaymentRoutes(server, ctx) {
 
         // CASE 3: Active session bound to a device + missing or different device -> DUPLICATE_SESSION_DETECTED
         if (existing.deviceId && (!deviceId || deviceId !== existing.deviceId)) {
-          HttpServer.json(res, 409, {
-            error: 'DUPLICATE_SESSION_DETECTED',
-            code: 'DEVICE_SESSION_MISMATCH',
-            session_id: existing.id,
-            activeSession: {
-              paymentId: existing.id,
-              orderId: existing.orderId,
-              amount: toRupeesString(existing.amountPaise)
-            },
-            action: 'END_SESSION_AND_CREATE_NEW',
-            message: 'This payment session was created on another device. For security reasons, this session cannot be continued from this device.'
-          });
-          return;
+          const nowMs = Date.now();
+          const isStale = (existing.expiresAt && existing.expiresAt.getTime() <= nowMs) ||
+            (existing.createdAt && (nowMs - existing.createdAt.getTime()) > 15 * 60 * 1000);
+          if (isStale) {
+            ctx.sessionRepo.transitionToTerminal(existing.id, PaymentStatus.EXPIRED);
+          } else {
+            HttpServer.json(res, 409, {
+              error: 'DUPLICATE_SESSION_DETECTED',
+              code: 'DEVICE_SESSION_MISMATCH',
+              session_id: existing.id,
+              activeSession: {
+                paymentId: existing.id,
+                orderId: existing.orderId,
+                amount: toRupeesString(existing.amountPaise)
+              },
+              action: 'END_SESSION_AND_CREATE_NEW',
+              message: 'This payment session was created on another device. For security reasons, this session cannot be continued from this device.'
+            });
+            return;
+          }
         }
 
         // CASE 2: Active session + Same device -> CONTINUE ACTIVE SESSION
@@ -353,7 +360,12 @@ export function registerPaymentRoutes(server, ctx) {
     if (customerId && ctx.sessionRepo) {
       const activeForCust = ctx.sessionRepo.findActiveForCustomer ? ctx.sessionRepo.findActiveForCustomer(customerId) : null;
       if (activeForCust) {
-        if (activeForCust.deviceId && (!deviceId || deviceId !== activeForCust.deviceId)) {
+        const nowMs = Date.now();
+        const isStale = (activeForCust.expiresAt && activeForCust.expiresAt.getTime() <= nowMs) ||
+          (activeForCust.createdAt && (nowMs - activeForCust.createdAt.getTime()) > 15 * 60 * 1000);
+        if (isStale) {
+          ctx.sessionRepo.transitionToTerminal(activeForCust.id, PaymentStatus.EXPIRED);
+        } else if (activeForCust.deviceId && (!deviceId || deviceId !== activeForCust.deviceId)) {
           HttpServer.json(res, 409, {
             error: 'DUPLICATE_SESSION_DETECTED',
             code: 'DEVICE_SESSION_MISMATCH',

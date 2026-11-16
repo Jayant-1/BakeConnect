@@ -8,6 +8,11 @@ import { useAuth } from '../../lib/store/auth-context';
 
 export function Footer() {
   const { role } = useAuth();
+  const [mounted, setMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
 
   return (
     <footer className="bg-[#342421] text-[#FFF7EB] border-t-2 border-[#342421] pt-14 pb-10 mt-12 sm:mt-16">
@@ -42,7 +47,7 @@ export function Footer() {
             </div>
           </div>
 
-          {role === 'RETAILER' ? (
+          {mounted && role === 'RETAILER' ? (
             <>
               {/* Wholesale Operations (Cols 6-8) */}
               <div className="lg:col-span-3 space-y-3">
@@ -93,7 +98,7 @@ export function Footer() {
                 </div>
               </div>
             </>
-          ) : role === 'DIRECT_CUSTOMER' ? (
+          ) : mounted && role === 'DIRECT_CUSTOMER' ? (
             <>
               {/* Direct Customer Ordering (Cols 6-8) */}
               <div className="lg:col-span-3 space-y-3">
