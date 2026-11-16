@@ -70,3 +70,9 @@ coverage/
 .tmp_apk_build/
 .vercel
 .env*
+
+# Media & Screenshot Dumps
+frontend/public/media/
+Screen Shot*
+*.mp4
+docs/redesign/evidence/
