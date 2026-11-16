@@ -87,45 +87,59 @@ export default function HomePage() {
     loadData();
   }, []);
 
-  // Curated 3-4 products matching the selected craving
+  // Curated 4 products matching the selected craving, prioritizing signature bakes
   const curatedProducts = useMemo(() => {
     if (products.length === 0) return [];
 
     if (activeTab === 'everyday') {
+      const priority = ['fresh-ladi-pav', 'classic-milk-bread', 'whole-wheat-bread', 'french-artisan-baguette'];
+      const byPriority = priority.map((slug) => products.find((p) => p.slug === slug)).filter(Boolean) as Product[];
+      if (byPriority.length >= 4) return byPriority.slice(0, 4);
+
       const matches = products.filter(
         (p) =>
-          p.name.toLowerCase().includes('pav') ||
-          p.name.toLowerCase().includes('sourdough') ||
-          p.name.toLowerCase().includes('baguette') ||
-          p.name.toLowerCase().includes('burger') ||
-          p.categoryName?.toLowerCase().includes('bread') ||
-          p.categoryName?.toLowerCase().includes('buns')
+          !byPriority.some((bp) => bp.id === p.id) &&
+          (p.name.toLowerCase().includes('pav') ||
+            p.name.toLowerCase().includes('sourdough') ||
+            p.name.toLowerCase().includes('baguette') ||
+            p.categoryName?.toLowerCase().includes('bread') ||
+            p.categoryName?.toLowerCase().includes('buns'))
       );
-      return matches.slice(0, 4);
+      return [...byPriority, ...matches].slice(0, 4);
     }
 
     if (activeTab === 'chai-time') {
+      const priority = ['pure-butter-khari', 'double-baked-saunf-rusk', 'desi-ghee-nankhatai', 'irani-mawa-cake'];
+      const byPriority = priority.map((slug) => products.find((p) => p.slug === slug)).filter(Boolean) as Product[];
+      if (byPriority.length >= 4) return byPriority.slice(0, 4);
+
       const matches = products.filter(
         (p) =>
-          p.name.toLowerCase().includes('khari') ||
-          p.name.toLowerCase().includes('nankhatai') ||
-          p.name.toLowerCase().includes('rusk') ||
-          p.name.toLowerCase().includes('mawa') ||
-          p.name.toLowerCase().includes('puff')
+          !byPriority.some((bp) => bp.id === p.id) &&
+          (p.name.toLowerCase().includes('khari') ||
+            p.name.toLowerCase().includes('nankhatai') ||
+            p.name.toLowerCase().includes('rusk') ||
+            p.name.toLowerCase().includes('mawa') ||
+            p.name.toLowerCase().includes('puff'))
       );
-      return matches.slice(0, 4);
+      return [...byPriority, ...matches].slice(0, 4);
     }
 
     // celebration
+    const priority = ['eggless-chocolate-cake', 'classic-truffle-cake', 'dutch-truffle-pastry', 'crispy-cream-roll'];
+    const byPriority = priority.map((slug) => products.find((p) => p.slug === slug)).filter(Boolean) as Product[];
+    if (byPriority.length >= 4) return byPriority.slice(0, 4);
+
     const matches = products.filter(
       (p) =>
-        p.name.toLowerCase().includes('cake') ||
-        p.name.toLowerCase().includes('brownie') ||
-        p.name.toLowerCase().includes('truffle') ||
-        p.categoryName?.toLowerCase().includes('celebration') ||
-        p.categoryName?.toLowerCase().includes('patisserie')
+        !byPriority.some((bp) => bp.id === p.id) &&
+        (p.name.toLowerCase().includes('cake') ||
+          p.name.toLowerCase().includes('brownie') ||
+          p.name.toLowerCase().includes('truffle') ||
+          p.categoryName?.toLowerCase().includes('celebration') ||
+          p.categoryName?.toLowerCase().includes('patisserie'))
     );
-    return matches.slice(0, 4);
+    return [...byPriority, ...matches].slice(0, 4);
   }, [products, activeTab]);
 
   const activeTabConfig = TABS.find((t) => t.id === activeTab) || TABS[0];
