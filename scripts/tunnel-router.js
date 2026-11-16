@@ -47,6 +47,8 @@ const server = http.createServer((req, res) => {
     url.startsWith('/js/') ||
     url.startsWith('/icons/') ||
     url.startsWith('/assets/') ||
+    url.startsWith('/youpi.js') ||
+    url.startsWith('/sdk/') ||
     url.startsWith('/api/v1/checkout/') ||
     url.startsWith('/api/v1/customer/')
   ) {

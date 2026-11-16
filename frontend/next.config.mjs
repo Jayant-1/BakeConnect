@@ -25,6 +25,22 @@ const nextConfig = {
         source: '/checkout/:path*',
         destination: `${backendTarget}/checkout/:path*`,
       },
+      {
+        source: '/css/:path*',
+        destination: `${backendTarget}/css/:path*`,
+      },
+      {
+        source: '/js/:path*',
+        destination: `${backendTarget}/js/:path*`,
+      },
+      {
+        source: '/icons/:path*',
+        destination: `${backendTarget}/icons/:path*`,
+      },
+      {
+        source: '/youpi.js',
+        destination: `${backendTarget}/youpi.js`,
+      },
     ];
   },
 };

@@ -30,6 +30,7 @@ frontend/.env.local
 *.local.json
 .staff-credentials.local.json
 backend/.staff-credentials.local.json
+scripts/tunnel-url.txt
 **/.secrets/
 **/*.sqlite*
 **/*.db*
