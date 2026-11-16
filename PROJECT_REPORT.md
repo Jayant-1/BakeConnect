@@ -6,57 +6,342 @@
 ---
 
 ## Table of Contents
-- [1. System Overview & Monorepo Architecture](#1-system-overview--monorepo-architecture)
-- [Database Design](#database-design)
-  - [3. Entity-Relationship (ER) Diagram](#3-entity-relationship-er-diagram)
-  - [4. Table Structure](#4-table-structure)
-  - [5. Data Dictionary](#5-data-dictionary)
-- [Chapter 5: Implementation](#chapter-5-implementation)
-  - [5.1 Module Descriptions](#51-module-descriptions)
-  - [5.2 Core Algorithms](#52-core-algorithms)
-  - [5.3 System Flowcharts](#53-system-flowcharts)
-  - [5.4 Screenshots of Verified System](#54-screenshots-of-verified-system)
-- [Chapter 6: Testing](#chapter-6-testing)
-  - [7.1 Test Plan](#71-test-plan)
-  - [7.2 Test Cases Table](#72-test-cases-table)
-  - [7.3 Types of Testing](#73-types-of-testing)
-- [Chapter 7: Conclusion](#chapter-7-conclusion)
-  - [Summary of Work](#summary-of-work)
-  - [Objectives Achieved](#objectives-achieved)
-  - [Key Learnings](#key-learnings)
-- [Chapter 8: References](#chapter-8-references)
+- [Chapter 1: System Overview & Project Scope](#chapter-1-system-overview--project-scope)
+- [Chapter 2: System Architecture](#chapter-2-system-architecture)
+  - [2.1 Multi-Tier Architecture Topology](#21-multi-tier-architecture-topology)
+  - [2.2 Ingress & Reverse Proxy Topology](#22-ingress--reverse-proxy-topology)
+  - [2.3 End-to-End Concurrency & Payment Reconciliation Lifecycle](#23-end-to-end-concurrency--payment-reconciliation-lifecycle)
+  - [2.4 Modular Monolith Domain Boundaries & Dependency Model](#24-modular-monolith-domain-boundaries--dependency-model)
+  - [2.5 Architectural Invariants & Non-Functional Guarantees](#25-architectural-invariants--non-functional-guarantees)
+- [Chapter 3: Database Design](#chapter-3-database-design)
+  - [3.1 Entity-Relationship (ER) Diagram](#31-entity-relationship-er-diagram)
+  - [3.2 Table Structure](#32-table-structure)
+  - [3.3 Data Dictionary](#33-data-dictionary)
+- [Chapter 4: Implementation](#chapter-4-implementation)
+  - [4.1 Module Descriptions](#41-module-descriptions)
+  - [4.2 Core Algorithms](#42-core-algorithms)
+  - [4.3 System Flowcharts](#43-system-flowcharts)
+  - [4.4 Screenshots of Verified System](#44-screenshots-of-verified-system)
+- [Chapter 5: Testing](#chapter-5-testing)
+  - [5.1 Test Plan](#51-test-plan)
+  - [5.2 Test Cases Table](#52-test-cases-table)
+  - [5.3 Types of Testing](#53-types-of-testing)
+- [Chapter 6: Conclusion](#chapter-6-conclusion)
+  - [6.1 Summary of Work](#61-summary-of-work)
+  - [6.2 Objectives Achieved](#62-objectives-achieved)
+  - [6.3 Key Learnings](#63-key-learnings)
+- [Chapter 7: References](#chapter-7-references)
 
 ---
 
-# 1. System Overview & Monorepo Architecture
+# Chapter 1: System Overview & Project Scope
 
-BakeConnect is an enterprise-grade digital distribution and retail commerce platform engineered for neighbourhood artisanal bakeries with wholesale delivery routes (e.g. Pune and western Maharashtra). It unifies two distinct commerce models into a single modular monolith:
-1. **Direct Customer Retail (B2C)**: Real-time consumer ordering, fresh daily batch scheduling (Morning Batch at 6:00 AM, Mid-Morning Batch at 11:30 AM), and instant peer-to-peer UPI checkout.
-2. **Wholesale Distribution (B2B)**: Shopkeeper onboarding, statutory 15-character Indian GSTIN verification, volume discount tiers, credit lines (Immediate, Net-15, Net-30), statutory tax invoicing, and 90-day cadence replenishment forecasting.
+BakeConnect is an enterprise-grade digital distribution and retail commerce platform engineered for neighbourhood artisanal bakeries with wholesale delivery routes (e.g., Pune and western Maharashtra). It unifies two distinct commerce models into a single modular monolith:
+
+1. **Direct Customer Retail (B2C)**: Real-time consumer ordering, fresh daily batch scheduling (Morning Batch at 6:00 AM, Mid-Morning Batch at 11:30 AM), instant peer-to-peer UPI checkout, and live order tracking.
+2. **Wholesale Distribution (B2B)**: Commercial merchant onboarding, statutory 15-character Indian GSTIN verification, tiered volume discounting, commercial credit terms (Immediate, Net-3, Net-15, Custom), statutory tax invoicing (`INV-YYYY-XXXXX`), double-entry accounts receivable ledgers, and 90-day cadence replenishment forecasting.
+
+---
+
+# Chapter 2: System Architecture
+
+BakeConnect is architected as a high-concurrency, hybrid-cloud platform designed for deterministic execution, zero data drift, and sub-second transaction processing. The system bridges a globally distributed cloud edge (Vercel) with an on-premises backend runtime via a secure tunnel router, orchestrating modular monolith domain boundaries backed by PostgreSQL 18 and a self-hosted zero-commission UPI payment engine.
+
+## 2.1 Multi-Tier Architecture Topology
+
+The overall system architecture is partitioned into six clear, decoupled tiers: Presentation & Edge Tier, Ingress & Hybrid Cloud Bridge, Backend Core Modular Monolith, Persistence & Caching Tier, Self-Hosted Payment Engine Tier, and External Banking / Notification Infrastructure.
 
 ```mermaid
-graph TD
-    Client["Browser / Mobile Client<br/>(Customer / Retailer)"] -->|HTTPS| VercelEdge["Vercel Edge Network<br/>bakeconnect.vercel.app"]
-    VercelEdge --> NextJS["Next.js 15 App Router<br/>(React 19, Tailwind CSS)"]
+flowchart TD
+    subgraph PresentationTier ["1. Presentation & Client Tier (Global Edge)"]
+        direction TB
+        B2CClient["Direct Retail Client (B2C)<br/>• Next.js 15 App Router & React 19<br/>• Artisanal Catalog & Cart Engine<br/>• Batch Slots (6:00 AM / 11:30 AM)<br/>• Real-time SSE Order Status"]
+        B2BClient["Wholesale Merchant Portal (B2B)<br/>• Statutory 15-char GSTIN Validation<br/>• Bulk MOQ & Tiered Wholesale Rates<br/>• Commercial Credit (Net-15/30 Terms)<br/>• Accounts Receivable Statement"]
+        AdminClient["Bakery Admin Hub<br/>• Catalog & Inventory Controls<br/>• State Machine (Accept/Delay/Decline)<br/>• Receivables Aging Dashboard<br/>• COGS Margin & Sales Reports"]
+        VercelCDN["Vercel Global Edge Network<br/>bakeconnect.vercel.app<br/>TLS 1.3 Termination & Edge SSR"]
+        
+        B2CClient --> VercelCDN
+        B2BClient --> VercelCDN
+        AdminClient --> VercelCDN
+    end
+
+    subgraph IngressTier ["2. Ingress & Hybrid Cloud Bridge"]
+        direction TB
+        CloudflareTunnel["Cloudflare Quick Tunnel<br/>*.trycloudflare.com (QUIC / HTTP/2)"]
+        TunnelRouter["Unified Tunnel Router (:8000)<br/>• Node.js High-Concurrency Reverse Proxy<br/>• Transparent Preflight CORS Interceptor<br/>• Zero-Buffering SSE Stream Pipe<br/>• WebSocket Upgrade Multiplexer"]
+        
+        VercelCDN -->|Secure HTTPS / WSS Tunnel| CloudflareTunnel
+        CloudflareTunnel --> TunnelRouter
+    end
+
+    subgraph BackendTier ["3. Backend Core Tier (Spring Boot 3.4.1 / Java 21)"]
+        direction TB
+        VirtualThreads["Java 21 Virtual Threads Pool (Project Loom)<br/>High-Throughput Concurrent Request Workers"]
+        
+        subgraph DomainModules ["Modular Monolith Domain Boundaries"]
+            SecurityMod["Identity & Security Module<br/>(BCrypt, Dual-Claim JWT, RBAC, IDOR Guards)"]
+            CatalogMod["Product Catalog & Pricing Module<br/>(Dual B2C/B2B Rates, COGS, Optimistic @Version)"]
+            CartMod["Cart & Quotation Engine<br/>(Authoritative Server GST & Promotional Rules)"]
+            OrderMod["Ordering & Concurrency Engine<br/>(Deterministic Ascending UUID Row Locks)"]
+            RetailerMod["B2B Retailer & Credit Module<br/>(GSTIN Verification, 90-Day Replenishment)"]
+            BillingMod["Billing & Ledger Module<br/>(Tax Invoices, Append-Only Receivables)"]
+            PaymentSPI["Payment Gateway SPI<br/>(MOCK / YOUPI_PG Adapters & Signature Guard)"]
+            OutboxMod["Transactional Outbox Module<br/>(PostgreSQL Event Table & Async Poller)"]
+            ReportMod["Financial Reporting Module<br/>(AOV, Gross/Net Revenue, Margin Insights)"]
+        end
+        
+        TunnelRouter -->|"/api/v1/*", "/actuator/*"| SecurityMod
+        SecurityMod --> VirtualThreads
+        VirtualThreads --> CatalogMod
+        VirtualThreads --> CartMod
+        CartMod --> OrderMod
+        OrderMod --> RetailerMod
+        OrderMod --> BillingMod
+        OrderMod --> PaymentSPI
+        OrderMod --> OutboxMod
+        RetailerMod --> BillingMod
+        BillingMod --> ReportMod
+    end
+
+    subgraph DataTier ["4. Persistence & Ephemeral Cache Tier"]
+        direction TB
+        PostgreSQL[("PostgreSQL 18 Database (:5433)<br/>• Authoritative System of Record<br/>• Strict ACID Transactions<br/>• Flyway Schema Versioning<br/>• Append-Only Receivables Ledger<br/>• Outbox Event Storage")]
+        RedisCache[("Redis 7 Cache (:6379)<br/>• Strict Read-Through Cache-Only<br/>• Non-Persistent: save='' appendonly=no<br/>• Catalog & Taxonomy Cache<br/>• Zero Inventory / Session State")]
+    end
+
+    subgraph PaymentEngineTier ["5. Self-Hosted Payment Engine (YouPi PG)"]
+        direction TB
+        CheckoutPortal["YouPi Checkout Portal (:7000)<br/>Dynamic UPI Intent & QR Code Renderer"]
+        PaymentAPI["Payment Processing API (:6100)<br/>Dynamic Verification Key Allocator (Paise)"]
+        SMSObserver["Banking SMS Observer Daemon<br/>(Headless Chrome / Android SMS Forwarder)"]
+        YouPiDB[("YouPi SQLite DB<br/>Sessions, Keys & Logs")]
+        
+        CheckoutPortal --> PaymentAPI
+        PaymentAPI --> YouPiDB
+        SMSObserver -->|Real-Time Bank Alert| PaymentAPI
+    end
+
+    subgraph ExternalTier ["6. External Financial & Notification Infrastructure"]
+        direction TB
+        NPCIBank["NPCI UPI Network & Core Banking<br/>(Customer UPI App & Instant SMS Alert)"]
+        EmailRelay["Transactional Mail Server<br/>(SMTP Notification Dispatcher)"]
+    end
+
+    TunnelRouter -->|"/checkout/*", "/css/*", "/js/*"| CheckoutPortal
+    TunnelRouter -->|"/payment-api/*"| PaymentAPI
+
+    DomainModules -->|Spring Data JPA & HikariCP| PostgreSQL
+    DomainModules -->|Read-Through Cache / Invalidation| RedisCache
+
+    PaymentSPI -->|Initiate Intent| PaymentAPI
+    PaymentAPI -->|Cryptographic HMAC-SHA256 Webhook| PaymentSPI
     
-    NextJS -->|"/api/v1/*", "/checkout/*"| Cloudflare["Cloudflare Quick Tunnel<br/>*.trycloudflare.com"]
-    Cloudflare --> TunnelRouter["Unified Tunnel Router<br/>(Port 8000 Reverse Proxy)"]
+    CheckoutPortal -.->|Render Intent| NPCIBank
+    NPCIBank -.->|SMS Credit Notification| SMSObserver
+    OutboxMod -->|Background Poller| EmailRelay
+```
+
+### Tier Responsibilities and Protocols
+
+1. **Presentation Tier (Vercel Edge)**: Next.js 15 App Router executing React 19 Server Components. Static marketing pages and cached catalog shells are delivered directly from edge nodes with sub-20ms TTFB. Dynamic user requests (order checkout, batch slot selection, B2B credit requests) invoke server actions and client fetch calls over TLS 1.3.
+2. **Ingress & Hybrid Cloud Bridge**: A Cloudflare Quick Tunnel terminates external public HTTPS traffic and forwards it via an encrypted HTTP/2 tunnel to the local on-premises Unified Tunnel Router on port `8000`. The router dispatches requests internally based on path prefix, eliminating CORS preflight friction.
+3. **Backend Core Modular Monolith**: Implemented in Spring Boot 3.4.1 using Java 21 Project Loom Virtual Threads (`spring.threads.virtual.enabled=true`). Virtual threads decouple connection blocking from operating system threads, permitting 1,000+ concurrent requests on minimal hardware.
+4. **Persistence & Ephemeral Cache Tier**:
+   - **PostgreSQL 18** (Port 5433): Authoritative System of Record. Flyway manages all schema migrations. All financial balances, order states, inventories, and outbox queues are stored with strict ACID guarantees.
+   - **Redis 7** (Port 6379): Operates strictly in cache-only mode (`--save "" --appendonly no`). It caches public product categories and read-only catalog lists. Per architectural decision (ADR-0001), no mutable financial state, inventory counters, or user sessions are ever stored in Redis.
+5. **Self-Hosted Payment Engine Tier (YouPi PG)**:
+   - **Checkout Portal (`:7000`)**: Renders dynamic UPI intent deep-links (`upi://pay?...`) and SVG QR codes.
+   - **Payment Processing API (`:6100`)**: Handles session lifecycles and dynamically allocates unique fractional paise tokens (e.g. ₹0.37) for transaction attribution.
+   - **Banking SMS Observer**: Monitors merchant bank incoming credit notifications in real-time, matching transactions to active orders without requiring manual reference entry.
+6. **External Tier**: Integrates with the NPCI UPI network for peer-to-peer settlement and transactional SMTP servers for asynchronous customer receipts.
+
+---
+
+## 2.2 Ingress & Reverse Proxy Topology
+
+In production hybrid deployments, the frontend runs globally distributed on Vercel Edge while backend services, database engines, and banking observer daemons run on dedicated host hardware. Cloudflare Quick Tunnels expose only a single local port per session. To solve port fragmentation, CORS preflight delays, and cookie credential policies, the **Unified Tunnel Router** acts as a single-origin reverse proxy:
+
+```mermaid
+flowchart LR
+    Client["Client Browser / App<br/>(HTTPS / WSS)"] -->|Vercel Edge| Cloudflare["Cloudflare Quick Tunnel<br/>*.trycloudflare.com"]
     
-    TunnelRouter -->|"/api/v1/*", "/actuator/*"| SpringBoot["Spring Boot 3.4.1 Backend<br/>(Java 21 Virtual Threads :8080)"]
-    TunnelRouter -->|"/checkout/*", "/payment-api/*"| YouPiPG["YouPi PG Engine<br/>(Checkout :7000, API :6100)"]
+    Cloudflare -->|Single Ingress Tunnel| Router["Unified Tunnel Router<br/>Port 8000 (Node.js)"]
     
-    SpringBoot --> PostgreSQL[("PostgreSQL 18 DB<br/>Port 5433<br/>Authoritative System of Record")]
-    SpringBoot --> Redis[("Redis 7 Cache<br/>Port 6379<br/>Strict Read-Through Cache")]
-    YouPiPG --> YouPiDB[("YouPi SQLite DB<br/>Transactions & Sessions")]
+    subgraph LocalHostServices ["Local / On-Premises Service Topology"]
+        Router -->|"/api/v1/*"<br/>"/actuator/*"| SB["Spring Boot Monolith<br/>Port 8080"]
+        Router -->|"/checkout/*"<br/>"/css/*", "/js/*"| PGPortal["YouPi Checkout UI<br/>Port 7000"]
+        Router -->|"/payment-api/*"| PGAPI["YouPi Core API<br/>Port 6100"]
+        Router -->|"/admin/*"| AdminHub["Admin Console<br/>Port 6001"]
+        Router -->|"/health"| Health["Router Self-Check<br/>JSON UP"]
+        
+        SB --> PG[("PostgreSQL 18<br/>Port 5433")]
+        SB --> RD[("Redis 7<br/>Port 6379")]
+        PGAPI --> SQLT[("YouPi SQLite<br/>data/youpi_pg.sqlite")]
+    end
+```
+
+### URL Dispatch Table
+
+| Path Pattern | Target Upstream | Port | Protocol & Capabilities |
+| :--- | :--- | :--- | :--- |
+| `/api/v1/*` | Spring Boot Monolith | `8080` | REST API, JWT auth, cart quotation, order management |
+| `/actuator/*` | Spring Boot Actuator | `8080` | Health probes, Prometheus metrics, thread pool stats |
+| `/checkout/*` | YouPi Checkout Portal | `7000` | Dynamic UPI QR display, intent deep-linking |
+| `/css/*`, `/js/*`, `/icons/*` | YouPi Static Assets | `7000` | Static stylesheets, banking icons, client poller |
+| `/payment-api/*` | YouPi Core API | `6100` | Transaction creation, signature verification, session status |
+| `/admin/*` | Merchant Admin Console | `6001` | Payment gateway merchant operations |
+| `/health` | Tunnel Router Daemon | `8000` | High-frequency router liveness check (`{"status":"UP"}`) |
+
+### Ingress Features
+- **Zero-Buffering SSE Streaming**: Responses with `content-type: text/event-stream` bypass proxy buffering (`Cache-Control: no-cache`, immediate header flushing) to ensure instantaneous push notifications reach clients upon order status updates.
+- **WebSocket Upgrade Multiplexing**: HTTP `upgrade` headers on `/api/v1/*` or `/actuator/*` route directly to Spring Boot, while checkout socket events pipe to the YouPi PG engine.
+- **Header Propagation**: Attaches `x-forwarded-for`, `x-forwarded-proto`, and `x-forwarded-host` to ensure backend audit logs preserve authentic client IP origins.
+
+---
+
+## 2.3 End-to-End Concurrency & Payment Reconciliation Lifecycle
+
+The checkout and payment lifecycle demonstrates the coordination between deterministic database concurrency, dynamic payment intent allocation, banking observers, and cryptographic webhooks:
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Customer as Customer / Merchant
+    participant Frontend as Next.js Storefront (Vercel)
+    participant Router as Tunnel Router (:8000)
+    participant Backend as Spring Boot Monolith (:8080)
+    participant DB as PostgreSQL 18 (:5433)
+    participant YouPi as YouPi PG Engine (:6100/:7000)
+    participant Bank as NPCI UPI & SMS Network
+    participant Observer as Bank SMS Observer Daemon
+
+    Customer->>Frontend: Clicks "Place Order" (Cart Items)
+    Frontend->>Router: POST /api/v1/orders (JWT Bearer)
+    Router->>Backend: Forward Request (Preserve CORS & Headers)
     
-    YouPiPG -->|HMAC-SHA256 Webhook| SpringBoot
+    rect rgb(240, 248, 255)
+        Note over Backend,DB: Deterministic Concurrency Control
+        Backend->>Backend: Sort Product UUIDs in Ascending Order
+        Backend->>DB: BEGIN Transaction (READ_COMMITTED)
+        Backend->>DB: SELECT * FROM products WHERE id IN (Sorted_UUIDs) ORDER BY id ASC FOR UPDATE
+        DB-->>Backend: Return Acquired Pessimistic Row Locks
+        Backend->>Backend: Validate Stock >= Requested Quantity
+        Backend->>DB: UPDATE products SET stock_quantity = stock - qty, version = version + 1
+        Backend->>DB: INSERT INTO orders, order_items (Immutable Snapshot)
+        Backend->>DB: INSERT INTO notification_outbox (ORDER_CREATED event)
+        Backend->>DB: COMMIT Transaction
+    end
+
+    Backend->>YouPi: POST /payment-api/initiate (Order ID, Base Amount ₹540.00)
+    YouPi->>YouPi: Allocate Dynamic Verification Token (e.g. 37 Paise)
+    YouPi-->>Backend: Return Checkout Session URL & Authoritative ₹540.37
+    Backend-->>Router: HTTP 201 Created (Checkout URL)
+    Router-->>Frontend: Forward Order Response
+    Frontend->>Customer: Redirect to Checkout Portal (:7000)
+
+    rect rgb(255, 250, 240)
+        Note over Customer,Bank: Zero-Commission UPI Payment
+        Customer->>YouPi: Open Dynamic UPI QR / Tap UPI Intent
+        Customer->>Bank: Pay ₹540.37 via GooglePay / PhonePe / Paytm
+        Bank-->>Customer: Payment Successful
+        Bank->>Observer: Bank Dispatches Credit SMS ("₹540.37 credited via UPI...")
+        Observer->>YouPi: Forward Intercepted SMS Payload
+        YouPi->>YouPi: Match Active Session with Expected Amount = 54037 Paise
+        YouPi->>YouPi: Generate HMAC-SHA256 Signature (Shared Secret)
+    end
+
+    rect rgb(240, 255, 240)
+        Note over YouPi,Backend: Cryptographic Webhook Reconciliation
+        YouPi->>Router: POST /api/v1/payments/webhook (Signature Header)
+        Router->>Backend: Forward Webhook Payload
+        Backend->>Backend: Constant-Time HMAC-SHA256 Verification
+        Backend->>DB: BEGIN Transaction
+        Backend->>DB: INSERT INTO webhook_event_inbox (Idempotency Key Check)
+        Backend->>DB: UPDATE orders SET payment_status = 'PAID', status = 'CONFIRMED'
+        Backend->>DB: INSERT INTO notification_outbox (PAYMENT_CONFIRMED event)
+        Backend->>DB: COMMIT Transaction
+        Backend-->>YouPi: HTTP 200 OK (Webhook Acknowledged)
+    end
+
+    Backend-->>Frontend: Server-Sent Event (SSE): Order Confirmed
+    Frontend->>Customer: Display Confirmed Order & Scheduled Hearth Batch
 ```
 
 ---
 
-# Database Design
+## 2.4 Modular Monolith Domain Boundaries & Dependency Model
 
-## 3. Entity-Relationship (ER) Diagram
+Rather than introducing distributed microservices with network hop overhead and distributed transaction (2PC/Saga) complexity, BakeConnect implements a **clean modular monolith** within Spring Boot. Packages enforce strict boundaries with unidirectional dependency flows:
+
+```mermaid
+flowchart TD
+    subgraph API_Entry ["API Ingress & Security Boundary"]
+        Security["Security & Authorization Layer<br/>(BCrypt, Dual-Claim JWT Filter, IDOR Guards)"]
+    end
+
+    subgraph Core_Domains ["Spring Boot Modular Monolith Domain Layers"]
+        direction TB
+        Identity["Identity Domain<br/>(User, Role, Address)"]
+        Catalog["Catalog Domain<br/>(Category, Product, Pricing)"]
+        Cart["Cart Quotation Engine<br/>(Server Tax & Discount Rules)"]
+        Ordering["Ordering Domain<br/>(Order State Machine, Inventory Locks)"]
+        Retailer["B2B Retailer Domain<br/>(GSTIN Validation, Credit Limits)"]
+        Billing["Billing Domain<br/>(Tax Invoicing, Append-Only Ledger)"]
+        Review["Review Domain<br/>(Verified Purchase Constraints)"]
+        Reporting["Financial Reporting Domain<br/>(AOV, Margins, Churn Metrics)"]
+        PaymentSPI["Payment Gateway SPI<br/>(Provider Abstraction, HMAC Validator)"]
+        Outbox["Transactional Notification Outbox<br/>(PostgreSQL Queue, Virtual Thread Poller)"]
+    end
+
+    Security --> Identity
+    Security --> Catalog
+    Security --> Cart
+    Security --> Ordering
+    Security --> Retailer
+    Security --> Billing
+    Security --> Reporting
+    Security --> Review
+
+    Catalog --> Cart
+    Cart --> Ordering
+    Ordering --> Retailer
+    Ordering --> Billing
+    Ordering --> PaymentSPI
+    Ordering --> Outbox
+    Ordering --> Review
+    Retailer --> Billing
+    Billing --> Reporting
+```
+
+### Module Responsibilities
+
+1. **Identity & Access Management (`com.bakeconnect.identity`)**: Issues stateless HMAC-SHA256 JWT tokens containing `userId`, `role`, and `email`. Enforces BCrypt password hashing and object-level ownership guards (`@PreAuthorize("@securityService.isOwner(...)")`) to eliminate Insecure Direct Object References (IDOR).
+2. **Product Catalog & Pricing (`com.bakeconnect.catalog`)**: Manages products, categories, stock availability, and dual pricing (B2C MRP vs. wholesale bulk price). Public read requests leverage Redis read-through caching.
+3. **Cart & Tax Quotation Engine (`com.bakeconnect.cart`)**: Enforces server-side authority over all item rates, volume thresholds, and statutory GST splits (5% total: 2.5% CGST + 2.5% SGST). Injected client prices are discarded.
+4. **Ordering & Concurrency Engine (`com.bakeconnect.ordering`)**: Manages the order state machine (`PENDING`, `ACCEPTED`, `CONFIRMED`, `DELAYED`, `DECLINED`, `DELIVERED`). Acquires deterministic ascending UUID row locks to guarantee zero overselling under high concurrency.
+5. **B2B Retailer & Commercial Credit (`com.bakeconnect.retailer`)**: Validates Indian statutory 15-character GSTINs via formal regex (`^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$`), sets credit limits, and computes 90-day reorder replenishment cadences.
+6. **Billing & Receivables Ledger (`com.bakeconnect.billing`)**: Generates statutory tax invoices (`INV-YYYY-XXXXX`), calculates payment due dates according to agreed terms (Net-3, Net-15, Custom), and maintains an immutable append-only ledger (`retailer_ledger`).
+7. **Payment Gateway SPI (`com.bakeconnect.payment`)**: Decouples payment providers (`MOCK` vs `YOUPI_PG`) behind a clean interface. Verifies webhook signatures using constant-time byte comparisons (`MessageDigest.isEqual`) to prevent timing attacks.
+8. **Transactional Notification Outbox (`com.bakeconnect.notification`)**: Implements the Transactional Outbox pattern. Events are persisted within the same database transaction as business operations, then polled and dispatched asynchronously by a dedicated virtual-thread worker with exponential backoff.
+9. **Financial & Margin Reporting (`com.bakeconnect.reporting`)**: Computes Gross Revenue, Net Revenue, Average Order Value (AOV), and Cost of Goods Sold (COGS) profit margins without blocking real-time transactional tables.
+
+---
+
+## 2.5 Architectural Invariants & Non-Functional Guarantees
+
+BakeConnect enforces five core system invariants across all execution paths:
+
+1. **Strict Currency Representation**: All monetary quantities use SQL `NUMERIC(12,2)` or `NUMERIC(14,2)` and Java `BigDecimal` with `RoundingMode.HALF_UP`. Floating-point types (`float`, `double`) are banned to prevent IEEE-754 precision drift.
+2. **Deterministic Deadlock-Free Locking**: Product IDs are sorted in lexicographical ascending order before acquiring pessimistic locks (`SELECT ... FOR UPDATE`). This guarantees a global lock acquisition hierarchy, eliminating cycle deadlocks between concurrent checkouts.
+3. **Single System of Record (PostgreSQL 18)**: Redis operates strictly as a read-through cache for catalog data. No inventory counters, shopping carts, or financial transactions touch Redis, ensuring zero cache-invalidation data drift.
+4. **Append-Only Commercial Ledger**: Direct `UPDATE` and `DELETE` SQL operations are forbidden on the `retailer_ledger` table. Balance adjustments must be submitted as explicit `'ADJUSTMENT'` entries, providing complete statutory audit trails.
+5. **Idempotent Webhook Processing**: Inbound payment webhooks must pass delivery ID deduplication via `webhook_event_inbox` before triggering state transitions, preventing duplicate payment crediting on gateway retries.
+
+---
+
+# Chapter 3: Database Design
+
+## 3.1 Entity-Relationship (ER) Diagram
 
 ```mermaid
 erDiagram
@@ -277,7 +562,7 @@ erDiagram
 
 ---
 
-## 4. Table Structure
+## 3.2 Table Structure
 
 ### 4.1 `users`
 Core user identity, credentials, roles, and account statuses.
@@ -413,7 +698,7 @@ B2B commercial accounts receivable tracking, payment terms scheduling, and doubl
 
 ---
 
-## 5. Data Dictionary
+## 3.3 Data Dictionary
 
 ### Core Domain Rules & Integrity Invariants
 
@@ -434,9 +719,9 @@ B2B commercial accounts receivable tracking, payment terms scheduling, and doubl
 
 ---
 
-# Chapter 5: Implementation
+# Chapter 4: Implementation
 
-## 5.1 Module Descriptions
+## 4.1 Module Descriptions
 
 1. **Identity & Access Management (`com.bakeconnect.identity`)**:
    Provides BCrypt password encryption, dual-claim JWT issuance, role-based security filters, and IDOR validation guards.
@@ -459,7 +744,7 @@ B2B commercial accounts receivable tracking, payment terms scheduling, and doubl
 
 ---
 
-## 5.2 Core Algorithms
+## 4.2 Core Algorithms
 
 ### Algorithm 1: Deterministic Ascending UUID Row-Locking (Ordering Module)
 **Objective**: Eliminates database deadlocks when concurrent users order overlapping items during high-traffic checkout spikes.
@@ -517,7 +802,7 @@ Output: DynamicAmountTotal, AllocatedPaiseToken
 
 ---
 
-## 5.3 System Flowcharts
+## 4.3 System Flowcharts
 
 ### Flowchart 1: Order Placement & Concurrency Inventory Lock
 
@@ -566,33 +851,33 @@ flowchart TD
 
 ---
 
-## 5.4 Screenshots of Verified System
+## 4.4 Screenshots of Verified System
 
-### Figure 5.1: Unified Auth & Login Portal
+### Figure 4.1: Unified Auth & Login Portal
 *Accessible at `https://bakeconnect.vercel.app/login` with single-click quick login.*  
 ![Login Portal](docs/screenshots/01_login_portal.png)
 
-### Figure 5.2: Bakery Storefront & Live Batch Scheduling
+### Figure 4.2: Bakery Storefront & Live Batch Scheduling
 *Accessible at `https://bakeconnect.vercel.app/shop` with active Pune hearth production batch indicator.*  
 ![Storefront](docs/screenshots/02_storefront_shop.png)
 
-### Figure 5.3: Order Page Payment Status & Gateway CTA
+### Figure 4.3: Order Page Payment Status & Gateway CTA
 *Accessible at `https://bakeconnect.vercel.app/order/:id` with tactile neo-brutalist payment panel.*  
 ![Order Payment Panel](docs/screenshots/03_order_payment_card.png)
 
-### Figure 5.4: Live YouPi PG Dynamic QR Checkout Portal
+### Figure 4.4: Live YouPi PG Dynamic QR Checkout Portal
 *Accessible at `http://localhost:7000/checkout/:id` with dynamic verification key (₹1.51) and instant banking listener.*  
 ![Checkout Portal](docs/screenshots/04_youpi_checkout_portal.png)
 
-### Figure 5.5: Verified & Reconciled Order Fulfillment
+### Figure 4.5: Verified & Reconciled Order Fulfillment
 *Customer order confirmed automatically upon bank SMS reconciliation without manual reference entry.*  
 ![Confirmed Order](docs/screenshots/05_order_confirmed_paid.png)
 
 ---
 
-# Chapter 6: Testing
+# Chapter 5: Testing
 
-## 7.1 Test Plan
+## 5.1 Test Plan
 
 ### Objectives
 1. Verify business correctness of dual-tier retail/wholesale pricing, GST calculations, and credit limits.
@@ -609,7 +894,7 @@ flowchart TD
 
 ---
 
-## 7.2 Test Cases Table
+## 5.2 Test Cases Table
 
 | Test Case ID | Module | Input / Scenario | Expected Output | Result |
 | :--- | :--- | :--- | :--- | :--- |
@@ -632,7 +917,7 @@ flowchart TD
 
 ---
 
-## 7.3 Types of Testing
+## 5.3 Types of Testing
 
 ### 1. Unit Testing
 - **Backend**: JUnit 5 and Mockito isolate domain logic (tax rounding, JWT verification, GSTIN regex checks, and dynamic paise generation) with no database dependency.
@@ -658,25 +943,25 @@ flowchart TD
 
 ---
 
-# Chapter 7: Conclusion
+# Chapter 6: Conclusion
 
-## Summary of Work
+## 6.1 Summary of Work
 The BakeConnect platform was engineered and deployed as an enterprise-grade, high-concurrency bakery distribution management system. The architecture synthesizes modern frontend engineering in **Next.js 15 (React 19)** with a robust **Spring Boot 3 (Java 21 Virtual Threads)** backend, **PostgreSQL 18** relational persistence, **strict cache-only Redis**, and a self-hosted **YouPi PG** peer-to-peer UPI payment reconciliation engine.
 
-## Objectives Achieved
+## 6.2 Objectives Achieved
 1. **Dual-Channel Sales Platform**: Successfully unified consumer retail ordering with wholesale B2B merchant workflows (GSTIN validation, credit ledgers, volume discounting).
 2. **Deterministic Concurrency & Zero Overselling**: Eliminated database deadlocks through ascending UUID lock ordering; verified under 1,000 concurrent virtual user stress tests.
 3. **Zero-Commission UPI Payment Automation**: Built an automated UPI reconciliation pipeline utilizing dynamic paise verification keys and real-time bank SMS alerts, eliminating merchant gateway fees.
 4. **Seamless Hybrid Deployment**: Connected a cloud-hosted Vercel production frontend to an on-premise local backend via a custom Unified Tunnel Router and Cloudflare Tunnel.
 
-## Key Learnings
+## 6.3 Key Learnings
 - **Virtual Threads Performance**: Java 21 Virtual Threads significantly simplify high-throughput I/O programming by avoiding reactive callback complexity while achieving equivalent concurrency.
 - **Relational Invariant Discipline**: Keeping PostgreSQL as the single source of truth and treating Redis strictly as an ephemeral cache completely eliminates cache-invalidation data drift.
 - **Client Hydration Guarding**: In modern React 19 / Next.js 15 applications, dynamic client state (such as timezone-dependent schedule calculations) must be deferred to client-only effects to prevent SSR hydration mismatches.
 
 ---
 
-# Chapter 8: References
+# Chapter 7: References
 
 1. Goetz, B. et al. (2023). *JEP 444: Virtual Threads*. OpenJDK Project Loom. [https://openjdk.org/jeps/444](https://openjdk.org/jeps/444)
 2. Walls, C. (2022). *Spring in Action, Sixth Edition*. Manning Publications.
