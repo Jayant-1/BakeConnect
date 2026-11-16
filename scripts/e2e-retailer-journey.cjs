@@ -201,7 +201,9 @@ async function runRetailerE2E() {
 
     // Open Official Tax Invoice Modal
     console.log('  Opening Tax Invoice Modal...');
-    const printInvoiceBtn = page.locator('button:has-text("PRINT INVOICE")');
+    const printInvoiceBtn = page.locator('button:has-text("Print Invoice")');
+    await printInvoiceBtn.waitFor({ state: 'visible', timeout: 10000 });
+    await page.waitForTimeout(500);
     await printInvoiceBtn.click();
 
     const invoiceModal = page.locator('[role="dialog"]');
@@ -218,10 +220,8 @@ async function runRetailerE2E() {
     await page.waitForTimeout(500);
 
     // Click "Back to Wholesale Desk"
-    await Promise.all([
-      page.waitForNavigation({ waitUntil: 'networkidle' }),
-      backToWholesaleLink.click(),
-    ]);
+    await backToWholesaleLink.click();
+    await page.waitForURL('**/retailer', { timeout: 10000 });
     console.log(`✓ Returned back to Wholesale Desk: ${page.url()}`);
     if (!page.url().includes('/retailer')) {
       throw new Error(`Expected /retailer but arrived at ${page.url()}`);
