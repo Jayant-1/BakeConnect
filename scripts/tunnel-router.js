@@ -11,6 +11,7 @@ const TARGETS = {
 };
 
 function setCorsHeaders(res, origin = '*') {
+  if (res.headersSent) return;
   res.setHeader('Access-Control-Allow-Origin', origin);
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, X-Merchant-Id, X-Merchant-Key, Idempotency-Key, x-internal-service-token, x-device-id, x-device-token');
@@ -95,18 +96,24 @@ const server = http.createServer((req, res) => {
       'x-forwarded-for': req.headers['x-forwarded-for'] || req.socket.remoteAddress
     }
   }, (proxyRes) => {
+    if (res.headersSent) return;
+
     // Preserve CORS headers
     setCorsHeaders(res, origin);
 
-    // If SSE stream, disable buffering
+    // If SSE stream, apply non-buffering headers directly in writeHead
     if (proxyRes.headers['content-type'] && proxyRes.headers['content-type'].includes('text/event-stream')) {
-      res.setHeader('Cache-Control', 'no-cache');
-      res.setHeader('Connection', 'keep-alive');
-      res.setHeader('Content-Type', 'text/event-stream');
-      res.flushHeaders?.();
+      const sseHeaders = {
+        ...proxyRes.headers,
+        'cache-control': 'no-cache',
+        'connection': 'keep-alive',
+        'content-type': 'text/event-stream'
+      };
+      res.writeHead(proxyRes.statusCode || 200, sseHeaders);
+    } else {
+      res.writeHead(proxyRes.statusCode || 500, proxyRes.headers);
     }
 
-    res.writeHead(proxyRes.statusCode || 500, proxyRes.headers);
     proxyRes.pipe(res);
   });
 
@@ -119,6 +126,14 @@ const server = http.createServer((req, res) => {
   });
 
   req.pipe(proxyReq);
+});
+
+process.on('uncaughtException', (err) => {
+  console.error('[Tunnel Router Uncaught Exception]:', err.message);
+});
+
+process.on('unhandledRejection', (reason) => {
+  console.error('[Tunnel Router Unhandled Rejection]:', reason);
 });
 
 // Support WebSockets (upgrade request forwarding)
