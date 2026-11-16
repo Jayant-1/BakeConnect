@@ -13,6 +13,17 @@ export default function RootError({
 }) {
   useEffect(() => {
     console.error('[BakeConnect] Root runtime error caught by error boundary:', error);
+
+    // Auto-recover from stale Turbopack / HMR chunk load failures
+    if (error?.message && /Failed to load chunk|Loading chunk/i.test(error.message)) {
+      const key = 'bc_chunk_reload_ts';
+      const last = sessionStorage.getItem(key);
+      const now = Date.now();
+      if (!last || now - parseInt(last, 10) > 6000) {
+        sessionStorage.setItem(key, String(now));
+        window.location.reload();
+      }
+    }
   }, [error]);
 
   return (

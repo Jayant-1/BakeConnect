@@ -47,6 +47,31 @@ export default function RootLayout({
       lang="en"
       className={`${anton.variable} ${roboto.variable} ${jetbrainsMono.variable}`}
     >
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                function checkChunkErr(msg) {
+                  if (msg && (msg.indexOf('Failed to load chunk') !== -1 || msg.indexOf('Loading chunk') !== -1)) {
+                    var k = 'bc_chunk_reload_ts';
+                    var last = sessionStorage.getItem(k);
+                    var now = Date.now();
+                    if (!last || (now - parseInt(last, 10)) > 6000) {
+                      sessionStorage.setItem(k, String(now));
+                      window.location.reload();
+                    }
+                  }
+                }
+                window.addEventListener('error', function(e) { checkChunkErr(e && e.message); });
+                window.addEventListener('unhandledrejection', function(e) {
+                  checkChunkErr((e && e.reason && e.reason.message) || (e && e.reason && String(e.reason)));
+                });
+              })();
+            `,
+          }}
+        />
+      </head>
       <body className="min-h-screen flex flex-col bg-[#FFF7EB] text-[#342421] font-sans selection:bg-[#FF7836] selection:text-white">
         <AuthProvider>
           <CartProvider>

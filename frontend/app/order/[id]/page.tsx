@@ -426,51 +426,74 @@ export default function OrderTrackingPage() {
             </div>
           </div>
 
-          <div className="p-3.5 rounded-2xl bg-cream-base border border-cream-border text-xs space-y-1">
-            <div className="flex justify-between">
-              <span className="text-crust-muted">Payment Method:</span>
-              <span className="font-bold text-crust-dark">
-                {order.paymentMethod === 'CREDIT_CYCLE' ? 'Net-15 Invoice Cycle' : 'UPI'}
-              </span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-crust-muted">Payment Status:</span>
-              <div className="flex items-center gap-2">
-                <span
-                  className={`font-bold ${
-                    order.paymentStatus === 'PAID'
-                      ? 'text-status-success'
-                      : 'text-status-warning'
-                  }`}
-                >
-                  {order.paymentStatus}
+          <div className="p-4 rounded-2xl bg-cream-base border border-cream-border text-xs">
+            <div className="space-y-2.5">
+              <div className="flex justify-between items-center">
+                <span className="text-crust-muted font-medium">Payment Method:</span>
+                <span className="font-bold text-crust-dark flex items-center gap-1.5">
+                  {order.paymentMethod === 'CREDIT_CYCLE' ? (
+                    'Net-15 Invoice Cycle'
+                  ) : (
+                    <>
+                      <span className="w-2 h-2 rounded-full bg-[#FF7836]" />
+                      <span>UPI Instant Pay</span>
+                    </>
+                  )}
                 </span>
-                {order.paymentStatus !== 'PAID' && order.paymentMethod === 'YOUPI_PG' && (
-                  <button
-                    type="button"
-                    onClick={() => handlePayViaYouPi(order)}
-                    disabled={isRedirectingToGateway}
-                    className="text-xs bg-[#FF7836] text-white hover:bg-[#FF6A1F] font-bold px-3 py-1 rounded-full border border-[#342421] shadow-[1px_1px_0px_#342421] transition-all flex items-center gap-1.5"
-                  >
-                    {isRedirectingToGateway ? (
-                      <>
-                        <RefreshCw className="w-3 h-3 animate-spin" />
-                        <span>Opening Gateway...</span>
-                      </>
-                    ) : (
-                      <>
-                        <span>Pay via YOUPI PG</span>
-                        <ExternalLink className="w-3 h-3" />
-                      </>
-                    )}
-                  </button>
+              </div>
+
+              <div className="flex justify-between items-center">
+                <span className="text-crust-muted font-medium">Payment Status:</span>
+                {order.paymentStatus === 'PAID' || order.paymentStatus === 'AUTHORIZED' ? (
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-green-100 text-green-800 border border-green-300">
+                    <CheckCircle2 className="w-3 h-3 text-green-600" />
+                    <span>PAID</span>
+                  </span>
+                ) : order.paymentStatus === 'FAILED' ? (
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-100 text-rose-800 border border-rose-300">
+                    <AlertCircle className="w-3 h-3 text-rose-600" />
+                    <span>FAILED</span>
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-900 border border-amber-300">
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                    <span>PENDING</span>
+                  </span>
                 )}
               </div>
+
+              {order.businessGst && (
+                <div className="flex justify-between items-center pt-1.5 border-t border-cream-border/60">
+                  <span className="text-crust-muted font-medium">GSTIN:</span>
+                  <span className="font-mono font-bold text-crust-dark">{order.businessGst}</span>
+                </div>
+              )}
             </div>
-            {order.businessGst && (
-              <div className="flex justify-between pt-1">
-                <span className="text-crust-muted">GSTIN:</span>
-                <span className="font-mono text-crust-dark">{order.businessGst}</span>
+
+            {order.paymentStatus !== 'PAID' && order.paymentStatus !== 'AUTHORIZED' && order.paymentMethod === 'YOUPI_PG' && (
+              <div className="mt-3.5 pt-3.5 border-t border-cream-border">
+                <button
+                  type="button"
+                  onClick={() => handlePayViaYouPi(order)}
+                  disabled={isRedirectingToGateway}
+                  className="w-full py-2.5 px-4 rounded-xl font-bold text-xs uppercase tracking-wider text-white bg-[#FF7836] hover:bg-[#FF6A1F] border-2 border-[#342421] shadow-[2px_2px_0px_#342421] active:translate-x-0.5 active:translate-y-0.5 transition-all flex items-center justify-center gap-2 group cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
+                >
+                  {isRedirectingToGateway ? (
+                    <>
+                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                      <span>Opening Gateway...</span>
+                    </>
+                  ) : (
+                    <>
+                      <CreditCard className="w-3.5 h-3.5" />
+                      <span>Pay via YOUPI PG &middot; {formatCurrency(order.totalAmount)}</span>
+                      <ExternalLink className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                    </>
+                  )}
+                </button>
+                <p className="text-[10px] text-crust-muted text-center mt-1.5">
+                  Instant QR &bull; 256-Bit Bank Verification
+                </p>
               </div>
             )}
           </div>
