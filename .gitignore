@@ -68,8 +68,9 @@ Thumbs.db
 # Coverage & Tests
 coverage/
 .tmp_apk_build/
-.vercel
-.env*
+.playwright-mcp/
+*.apk
+**/*.apk
 
 # Media & Screenshot Dumps
 frontend/public/media/

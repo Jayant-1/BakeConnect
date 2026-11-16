@@ -508,6 +508,16 @@ export class GoogleMessagesAutomator {
             })()
           `);
           this.lastSeenAt = new Date();
+          try {
+            fetch(`${this.apiBaseUrl}/api/v1/pollers/android/heartbeat`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'X-Device-Id': '00000000-0000-0000-0000-000000000001'
+              },
+              body: JSON.stringify({ deviceId: '00000000-0000-0000-0000-000000000001', timestamp: Date.now() })
+            }).catch(() => {});
+          } catch {}
         }
       } catch {}
     }, 25000); // Every 25 seconds
