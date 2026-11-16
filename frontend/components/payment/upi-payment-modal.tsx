@@ -433,9 +433,6 @@ export function UpiPaymentModal({
                     </div>
                   )}
 
-                  {/* Scan beam */}
-                  <div className="absolute inset-x-3 top-3 h-0.5 bg-gradient-to-r from-transparent via-[#FF7836]/60 to-transparent animate-pulse pointer-events-none" />
-
                   <div className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 bg-[#342421] text-white text-[9px] font-bold uppercase tracking-wider px-3 py-0.5 rounded-full border border-white whitespace-nowrap shadow-xs">
                     Scan with any UPI App
                   </div>
@@ -550,10 +547,7 @@ export function UpiPaymentModal({
               {/* Heartbeat Status Indicator */}
               <div className="p-2.5 rounded-xl bg-emerald-50 border border-emerald-300 flex items-center justify-between text-xs text-emerald-900">
                 <div className="flex items-center gap-2">
-                  <span className="relative flex h-2.5 w-2.5">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500" />
-                  </span>
+                  <span className="inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500 shrink-0" />
                   <span className="text-[11px] font-medium">
                     Autonomous bank observation active on {upiId}...
                   </span>

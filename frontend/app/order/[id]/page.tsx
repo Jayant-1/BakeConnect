@@ -205,7 +205,7 @@ export default function OrderTrackingPage() {
           </span>
         ) : (
           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FEF3C7] text-[#92400E] border-2 border-[#92400E] shadow-[2px_2px_0px_#92400E] text-xs font-bold whitespace-nowrap">
-            <Clock className="w-3.5 h-3.5 text-[#92400E] animate-pulse" />
+            <Clock className="w-3.5 h-3.5 text-[#92400E]" />
             <span>Awaiting Payment Confirmation</span>
           </span>
         );
@@ -604,7 +604,7 @@ export default function OrderTrackingPage() {
                   </span>
                 ) : (
                   <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#FEF3C7] text-[#92400E] border border-[#92400E]/40">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#D97706] animate-pulse" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#D97706]" />
                     <span>PENDING</span>
                   </span>
                 )}

@@ -6,9 +6,6 @@ import Link from 'next/link';
 import QRCode from 'qrcode';
 import {
   CheckCircle2,
-  Copy,
-  Check,
-  ShieldCheck,
   Smartphone,
   ExternalLink,
   RefreshCw,
@@ -19,7 +16,6 @@ import {
   CreditCard,
   Clock,
   Receipt,
-  UtensilsCrossed,
   HelpCircle,
   Lock,
 } from 'lucide-react';
@@ -422,10 +418,7 @@ export default function CheckoutAttemptPage() {
               <span className="text-[#342421]">Merchant Payment Terminal</span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="relative flex h-2.5 w-2.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500" />
-              </span>
+              <span className="inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500 shrink-0" />
               <span className="text-xs font-bold uppercase tracking-wider text-emerald-800">
                 Live Terminal Link
               </span>
@@ -508,8 +501,6 @@ export default function CheckoutAttemptPage() {
                           className="w-52 h-52 sm:w-56 sm:h-56 object-contain block"
                         />
 
-                        {/* Subtle Laser Scanning Sweep Line */}
-                        <div className="absolute inset-x-4 top-4 h-0.5 bg-gradient-to-r from-transparent via-[#FF7836]/60 to-transparent animate-pulse pointer-events-none" />
                       </div>
 
                       <div className="text-center space-y-1">
@@ -592,10 +583,7 @@ export default function CheckoutAttemptPage() {
                   {/* Live HDFC Bank SMS Observer Stream */}
                   <div className="p-3 bg-emerald-50 border-2 border-emerald-700/40 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-emerald-900">
                     <div className="flex items-center gap-2.5 text-left">
-                      <span className="relative flex h-3 w-3 shrink-0">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                        <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500" />
-                      </span>
+                      <span className="inline-flex rounded-full h-3 w-3 bg-emerald-500 shrink-0" />
                       <span className="font-semibold text-[11px] leading-snug">
                         Listening for HDFC bank SMS credit of {formatCurrency(checkoutState.amount)} to {checkoutState.payeeVpa}...
                       </span>

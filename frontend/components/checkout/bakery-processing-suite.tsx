@@ -76,7 +76,7 @@ export function BakeryProcessingSuite({
           </div>
 
           <div className="inline-flex items-center gap-2 text-xs font-mono font-bold text-[#342421]/80">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="w-2 h-2 rounded-full bg-emerald-500" />
             <span>OVEN LINE 1 ACTIVE</span>
           </div>
         </div>
@@ -84,9 +84,9 @@ export function BakeryProcessingSuite({
         {/* Animated Artisan Oven Visual */}
         <div className="py-8 text-center flex flex-col items-center">
           <div className="relative mb-5">
-            {/* Outer Glowing Pulsing Oven Ring */}
-            <div className="w-24 h-24 rounded-3xl bg-[#FF7836]/15 border-2 border-[#342421] shadow-[3px_3px_0px_#342421] flex items-center justify-center animate-bounce duration-1000">
-              <Flame className="w-12 h-12 text-[#FF7836] animate-pulse" />
+            {/* Outer Glowing Oven Ring */}
+            <div className="w-24 h-24 rounded-3xl bg-[#FF7836]/15 border-2 border-[#342421] shadow-[3px_3px_0px_#342421] flex items-center justify-center">
+              <Flame className="w-12 h-12 text-[#FF7836]" />
             </div>
 
             {/* Floating Bakery Steam Badges */}
@@ -166,7 +166,7 @@ export function BakeryProcessingSuite({
                     isCompleted
                       ? 'bg-emerald-600 text-white border-emerald-700'
                       : isCurrent
-                      ? 'bg-[#FF7836] text-white border-[#342421] shadow-[1px_1px_0px_#342421] animate-pulse'
+                      ? 'bg-[#FF7836] text-white border-[#342421] shadow-[1px_1px_0px_#342421]'
                       : 'bg-white text-[#342421]/50 border-[#342421]/30'
                   }`}
                 >

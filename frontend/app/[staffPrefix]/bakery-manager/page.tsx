@@ -400,7 +400,7 @@ export default function BakeryManagerPage({
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b-2 border-[#342421]/15">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
             <span className="text-xs uppercase font-extrabold tracking-widest text-[#342421]/70">
               Live Bakery Production Deck
             </span>
