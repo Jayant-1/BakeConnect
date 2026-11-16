@@ -7,7 +7,7 @@ import { apiClient } from '../../lib/api/client';
 import { Product, Category } from '../../lib/api/types';
 import { ProductCard } from '../../components/storefront/product-card';
 import { Button } from '../../components/ui/button';
-import { Search, SlidersHorizontal, X, Sparkles, Check } from 'lucide-react';
+import { Search, SlidersHorizontal, X, Sparkles, Check, ChevronLeft, ChevronRight } from 'lucide-react';
 
 function ShopContent() {
   const searchParams = useSearchParams();
@@ -20,6 +20,8 @@ function ShopContent() {
   const [selectedDietary, setSelectedDietary] = useState<string>('all');
   const [sortBy, setSortBy] = useState<'featured' | 'price-asc' | 'price-desc' | 'rating'>('featured');
   const [isLoading, setIsLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 16;
 
   useEffect(() => {
     async function load() {
@@ -44,6 +46,11 @@ function ShopContent() {
     const cat = searchParams.get('category');
     if (cat) setSelectedCategory(cat);
   }, [searchParams]);
+
+  // Reset to page 1 whenever any filter or search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, selectedCategory, selectedDietary, sortBy]);
 
   const filteredProducts = useMemo(() => {
     let result = [...products];
@@ -97,11 +104,44 @@ function ShopContent() {
     return result;
   }, [products, searchQuery, selectedCategory, selectedDietary, sortBy]);
 
+  const totalPages = Math.max(1, Math.ceil(filteredProducts.length / ITEMS_PER_PAGE));
+
+  const paginatedProducts = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredProducts.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  }, [filteredProducts, currentPage]);
+
+  const handlePageChange = (newPage: number) => {
+    setCurrentPage(newPage);
+    if (typeof window !== 'undefined') {
+      const el = document.getElementById('catalog-grid-top');
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } else {
+        window.scrollTo({ top: 300, behavior: 'smooth' });
+      }
+    }
+  };
+
+  const getPageNumbers = () => {
+    if (totalPages <= 7) {
+      return Array.from({ length: totalPages }, (_, i) => i + 1);
+    }
+    if (currentPage <= 4) {
+      return [1, 2, 3, 4, 5, '...', totalPages];
+    }
+    if (currentPage >= totalPages - 3) {
+      return [1, '...', totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1, totalPages];
+    }
+    return [1, '...', currentPage - 1, currentPage, currentPage + 1, '...', totalPages];
+  };
+
   const clearFilters = () => {
     setSearchQuery('');
     setSelectedCategory('all');
     setSelectedDietary('all');
     setSortBy('featured');
+    setCurrentPage(1);
   };
 
   const hasActiveFilters =
@@ -239,7 +279,12 @@ function ShopContent() {
 
           <div className="flex items-center gap-3">
             <span className="text-[#342421]/70 font-medium">
-              Showing <strong className="text-[#342421]">{filteredProducts.length}</strong> items
+              Showing{' '}
+              <strong className="text-[#342421]">
+                {filteredProducts.length > 0 ? (currentPage - 1) * ITEMS_PER_PAGE + 1 : 0}
+                –{Math.min(currentPage * ITEMS_PER_PAGE, filteredProducts.length)}
+              </strong>{' '}
+              of <strong className="text-[#342421]">{filteredProducts.length}</strong> bakes
             </span>
             {hasActiveFilters && (
               <button
@@ -256,11 +301,74 @@ function ShopContent() {
       </div>
 
       {/* Product Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {filteredProducts.map((product) => (
+      <div id="catalog-grid-top" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 scroll-mt-6">
+        {paginatedProducts.map((product) => (
           <ProductCard key={product.id} product={product} />
         ))}
       </div>
+
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <nav
+          aria-label="Catalogue pagination"
+          className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 sm:p-5 bg-[#FFF7EB] rounded-3xl border-2 border-[#342421] shadow-[4px_4px_0px_#342421]"
+        >
+          <div className="text-xs text-[#342421]/70 font-medium order-2 sm:order-1">
+            Page <strong className="text-[#342421]">{currentPage}</strong> of <strong className="text-[#342421]">{totalPages}</strong> (16 items per page)
+          </div>
+
+          <div className="flex items-center gap-1 sm:gap-2 order-1 sm:order-2 justify-center max-w-full">
+            <button
+              type="button"
+              onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
+              disabled={currentPage === 1}
+              className="h-8 sm:h-9 px-2 sm:px-3.5 rounded-xl border-2 border-[#342421] bg-white text-[#342421] font-bold text-xs shadow-[2px_2px_0px_#342421] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#FFF7EB] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all flex items-center gap-1 cursor-pointer shrink-0"
+              aria-label="Previous Page"
+            >
+              <ChevronLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <span className="hidden sm:inline">Previous</span>
+            </button>
+
+            <div className="flex items-center gap-0.5 sm:gap-1 justify-center">
+              {getPageNumbers().map((pageItem, idx) =>
+                pageItem === '...' ? (
+                  <span
+                    key={`ellipsis-${idx}`}
+                    className="w-5 h-8 sm:w-8 sm:h-9 flex items-center justify-center text-xs font-bold text-[#342421]/50 select-none"
+                  >
+                    …
+                  </span>
+                ) : (
+                  <button
+                    key={`page-${pageItem}`}
+                    type="button"
+                    onClick={() => handlePageChange(pageItem as number)}
+                    className={`w-7 h-8 sm:w-9 sm:h-9 rounded-xl font-mono font-bold text-xs border-2 border-[#342421] transition-all flex items-center justify-center cursor-pointer ${
+                      currentPage === pageItem
+                        ? 'bg-[#FF7836] text-[#342421] shadow-[2px_2px_0px_#342421]'
+                        : 'bg-white text-[#342421] shadow-[1px_1px_0px_#342421] hover:bg-[#FFF7EB] active:translate-x-0.5 active:translate-y-0.5'
+                    }`}
+                    aria-current={currentPage === pageItem ? 'page' : undefined}
+                  >
+                    {pageItem}
+                  </button>
+                )
+              )}
+            </div>
+
+            <button
+              type="button"
+              onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
+              disabled={currentPage === totalPages}
+              className="h-8 sm:h-9 px-2 sm:px-3.5 rounded-xl border-2 border-[#342421] bg-white text-[#342421] font-bold text-xs shadow-[2px_2px_0px_#342421] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#FFF7EB] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all flex items-center gap-1 cursor-pointer shrink-0"
+              aria-label="Next Page"
+            >
+              <span className="hidden sm:inline">Next</span>
+              <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            </button>
+          </div>
+        </nav>
+      )}
 
       {/* Empty State */}
       {filteredProducts.length === 0 && !isLoading && (
