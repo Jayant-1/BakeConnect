@@ -2,6 +2,8 @@
 
 Welcome to the **BakeConnect System Documentation**. This directory serves as the technical knowledge base for all architecture decisions, data models, integration specifications, and deployment runbooks.
 
+📖 [**Complete System Specification & Capstone Report**](SYSTEM_SPECIFICATION_REPORT.md) &mdash; Comprehensive report featuring Database Design (ERD, Table Structure, Data Dictionary), Chapter 5 (Implementation, Algorithms, Flowcharts, Screenshots), Chapter 6 (Testing, Test Plan, Test Cases, UAT), Chapter 7 (Conclusion), and Chapter 8 (References).
+
 ---
 
 ## 1. Visual Architecture & UML Diagrams
