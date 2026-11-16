@@ -9,6 +9,7 @@ import { useAuth } from '../../lib/store/auth-context';
 import { StorefrontLayout } from '../../components/layout/storefront-layout';
 import { BakeryProcessingSuite } from '../../components/checkout/bakery-processing-suite';
 import { apiClient } from '../../lib/api/client';
+import { backendClient } from '../../lib/api/backend-client';
 import { formatCurrency, validateGST } from '../../lib/utils';
 import { OrderType, PaymentMethod, Address } from '../../lib/api/types';
 import { Button } from '../../components/ui/button';
@@ -71,6 +72,66 @@ export default function CheckoutPage() {
   const [businessName, setBusinessName] = useState('');
   const [businessGst, setBusinessGst] = useState('');
   const [gstError, setGstError] = useState<string | null>(null);
+  const [isBusinessAutofilled, setIsBusinessAutofilled] = useState(false);
+
+  // Pre-fill business details (Registered Business Name & GSTIN) like name and address
+  React.useEffect(() => {
+    let isMounted = true;
+
+    async function loadBusinessDetails() {
+      // 1. First check local cached business details (fast local prefill)
+      try {
+        const cached = localStorage.getItem('bakeconnect_business_details');
+        if (cached && isMounted) {
+          const parsed = JSON.parse(cached);
+          if (parsed.businessName) {
+            setBusinessName((prev) => prev || parsed.businessName);
+          }
+          if (parsed.businessGst) {
+            setBusinessGst((prev) => prev || parsed.businessGst);
+          }
+          if (parsed.businessName || parsed.businessGst) {
+            setIsBusinessAutofilled(true);
+          }
+        }
+      } catch {}
+
+      // 2. Authoritative profile from backend for authenticated users / retailers
+      if (isAuthenticated) {
+        try {
+          const profile = await backendClient.getMyProfile();
+          if (isMounted && profile) {
+            if (profile.businessName) {
+              setBusinessName(profile.businessName);
+            }
+            if (profile.gstNumber) {
+              setBusinessGst(profile.gstNumber);
+            }
+            if (profile.businessName || profile.gstNumber) {
+              setIsBusinessAutofilled(true);
+              try {
+                localStorage.setItem(
+                  'bakeconnect_business_details',
+                  JSON.stringify({
+                    businessName: profile.businessName,
+                    businessGst: profile.gstNumber,
+                  })
+                );
+              } catch {}
+            }
+          }
+        } catch {
+          // Non-retailer customer or profile not created yet - gracefully ignore
+        }
+      }
+    }
+
+    loadBusinessDetails();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [isAuthenticated]);
 
   // Fulfillment Type
   const [fulfillmentType, setFulfillmentType] = useState<'DELIVERY' | 'PICKUP'>('DELIVERY');
@@ -247,6 +308,17 @@ export default function CheckoutPage() {
 
       setProcessingStep(2);
       const created = await apiClient.createOrder(orderPayload);
+      if (orderType === 'BUSINESS' && (businessName || businessGst)) {
+        try {
+          localStorage.setItem(
+            'bakeconnect_business_details',
+            JSON.stringify({
+              businessName: businessName.trim(),
+              businessGst: businessGst.trim().toUpperCase(),
+            })
+          );
+        } catch {}
+      }
       setProcessingOrderInfo((prev) => ({
         ...prev,
         orderNumber: created.orderNumber,
@@ -408,13 +480,21 @@ export default function CheckoutPage() {
             {/* Step 2: B2B Wholesale GST Details (Only shown in B2B channel) */}
             {channel === 'B2B' && (
               <div className="bg-[#FFF7EB] rounded-3xl p-6 sm:p-7 border-2 border-[#342421] shadow-[4px_4px_0px_#342421] space-y-4">
-                <div className="flex items-center gap-2.5 pb-3 border-b-2 border-[#342421]/15">
-                  <div className="w-8 h-8 rounded-full bg-[#FF7836] text-white border-2 border-[#342421] shadow-[2px_2px_0px_#342421] flex items-center justify-center font-bold text-xs">
-                    2
+                <div className="flex items-center justify-between pb-3 border-b-2 border-[#342421]/15">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-full bg-[#FF7836] text-white border-2 border-[#342421] shadow-[2px_2px_0px_#342421] flex items-center justify-center font-bold text-xs">
+                      2
+                    </div>
+                    <h2 className="font-sans text-base sm:text-lg font-bold text-[#342421] tracking-tight">
+                      Wholesale Business Invoicing & GST
+                    </h2>
                   </div>
-                  <h2 className="font-sans text-base sm:text-lg font-bold text-[#342421] tracking-tight">
-                    Wholesale Business Invoicing & GST
-                  </h2>
+                  {isBusinessAutofilled && (businessName || businessGst) && (
+                    <span className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-800 bg-emerald-100/90 px-2.5 py-1 rounded-full border border-emerald-300 shadow-[1px_1px_0px_#342421]">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                      Auto-filled
+                    </span>
+                  )}
                 </div>
 
                 <div className="p-4 rounded-2xl bg-white border-2 border-[#342421]/20 space-y-3">

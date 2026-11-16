@@ -50,10 +50,8 @@ export default function CheckoutAttemptPage() {
   const [checkoutState, setCheckoutState] = useState<CheckoutState | null>(null);
   const [order, setOrder] = useState<Order | null>(null);
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
-  const [copiedField, setCopiedField] = useState<'upi' | 'amount' | null>(null);
   const [isPaid, setIsPaid] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
-  const [isSimulating, setIsSimulating] = useState(false);
   const [timeLeftSeconds, setTimeLeftSeconds] = useState(600); // 10 minutes reservation
 
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -279,16 +277,6 @@ export default function CheckoutAttemptPage() {
     };
   }, [checkoutState, isPaid, paymentId, router]);
 
-  const copyToClipboard = async (text: string, field: 'upi' | 'amount') => {
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopiedField(field);
-      setTimeout(() => setCopiedField(null), 2000);
-    } catch (err) {
-      console.error('Failed to copy to clipboard:', err);
-    }
-  };
-
   const handleManualCheck = async () => {
     setIsVerifying(true);
     try {
@@ -314,30 +302,6 @@ export default function CheckoutAttemptPage() {
       }
     } finally {
       setIsVerifying(false);
-    }
-  };
-
-  const handleSimulateBankCredit = async () => {
-    if (!checkoutState) return;
-    setIsSimulating(true);
-    try {
-      await apiClient.simulatePaymentSuccess(
-        paymentId,
-        checkoutState.amount,
-        checkoutState.orderNumber || checkoutState.orderId
-      ).catch(() => null);
-
-      setIsPaid(true);
-      const target = checkoutState.orderNumber || checkoutState.orderId;
-      if (target) {
-        setTimeout(() => {
-          router.push(`/order/${target}?success=true`);
-        }, 1800);
-      }
-    } catch (e) {
-      console.error('Simulation error:', e);
-    } finally {
-      setIsSimulating(false);
     }
   };
 
@@ -487,20 +451,13 @@ export default function CheckoutAttemptPage() {
                   {/* High-Precision QR Viewfinder Chamber */}
                   {qrDataUrl && (
                     <div className="flex flex-col items-center justify-center space-y-3">
-                      <div className="relative p-4 bg-white rounded-2xl border-2 border-[#342421] shadow-[4px_4px_0px_#342421] inline-block">
-                        {/* 4 Corner Targeting Brackets */}
-                        <span className="absolute -top-1 -left-1 w-4 h-4 border-t-2 border-l-2 border-[#FF7836]" />
-                        <span className="absolute -top-1 -right-1 w-4 h-4 border-t-2 border-r-2 border-[#FF7836]" />
-                        <span className="absolute -bottom-1 -left-1 w-4 h-4 border-b-2 border-l-2 border-[#FF7836]" />
-                        <span className="absolute -bottom-1 -right-1 w-4 h-4 border-b-2 border-r-2 border-[#FF7836]" />
-
+                      <div className="p-4 bg-white rounded-2xl border-2 border-[#342421] shadow-[4px_4px_0px_#342421] inline-block">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
                           src={qrDataUrl}
                           alt="Scan UPI QR Code to Pay"
                           className="w-52 h-52 sm:w-56 sm:h-56 object-contain block"
                         />
-
                       </div>
 
                       <div className="text-center space-y-1">
@@ -514,34 +471,6 @@ export default function CheckoutAttemptPage() {
                       </div>
                     </div>
                   )}
-
-                  {/* Payee Credentials with One-Touch Copy */}
-                  <div className="bg-[#FFF7EB] rounded-2xl border-2 border-[#342421] p-3.5 space-y-2.5 shadow-[2px_2px_0px_#342421]">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-[#342421]/70 font-semibold">Payee Name:</span>
-                      <span className="font-bold text-[#342421]">{checkoutState.payeeName}</span>
-                    </div>
-                    <div className="flex items-center justify-between text-xs pt-2 border-t border-[#342421]/15">
-                      <span className="text-[#342421]/70 font-semibold">Merchant UPI VPA:</span>
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono font-bold text-[#342421] bg-white px-2 py-0.5 rounded border border-[#342421]/20">
-                          {checkoutState.payeeVpa}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => copyToClipboard(checkoutState.payeeVpa, 'upi')}
-                          className="p-1 hover:bg-white rounded border border-[#342421]/30 text-[#342421] transition-colors"
-                          title="Copy UPI ID"
-                        >
-                          {copiedField === 'upi' ? (
-                            <Check className="w-3.5 h-3.5 text-emerald-600" />
-                          ) : (
-                            <Copy className="w-3.5 h-3.5" />
-                          )}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
 
                   {/* Mobile 1-Tap Quick Launch Pad */}
                   <div className="space-y-2">
@@ -580,38 +509,16 @@ export default function CheckoutAttemptPage() {
                     </div>
                   </div>
 
-                  {/* Live HDFC Bank SMS Observer Stream */}
-                  <div className="p-3 bg-emerald-50 border-2 border-emerald-700/40 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-emerald-900">
-                    <div className="flex items-center gap-2.5 text-left">
-                      <span className="inline-flex rounded-full h-3 w-3 bg-emerald-500 shrink-0" />
-                      <span className="font-semibold text-[11px] leading-snug">
-                        Listening for HDFC bank SMS credit of {formatCurrency(checkoutState.amount)} to {checkoutState.payeeVpa}...
-                      </span>
-                    </div>
-                    <ShieldCheck className="w-5 h-5 text-emerald-700 shrink-0 hidden sm:block" />
-                  </div>
-
-                  {/* Actions & Simulation Bar */}
-                  <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-[#342421]/15">
+                  {/* Actions Bar */}
+                  <div className="pt-2 flex items-center justify-center border-t border-[#342421]/15">
                     <button
                       type="button"
                       onClick={handleManualCheck}
                       disabled={isVerifying}
-                      className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-full bg-white hover:bg-[#FFF7EB] border-2 border-[#342421] shadow-[2px_2px_0px_#342421] text-xs font-bold text-[#342421] active:translate-x-0.5 active:translate-y-0.5 transition-all"
+                      className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-full bg-white hover:bg-[#FFF7EB] border-2 border-[#342421] shadow-[2px_2px_0px_#342421] text-xs font-bold text-[#342421] active:translate-x-0.5 active:translate-y-0.5 transition-all"
                     >
                       <RefreshCw className={`w-3.5 h-3.5 ${isVerifying ? 'animate-spin' : ''}`} />
                       <span>{isVerifying ? 'Checking Bank Ledger...' : 'Refresh Status'}</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={handleSimulateBankCredit}
-                      disabled={isSimulating}
-                      className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-4 py-2 text-xs font-bold text-[#FF7836] hover:text-[#E86322] hover:underline transition-colors"
-                      title="Simulates bank SMS receipt for test purposes"
-                    >
-                      <Sparkles className="w-3.5 h-3.5" />
-                      <span>{isSimulating ? 'Sending SMS...' : 'Demo: Simulate Bank Credit'}</span>
                     </button>
                   </div>
                 </div>
@@ -625,22 +532,15 @@ export default function CheckoutAttemptPage() {
                 <div className="absolute top-1/2 -left-3 w-6 h-6 rounded-full bg-[#FFF7EB] border-2 border-[#342421]" />
                 <div className="absolute top-1/2 -right-3 w-6 h-6 rounded-full bg-[#FFF7EB] border-2 border-[#342421]" />
 
-                {/* Satellite Header & Stamp */}
+                {/* Satellite Header */}
                 <div className="border-b-2 border-dashed border-[#342421]/20 pb-5 mb-5 space-y-3">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-[#342421]/60 block">
-                        Bakery Order Dispatch Slip
-                      </span>
-                      <h3 className="font-display uppercase text-2xl font-bold text-[#342421]">
-                        Bakery Oven Batch #03
-                      </h3>
-                    </div>
-
-                    {/* Rubber Stamp Badge */}
-                    <div className="border-2 border-[#FF7836] text-[#FF7836] px-2.5 py-1 rounded-lg text-[10px] font-extrabold uppercase tracking-widest -rotate-6 shadow-[1px_1px_0px_#FF7836]">
-                      Pune Verified
-                    </div>
+                  <div>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#342421]/60 block">
+                      Bakery Order Dispatch Slip
+                    </span>
+                    <h3 className="font-display uppercase text-2xl font-bold text-[#342421]">
+                      Bakery Oven Batch #03
+                    </h3>
                   </div>
 
                   <div className="grid grid-cols-2 gap-2 text-xs pt-1">
@@ -732,17 +632,6 @@ export default function CheckoutAttemptPage() {
                         {formatCurrency(checkoutState.amount)}
                       </span>
                     </div>
-                  </div>
-
-                  {/* Guarantee & Print notice */}
-                  <div className="mt-5 p-3 rounded-2xl bg-[#FFF7EB] border border-[#342421]/20 space-y-1.5">
-                    <div className="flex items-center gap-1.5 text-xs font-bold text-[#342421]">
-                      <UtensilsCrossed className="w-3.5 h-3.5 text-[#FF7836]" />
-                      <span>Artisan Oven Guarantee</span>
-                    </div>
-                    <p className="text-[11px] text-[#342421]/75 leading-relaxed">
-                      Your items are reserved in Batch #03. The dispatch slip auto-prints at our Koregaon Park oven the moment our bank listener catches your incoming UPI credit.
-                    </p>
                   </div>
                 </div>
               </div>
