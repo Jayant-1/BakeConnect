@@ -118,7 +118,7 @@ function LoginForm() {
               </button>
               <button
                 type="button"
-                onClick={() => handleQuickFill('retailer1@bakeconnect.com', 'Password@123', 'Shopkeeper')}
+                onClick={() => handleQuickFill('santosh.shinde@punechai.com', 'Pass123', 'Shopkeeper (Santosh)')}
                 className="px-3 py-1 rounded-xl text-[11px] font-bold text-[#342421] bg-[#D9EAF3] hover:bg-[#342421] hover:text-white border border-[#342421]/20 transition-all active:scale-95"
               >
                 Shopkeeper

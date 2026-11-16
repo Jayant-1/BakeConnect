@@ -28,9 +28,15 @@ export function getNetflixAvatar(seed: string) {
 }
 
 export function NetflixAvatar({ seed, className = 'w-8 h-8' }: { seed: string; className?: string }) {
-  const avatar = getNetflixAvatar(seed);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const avatar = getNetflixAvatar(mounted ? (seed || 'default') : 'default');
   return (
     <div
+      suppressHydrationWarning
       style={{ backgroundColor: avatar.bg }}
       className={`relative rounded-md border-2 border-[#342421] shadow-[1.5px_1.5px_0px_#342421] flex items-center justify-center overflow-hidden shrink-0 select-none ${className}`}
     >

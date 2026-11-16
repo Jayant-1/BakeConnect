@@ -93,16 +93,17 @@ function getStoredToken(): string | null {
   return localStorage.getItem('bakeconnect_token_v1');
 }
 
-async function getAuthToken(role: 'CUSTOMER' | 'RETAILER' | 'ADMIN' = 'CUSTOMER'): Promise<string | null> {
+async function getAuthToken(role?: 'CUSTOMER' | 'RETAILER' | 'ADMIN'): Promise<string | null> {
   const userToken = getStoredToken();
   if (userToken) {
+    if (!role) return userToken;
     try {
       const storedUserStr = localStorage.getItem('bakeconnect_user_v1');
       if (storedUserStr) {
         const u = JSON.parse(storedUserStr);
         const matches =
           (role === 'RETAILER' && u.role === 'RETAILER') ||
-          (role === 'CUSTOMER' && u.role === 'DIRECT_CUSTOMER') ||
+          (role === 'CUSTOMER' && (u.role === 'DIRECT_CUSTOMER' || u.role === 'RETAILER')) ||
           (role === 'ADMIN' && (u.role === 'BAKERY_ADMIN' || u.role === 'BAKERY_MANAGER'));
         if (matches) return userToken;
       } else {
@@ -112,13 +113,14 @@ async function getAuthToken(role: 'CUSTOMER' | 'RETAILER' | 'ADMIN' = 'CUSTOMER'
       return userToken;
     }
   }
-  if (tokenCache[role]) return tokenCache[role];
+  const targetRole = role || 'CUSTOMER';
+  if (tokenCache[targetRole]) return tokenCache[targetRole];
 
   const creds = {
     CUSTOMER: { email: 'customer1@bakeconnect.com', password: 'Password@123' },
     RETAILER: { email: 'retailer1@bakeconnect.com', password: 'Password@123' },
     ADMIN: { email: 'admin@bakeconnect.com', password: 'Password@123' },
-  }[role];
+  }[targetRole];
 
   try {
     const res = await fetch(`${getBaseUrl()}/api/v1/auth/login`, {
@@ -130,10 +132,10 @@ async function getAuthToken(role: 'CUSTOMER' | 'RETAILER' | 'ADMIN' = 'CUSTOMER'
     if (!res.ok) return null;
     const json = await res.json();
     const token = json.data?.token;
-    if (token) tokenCache[role] = token;
+    if (token) tokenCache[targetRole] = token;
     return token;
   } catch (e) {
-    console.warn(`[API] Auth login failed for ${role}, using local mock session:`, e);
+    console.warn(`[API] Auth login failed for ${targetRole}, using local mock session:`, e);
     return null;
   }
 }
@@ -750,7 +752,7 @@ export const apiClient = {
 
   async getOrder(orderNumberOrId: string): Promise<Order | null> {
     try {
-      const token = await getAuthToken('CUSTOMER');
+      const token = await getAuthToken();
       if (token) {
         const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(orderNumberOrId);
         const url = isUuid

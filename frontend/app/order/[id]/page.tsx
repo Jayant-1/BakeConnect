@@ -123,8 +123,8 @@ export default function OrderTrackingPage() {
     return (
       <StorefrontLayout>
         <div className="py-24 max-w-xl mx-auto px-4 text-center">
-          <div className="animate-spin w-8 h-8 border-4 border-berry-jam border-t-transparent rounded-full mx-auto mb-4" />
-          <p className="text-sm text-crust-muted">Connecting to Spring Boot dispatch server...</p>
+          <div className="animate-spin w-8 h-8 border-4 border-[#FF7836] border-t-transparent rounded-full mx-auto mb-4" />
+          <p className="text-sm font-semibold text-[#342421]/70">Connecting to Spring Boot dispatch server...</p>
         </div>
       </StorefrontLayout>
     );
@@ -134,16 +134,16 @@ export default function OrderTrackingPage() {
     return (
       <StorefrontLayout>
         <div className="py-24 max-w-xl mx-auto px-4 text-center">
-          <div className="w-16 h-16 rounded-full bg-cream-subtle flex items-center justify-center text-crust-muted mx-auto mb-4">
-            <AlertCircle className="w-8 h-8 opacity-40 text-status-warning" />
+          <div className="w-16 h-16 rounded-2xl bg-[#FFF7EB] border-2 border-[#342421] shadow-[2px_2px_0px_#342421] flex items-center justify-center text-[#342421] mx-auto mb-4">
+            <AlertCircle className="w-8 h-8 text-[#FF7836]" />
           </div>
-          <h2 className="font-sans text-xl sm:text-2xl font-bold text-crust-dark mb-2">Order Record Not Found</h2>
-          <p className="text-sm text-crust-muted mb-6">
+          <h2 className="font-display uppercase text-xl sm:text-2xl font-bold text-[#342421] mb-2">Order Record Not Found</h2>
+          <p className="text-xs text-[#342421]/70 mb-6">
             No active order matching #{orderId} was retrieved from the database.
           </p>
           <Link
             href="/shop"
-            className="inline-flex items-center justify-center font-medium transition-all duration-150 px-5 py-2 text-sm rounded-full min-h-[44px] bg-berry-jam text-cream-base hover:bg-berry-hover shadow-sm"
+            className="inline-flex items-center justify-center font-bold text-xs uppercase tracking-wider transition-all px-6 py-3 rounded-full bg-[#FF7836] text-white hover:bg-[#FF6A1F] border-2 border-[#342421] shadow-[3px_3px_0px_#342421] active:translate-x-0.5 active:translate-y-0.5"
           >
             Return to Catalog
           </Link>
@@ -273,17 +273,17 @@ export default function OrderTrackingPage() {
         {/* Navigation Breadcrumb */}
         <div className="flex items-center justify-between gap-4 mb-5">
           <Link
-            href="/account/orders"
+            href={order.orderType === 'BUSINESS' ? '/retailer' : '/account/orders'}
             className="inline-flex items-center gap-1.5 text-xs text-[#342421]/70 hover:text-[#FF7836] font-bold uppercase tracking-wider transition-colors"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
-            <span>Back to My Orders</span>
+            <span>{order.orderType === 'BUSINESS' ? 'Back to Wholesale Desk' : 'Back to My Orders'}</span>
           </Link>
           <Link
-            href="/shop"
+            href={order.orderType === 'BUSINESS' ? '/retailer' : '/shop'}
             className="inline-flex items-center gap-1.5 text-xs text-[#342421]/70 hover:text-[#FF7836] font-bold uppercase tracking-wider transition-colors"
           >
-            <span>Browse Fresh Bakes</span>
+            <span>{order.orderType === 'BUSINESS' ? 'Wholesale Order Guide' : 'Browse Fresh Bakes'}</span>
             <ArrowRight className="w-3.5 h-3.5" />
           </Link>
         </div>

@@ -169,10 +169,25 @@ export default function RetailerPortalPage() {
 
   const handleQuantityChange = (productId: string, delta: number, increment: number, moq: number) => {
     setOrderGuideQuantities((prev) => {
-      const current = prev[productId] || moq;
-      const next = Math.max(moq, current + delta * increment);
+      const inc = increment && increment > 0 ? increment : 1;
+      const m = moq && moq > 0 ? moq : 1;
+      const current = prev[productId] !== undefined ? prev[productId] : m;
+      const next = Math.max(m, current + delta * inc);
       return { ...prev, [productId]: next };
     });
+  };
+
+  const getVisiblePages = (current: number, total: number) => {
+    if (total <= 7) {
+      return Array.from({ length: total }, (_, i) => i + 1);
+    }
+    if (current <= 4) {
+      return [1, 2, 3, 4, 5, '...', total];
+    }
+    if (current >= total - 3) {
+      return [1, '...', total - 4, total - 3, total - 2, total - 1, total];
+    }
+    return [1, '...', current - 1, current, current + 1, '...', total];
   };
 
   const handleAddRowToCart = (product: Product) => {
@@ -607,20 +622,29 @@ export default function RetailerPortalPage() {
               </button>
 
               <div className="flex items-center gap-1">
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
-                  <button
-                    key={pageNum}
-                    type="button"
-                    onClick={() => setCurrentPage(pageNum)}
-                    className={`w-8 h-8 rounded-xl font-mono font-bold text-xs border-2 border-[#342421] transition-all flex items-center justify-center ${
-                      currentPage === pageNum
-                        ? 'bg-[#342421] text-white shadow-[2px_2px_0px_#342421]'
-                        : 'bg-white text-[#342421] shadow-[1px_1px_0px_#342421] hover:bg-[#FFF7EB] active:translate-x-0.5 active:translate-y-0.5'
-                    }`}
-                  >
-                    {pageNum}
-                  </button>
-                ))}
+                {getVisiblePages(currentPage, totalPages).map((item, idx) =>
+                  item === '...' ? (
+                    <span
+                      key={`ellipsis-${idx}`}
+                      className="w-7 h-8 flex items-center justify-center font-bold text-[#342421]/50 text-xs"
+                    >
+                      ...
+                    </span>
+                  ) : (
+                    <button
+                      key={item}
+                      type="button"
+                      onClick={() => setCurrentPage(item as number)}
+                      className={`w-8 h-8 rounded-xl font-mono font-bold text-xs border-2 border-[#342421] transition-all flex items-center justify-center ${
+                        currentPage === item
+                          ? 'bg-[#342421] text-white shadow-[2px_2px_0px_#342421]'
+                          : 'bg-white text-[#342421] shadow-[1px_1px_0px_#342421] hover:bg-[#FFF7EB] active:translate-x-0.5 active:translate-y-0.5'
+                      }`}
+                    >
+                      {item}
+                    </button>
+                  )
+                )}
               </div>
 
               <button

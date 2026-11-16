@@ -80,7 +80,7 @@ export default function CartPage() {
           </p>
           <Link
             href={channel === 'B2B' ? '/retailer' : '/shop'}
-            className="inline-flex items-center justify-center font-medium transition-all duration-150 h-12 px-7 text-base rounded-full min-h-[48px] bg-berry-jam text-cream-base hover:bg-berry-hover shadow-sm active:bg-berry-hover"
+            className="inline-flex items-center justify-center font-bold text-xs uppercase tracking-wider transition-all h-12 px-7 rounded-full min-h-[48px] bg-[#FF7836] text-white hover:bg-[#FF6A1F] border-2 border-[#342421] shadow-[3px_3px_0px_#342421] active:translate-x-0.5 active:translate-y-0.5"
           >
             {channel === 'B2B' ? 'Open Wholesale Order Guide' : "Explore Today's Fresh Bakes"}
           </Link>
