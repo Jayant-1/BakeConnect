@@ -119,12 +119,12 @@ export class BankSmsParser {
 
     // 3. Extract Sender VPA
     let senderVpa;
-    let vpaMatch = text.match(/(?:from|by)\s+([a-zA-Z0-9.\-_]{2,100}@[a-zA-Z0-9.\-_]{2,64})/i);
+    let vpaMatch = text.match(/(?:from|by|vpa)\s+(?:vpa\s+)?([*a-zA-Z0-9.\-_]{2,100}@[a-zA-Z0-9.\-_]{2,64})/i);
     if (!vpaMatch) {
-      vpaMatch = text.match(/([a-zA-Z0-9.\-_]{2,100}@[a-zA-Z0-9.\-_]{2,64})/i);
+      vpaMatch = text.match(/([*a-zA-Z0-9.\-_]{2,100}@[a-zA-Z0-9.\-_]{2,64})/i);
     }
     if (vpaMatch && vpaMatch[1]) {
-      senderVpa = vpaMatch[1].trim().replace(/[.,;]+$/, '');
+      senderVpa = vpaMatch[1].trim().replace(/[.,;]+$/, '').replace(/^\*+/, '');
     }
 
     // 4. Timestamp

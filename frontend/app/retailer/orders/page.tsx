@@ -202,7 +202,7 @@ export default function RetailerOrdersPage() {
                     </span>
                   </div>
                   <div className="text-xs text-[#342421]/60 font-medium">
-                    Placed on {formatDate(order.createdAt)} • Dispatch: 5:30 AM Pune Route
+                    Placed on <span suppressHydrationWarning>{formatDate(order.createdAt)}</span> • Dispatch: 5:30 AM Pune Route
                   </div>
                 </div>
 

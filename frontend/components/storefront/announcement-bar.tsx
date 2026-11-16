@@ -11,8 +11,10 @@ const DEFAULT_BATCH: BakeryBatch = { batchName: 'Morning Batch', timeString: '6:
 export function AnnouncementBar() {
   const { role } = useAuth();
   const [batch, setBatch] = useState<BakeryBatch>(DEFAULT_BATCH);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     // Sync with local client clock only after mount (prevents SSR hydration mismatch)
     setBatch(getBakeryBatch());
 
@@ -27,7 +29,7 @@ export function AnnouncementBar() {
   return (
     <div className="bg-[#2D211B] text-[#FFF8EF] px-4 py-2 text-xs font-medium tracking-wide border-b border-[#3D2F27]">
       <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-1 text-center sm:text-left">
-        {role === 'RETAILER' ? (
+        {mounted && role === 'RETAILER' ? (
           <>
             <div className="flex items-center gap-2">
               <span className="flex h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
@@ -49,14 +51,14 @@ export function AnnouncementBar() {
               </Link>
             </div>
           </>
-        ) : role === 'DIRECT_CUSTOMER' ? (
+        ) : mounted && role === 'DIRECT_CUSTOMER' ? (
           <>
             <div className="flex items-center gap-2">
               <span className="flex h-2 w-2 rounded-full bg-[#D4973B] animate-pulse" />
               <span className="flex items-center gap-1.5 text-white/90">
                 <Clock className="w-3.5 h-3.5 text-[#D4973B] inline shrink-0" />
                 <span suppressHydrationWarning>
-                  <strong suppressHydrationWarning>{batch.batchName}:</strong> Warm ladi pav, butter khari &amp; mawa cakes fresh out of oven by {batch.timeString}
+                  <strong suppressHydrationWarning>{batch.batchName}:</strong> Warm ladi pav, butter khari & mawa cakes fresh out of oven by {batch.timeString}
                 </span>
               </span>
             </div>
@@ -78,7 +80,7 @@ export function AnnouncementBar() {
               <span className="flex items-center gap-1.5 text-white/90">
                 <Clock className="w-3.5 h-3.5 text-[#D4973B] inline shrink-0" />
                 <span suppressHydrationWarning>
-                  <strong suppressHydrationWarning>{batch.batchName}:</strong> Warm ladi pav, butter khari &amp; mawa cakes fresh out of oven by {batch.timeString}
+                  <strong suppressHydrationWarning>{batch.batchName}:</strong> Warm ladi pav, butter khari & mawa cakes fresh out of oven by {batch.timeString}
                 </span>
               </span>
             </div>

@@ -178,12 +178,19 @@ export function createPaymentApp(customDb = null, options = {}) {
     const session = sessionRepo.findById(data.paymentId);
     if (session) {
       server.broadcastSse(session.id, 'status_change', {
-        status: PaymentStatus.OBSERVED_SUCCESS,
+        status: PaymentStatus.SUCCESS,
+        gatewayStatus: PaymentStatus.OBSERVED_SUCCESS,
         settlementState: 'NOT_RECONCILED',
         verificationLevel: data.verificationLevel || session.verificationLevel || 1,
         verificationTag: data.verificationTag || session.verificationTag,
         sources: data.sources || session.verificationSources
       });
+      server.broadcastSse(session.id, 'payment_success', {
+        status: PaymentStatus.SUCCESS,
+        orderId: session.orderId,
+        amount: session.amount
+      });
+      webhookEngine.dispatch('SUCCESS', session).catch(() => {});
       webhookEngine.dispatch('OBSERVED_SUCCESS', session).catch(() => {});
       handleSlotFreedAndPromote(session.receivingAccountId);
     }

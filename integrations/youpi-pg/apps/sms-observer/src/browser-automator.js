@@ -626,16 +626,17 @@ export class GoogleMessagesAutomator {
       for (const rawText of extracted) {
         const hash = rawText.substring(0, 80);
         if (!this.processedHashes.has(hash)) {
-          this.processedHashes.add(hash);
-          if (this.processedHashes.size > 200) {
-            const first = this.processedHashes.values().next().value;
-            this.processedHashes.delete(first);
+          // 1. Detect sender from first line if formatted as SMS sender header (e.g. JM-HDFCBK-S)
+          let sender = 'Google-Messages-Web';
+          const lines = rawText.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+          if (lines.length > 1 && /^[a-zA-Z0-9_\-\.]{3,25}$/.test(lines[0]) && /[a-zA-Z]/.test(lines[0])) {
+            sender = lines[0];
           }
 
-          // 1. Try standard bank SMS parser
-          let parsed = BankSmsParser.parse({ text: rawText });
+          // 2. Try standard bank SMS parser
+          let parsed = BankSmsParser.parse({ text: rawText, sender });
 
-          // 2. Intelligent Active Window Fallback:
+          // 3. Intelligent Active Window Fallback:
           // If message contains the active session's exact amount, match it directly!
           if (!parsed && activeSessions.length > 0) {
             for (const s of activeSessions) {
@@ -653,14 +654,25 @@ export class GoogleMessagesAutomator {
           }
 
           if (parsed) {
-            console.log(`[Google Messages Automator] Extracted incoming payment SMS: ₹${parsed.amount} (Ref: ${parsed.bankReferenceNumber || 'NONE'})`);
-            await this.smsService.processSms({
-              text: rawText,
-              sender: 'Google-Messages-Web',
-              timestamp: new Date()
-            });
-            this.messagesObserved++;
-            this.lastMessageAt = new Date();
+            console.log(`[Google Messages Automator] Extracted incoming payment SMS: ₹${parsed.amount} (Ref: ${parsed.bankReferenceNumber || 'NONE'}, Sender: ${sender})`);
+            try {
+              const result = await this.smsService.processSms({
+                text: rawText,
+                sender,
+                timestamp: parsed.observedAt || new Date()
+              });
+              if (result) {
+                this.processedHashes.add(hash);
+                if (this.processedHashes.size > 200) {
+                  const first = this.processedHashes.values().next().value;
+                  this.processedHashes.delete(first);
+                }
+                this.messagesObserved++;
+                this.lastMessageAt = new Date();
+              }
+            } catch (err) {
+              console.warn('[Google Messages Automator] processSms submission warning:', err.message);
+            }
           }
         }
       }

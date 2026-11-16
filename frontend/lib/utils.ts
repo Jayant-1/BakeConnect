@@ -6,22 +6,30 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat('en-IN', {
-    style: 'currency',
-    currency: 'INR',
+  if (isNaN(amount) || amount === null || amount === undefined) return '₹0.00';
+  const formattedNumber = new Intl.NumberFormat('en-IN', {
+    minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(amount);
+  return `₹${formattedNumber.replace(/[\u202F\u00A0]/g, ' ').trim()}`;
 }
 
 export function formatDate(dateString: string | Date): string {
+  if (!dateString) return '';
   const d = new Date(dateString);
-  return new Intl.DateTimeFormat('en-IN', {
+  if (isNaN(d.getTime())) return '';
+  const formatted = new Intl.DateTimeFormat('en-IN', {
+    timeZone: 'Asia/Kolkata',
     month: 'short',
     day: 'numeric',
     year: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
+    hour12: true,
   }).format(d);
+  return formatted
+    .replace(/[\u202F\u00A0]/g, ' ')
+    .replace(/\s*(am|pm|AM|PM)\s*$/i, (match) => ' ' + match.trim().toUpperCase());
 }
 
 export function validateGST(gst: string): boolean {

@@ -48,6 +48,7 @@ export class ObservationRepository {
   }
 
   findByFingerprint(fingerprintHash) {
+    if (!fingerprintHash) return null;
     const row = this.db.queryOne('SELECT * FROM payment_observations WHERE fingerprint_hash = ?', [fingerprintHash]);
     if (!row) return null;
     return this.mapRow(row);

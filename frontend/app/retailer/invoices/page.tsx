@@ -19,6 +19,7 @@ import {
   Building,
 } from 'lucide-react';
 import { UpiPaymentModal } from '../../../components/payment/upi-payment-modal';
+import { InvoiceModal } from '../../../components/invoice/invoice-modal';
 
 export default function RetailerInvoicesPage() {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
@@ -26,6 +27,7 @@ export default function RetailerInvoicesPage() {
   const [isProcessingId, setIsProcessingId] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [selectedInvoiceForPayment, setSelectedInvoiceForPayment] = useState<Invoice | null>(null);
+  const [viewingInvoice, setViewingInvoice] = useState<Invoice | null>(null);
 
   const loadData = async () => {
     try {
@@ -146,10 +148,10 @@ export default function RetailerInvoicesPage() {
                   <td className="py-4 px-4 font-mono text-crust-muted">
                     {inv.orderNumber}
                   </td>
-                  <td className="py-4 px-4 text-crust-muted">
+                  <td className="py-4 px-4 text-crust-muted" suppressHydrationWarning>
                     {formatDate(inv.issuedAt)}
                   </td>
-                  <td className="py-4 px-4 text-crust-muted font-medium">
+                  <td className="py-4 px-4 text-crust-muted font-medium" suppressHydrationWarning>
                     {formatDate(inv.dueDate)}
                   </td>
                   <td className="py-4 px-4 text-right font-mono font-bold">
@@ -178,7 +180,7 @@ export default function RetailerInvoicesPage() {
                       <Button
                         variant="secondary"
                         size="sm"
-                        onClick={() => window.print()}
+                        onClick={() => setViewingInvoice(inv)}
                         className="rounded-full px-3 text-xs"
                       >
                         <Download className="w-3.5 h-3.5 mr-1" />
@@ -192,6 +194,21 @@ export default function RetailerInvoicesPage() {
           </table>
         </div>
       </div>
+
+      {viewingInvoice && (
+        <InvoiceModal
+          isOpen={!!viewingInvoice}
+          onClose={() => setViewingInvoice(null)}
+          invoice={viewingInvoice}
+          orderNumber={viewingInvoice.orderNumber}
+          invoiceNumber={viewingInvoice.invoiceNumber}
+          totalAmount={viewingInvoice.amount}
+          businessName={viewingInvoice.retailerBusinessName}
+          businessGst={viewingInvoice.gstNumber}
+          paymentMethod="Net-15 Commercial Credit"
+          orderId={viewingInvoice.orderId}
+        />
+      )}
 
       {selectedInvoiceForPayment && (
         <UpiPaymentModal

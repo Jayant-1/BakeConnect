@@ -1,5 +1,13 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { PaymentObserverClient } from '@youpi/observer-sdk';
+import { getAdminToken, getObserverToken } from '@youpi/common';
 import { BankSmsParser } from './sms-parser.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const rootDir = path.resolve(__dirname, '../../..');
 
 export class SmsObserverService {
   /**
@@ -25,15 +33,76 @@ export class SmsObserverService {
   }
 
   async resolveActiveReceivingAccount() {
+    if (this.receivingAccountId) return this.receivingAccountId;
+    if (process.env.RECEIVING_ACCOUNT_ID) {
+      this.receivingAccountId = process.env.RECEIVING_ACCOUNT_ID;
+      return this.receivingAccountId;
+    }
+
+    const adminToken = getAdminToken();
+    const observerToken = getObserverToken();
+
+    // 1. Fetch from /api/v1/admin/upi-accounts using admin or observer credentials
     try {
-      const res = await fetch(`${this.apiBaseUrl}/api/v1/pollers/active-window`, { signal: AbortSignal.timeout(1000) });
+      const token = adminToken || observerToken;
+      const res = await fetch(`${this.apiBaseUrl}/api/v1/admin/upi-accounts`, {
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+        signal: AbortSignal.timeout(2000)
+      });
       if (res.ok) {
         const data = await res.json();
-        if (data.sessions && data.sessions.length > 0) {
+        const activeAcct = (data.accounts || []).find(a => a.isActive && a.isMerchantEnabled) ||
+                           (data.accounts || []).find(a => a.isActive) ||
+                           (data.accounts || [])[0];
+        if (activeAcct?.id) {
+          this.receivingAccountId = activeAcct.id;
+          console.log(`[SMS Observer] Resolved active receiving account from UPI accounts: ${activeAcct.id}`);
+          return activeAcct.id;
+        }
+      }
+    } catch {}
+
+    // 2. Fetch from /api/v1/pollers/active-window with observer credentials
+    try {
+      const token = observerToken || adminToken;
+      const res = await fetch(`${this.apiBaseUrl}/api/v1/pollers/active-window`, {
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+        signal: AbortSignal.timeout(2000)
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.receivingAccountId) {
+          this.receivingAccountId = data.receivingAccountId;
+          return data.receivingAccountId;
+        }
+        if (data.sessions && data.sessions.length > 0 && data.sessions[0].receivingAccountId) {
+          this.receivingAccountId = data.sessions[0].receivingAccountId;
           return data.sessions[0].receivingAccountId;
         }
       }
     } catch {}
+
+    // 3. Fallback to local SQLite database if available
+    try {
+      const candidates = [
+        path.join(rootDir, 'data/youpi_pg.sqlite'),
+        path.resolve(process.cwd(), 'data/youpi_pg.sqlite'),
+        path.join(process.cwd(), 'integrations/youpi-pg/data/youpi_pg.sqlite'),
+        '/data/youpi_pg.sqlite'
+      ];
+      const dbFile = candidates.find(p => fs.existsSync(p));
+      if (dbFile) {
+        const { DatabaseSync } = await import('node:sqlite');
+        const syncDb = new DatabaseSync(dbFile);
+        const row = syncDb.prepare('SELECT id FROM payment_receiving_accounts WHERE is_active = 1 LIMIT 1').get();
+        if (row?.id) {
+          this.receivingAccountId = row.id;
+          console.log(`[SMS Observer] Resolved active receiving account from SQLite database: ${row.id}`);
+          return row.id;
+        }
+      }
+    } catch {}
+
     return null;
   }
 

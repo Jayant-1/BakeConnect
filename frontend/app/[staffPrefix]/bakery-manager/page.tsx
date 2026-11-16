@@ -4,7 +4,7 @@ import React, { useState, useEffect, use } from 'react';
 import { notFound } from 'next/navigation';
 import { useAuth } from '../../../lib/store/auth-context';
 import { getApiBase } from '../../../lib/api/backend-client';
-import { formatCurrency } from '../../../lib/utils';
+import { formatCurrency, formatDate } from '../../../lib/utils';
 import {
   ChefHat,
   ShoppingBag,
@@ -1070,7 +1070,7 @@ export default function BakeryManagerPage({
                           {msg.isInternalNote ? '🔒 INTERNAL STAFF NOTE by ' : ''}
                           {msg.senderName} ({msg.senderRole})
                         </span>
-                        <span>{new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                        <span suppressHydrationWarning>{formatDate(msg.createdAt)}</span>
                       </div>
                       <p className="leading-relaxed font-medium">{msg.message}</p>
                     </div>

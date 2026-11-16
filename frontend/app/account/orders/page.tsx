@@ -7,7 +7,7 @@ import { StorefrontLayout } from '../../../components/layout/storefront-layout';
 import { useAuth } from '../../../lib/store/auth-context';
 import { apiClient } from '../../../lib/api/client';
 import { Order } from '../../../lib/api/types';
-import { formatCurrency } from '../../../lib/utils';
+import { formatCurrency, formatDate } from '../../../lib/utils';
 import { useRouter } from 'next/navigation';
 import {
   ShoppingBag,
@@ -425,12 +425,8 @@ export default function CustomerOrdersPage() {
                         >
                           {order.status.replace('_', ' ')}
                         </span>
-                        <span className="text-xs text-[#342421]/60">
-                          {new Date(order.createdAt).toLocaleDateString('en-IN', {
-                            day: 'numeric',
-                            month: 'short',
-                            year: 'numeric',
-                          })}
+                        <span suppressHydrationWarning className="text-xs text-[#342421]/60">
+                          {formatDate(order.createdAt)}
                         </span>
                       </div>
 

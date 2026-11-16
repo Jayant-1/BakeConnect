@@ -559,10 +559,10 @@ export default function AdminReportsPage() {
                   <td className="py-3.5 px-6 font-mono text-[11px] text-crust-muted">
                     {inv.gstNumber}
                   </td>
-                  <td className="py-3.5 px-6 text-crust-muted">
+                  <td className="py-3.5 px-6 text-crust-muted" suppressHydrationWarning>
                     {formatDate(inv.issuedAt)}
                   </td>
-                  <td className="py-3.5 px-6 text-crust-muted font-medium">
+                  <td className="py-3.5 px-6 text-crust-muted font-medium" suppressHydrationWarning>
                     {formatDate(inv.dueDate)}
                   </td>
                   <td className="py-3.5 px-6 text-right font-mono font-medium text-crust-dark">

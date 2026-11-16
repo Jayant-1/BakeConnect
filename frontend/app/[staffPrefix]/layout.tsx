@@ -6,6 +6,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useAuth } from '../../lib/store/auth-context';
 import { backendClient, getApiBase } from '../../lib/api/backend-client';
+import { formatDate } from '../../lib/utils';
 import {
   Shield,
   ChefHat,
@@ -283,11 +284,8 @@ export default function StaffLayout({
                           >
                             <div className="flex items-center justify-between gap-2 mb-1">
                               <span className="font-bold text-[#342421]">{n.title}</span>
-                              <span className="text-[10px] text-[#342421]/50 font-normal">
-                                {new Date(n.createdAt).toLocaleTimeString([], {
-                                  hour: '2-digit',
-                                  minute: '2-digit',
-                                })}
+                              <span suppressHydrationWarning className="text-[10px] text-[#342421]/50 font-normal">
+                                {formatDate(n.createdAt)}
                               </span>
                             </div>
                             <p className="text-[#342421]/80 text-[11px] leading-relaxed">

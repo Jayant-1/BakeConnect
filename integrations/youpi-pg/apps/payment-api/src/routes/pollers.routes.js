@@ -58,7 +58,15 @@ export function registerPollerRoutes(server, ctx) {
 
     // receivingAccountId is mandatory for observer queries (no public fallback / no oracle enumeration)
     // Exception: when a valid Android observer device is bound, it auto-binds to the device's account
-    const requestedAccountId = req.query.receivingAccountId;
+    let requestedAccountId = req.query.receivingAccountId;
+    if (!requestedAccountId && !deviceAccountId && (isAdminRequest(req) || hasBearer(req, getObserverToken()))) {
+      const defaultAcc = ctx.accountRepo
+        ? ctx.accountRepo.findActiveForMerchant('00000000-0000-0000-0000-000000000001')
+        : ctx.db.queryOne('SELECT id FROM payment_receiving_accounts WHERE is_active = 1 LIMIT 1');
+      if (defaultAcc) {
+        requestedAccountId = defaultAcc.id || defaultAcc.receiving_account_id;
+      }
+    }
     if (!requestedAccountId && !deviceAccountId) {
       HttpServer.json(res, 400, { error: 'receivingAccountId is required for observer queries.', code: 'ACCOUNT_BINDING_REQUIRED' });
       return;
@@ -143,6 +151,15 @@ export function registerPollerRoutes(server, ctx) {
         ? ctx.accountRepo.findActiveForMerchant(device.merchant_id)
         : ctx.db.queryOne('SELECT id FROM payment_receiving_accounts WHERE merchant_id = ? AND is_active = 1 LIMIT 1', [device.merchant_id]);
       if (activeAcc) deviceAccountId = activeAcc.id || activeAcc.receiving_account_id || activeAcc.account_id;
+    }
+
+    if (!body.receivingAccountId && !deviceAccountId && (isAdminRequest(req) || hasBearer(req, getObserverToken()))) {
+      const defaultAcc = ctx.accountRepo
+        ? ctx.accountRepo.findActiveForMerchant('00000000-0000-0000-0000-000000000001')
+        : ctx.db.queryOne('SELECT id FROM payment_receiving_accounts WHERE is_active = 1 LIMIT 1');
+      if (defaultAcc) {
+        body.receivingAccountId = defaultAcc.id || defaultAcc.receiving_account_id;
+      }
     }
 
     if (!body.receivingAccountId && !deviceAccountId) {
@@ -280,6 +297,7 @@ export function registerPollerRoutes(server, ctx) {
             bankReferenceNumber: pipeResult.reference || body.utr || body.bankReferenceNumber,
             observedAt: new Date(body.observedAt || Date.now()),
             sender,
+            fingerprintHash: pipeResult.messageId || (typeof crypto.randomUUID === 'function' ? crypto.randomUUID() : String(Date.now())),
             rawPayload: body.rawPayload || { text: rawText }
           });
           HttpServer.json(res, 200, {

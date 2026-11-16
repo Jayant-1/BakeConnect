@@ -327,8 +327,8 @@ export default function CustomerHelpPage() {
                         <h4 className="font-bold text-xs text-[#342421] truncate">
                           {iss.shortDescription}
                         </h4>
-                        <span className="text-[10px] text-[#342421]/50 block">
-                          Filed {new Date(iss.createdAt).toLocaleDateString()}
+                        <span suppressHydrationWarning className="text-[10px] text-[#342421]/50 block">
+                          Filed {formatDate(iss.createdAt)}
                         </span>
                       </div>
                       <ChevronRight className="w-4 h-4 text-[#342421]/40 shrink-0 mt-2" />
@@ -401,11 +401,8 @@ export default function CustomerHelpPage() {
                               <span className="font-bold text-[#342421]">
                                 {isStaff ? '🧑‍🍳 BakeConnect Team' : '👤 You'}
                               </span>
-                              <span className="text-[#342421]/50 font-normal">
-                                {new Date(m.createdAt).toLocaleTimeString([], {
-                                  hour: '2-digit',
-                                  minute: '2-digit',
-                                })}
+                              <span suppressHydrationWarning className="text-[#342421]/50 font-normal">
+                                {formatDate(m.createdAt)}
                               </span>
                             </div>
                             <p className="text-[#342421] leading-relaxed font-medium">

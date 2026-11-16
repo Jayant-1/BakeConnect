@@ -56,7 +56,12 @@ export function StorefrontHeader() {
   const { itemCount } = useCart();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const accountDropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Close menus on outside click or Escape key press
   useEffect(() => {
@@ -114,7 +119,7 @@ export function StorefrontHeader() {
 
           {/* 2. Center: Role-based Navigation Links (Col 4-9) */}
           <nav className="hidden lg:flex col-span-6 justify-center items-center gap-8 text-xs font-bold uppercase tracking-wider text-[#342421]">
-            {role === 'RETAILER' ? (
+            {mounted && role === 'RETAILER' ? (
               // Retailer shopkeeper navigation
               <>
                 <Link href="/retailer" className="hover:text-[#FF7836] transition-colors">
@@ -130,7 +135,7 @@ export function StorefrontHeader() {
                   Help
                 </Link>
               </>
-            ) : role === 'DIRECT_CUSTOMER' ? (
+            ) : mounted && role === 'DIRECT_CUSTOMER' ? (
               // Authenticated customer navigation
               <>
                 <Link href="/shop" className="hover:text-[#FF7836] transition-colors">
@@ -168,18 +173,22 @@ export function StorefrontHeader() {
             <Link
               href="/cart"
               className="relative p-2.5 text-[#342421] hover:text-[#FF7836] transition-colors rounded-full hover:bg-white/80 border-2 border-transparent hover:border-[#342421] hover:shadow-[2px_2px_0px_#342421]"
-              aria-label={`Shopping basket with ${itemCount} items`}
+              aria-label={mounted && itemCount > 0 ? `Shopping basket with ${itemCount} items` : 'Shopping basket'}
+              suppressHydrationWarning
             >
               <ShoppingBag className="w-5 h-5" />
-              {itemCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-[#FF7836] text-[#342421] text-[10px] font-black w-5 h-5 rounded-full flex items-center justify-center border-2 border-[#342421] shadow-[1px_1px_0px_#342421]">
+              {mounted && itemCount > 0 && (
+                <span
+                  suppressHydrationWarning
+                  className="absolute -top-1 -right-1 bg-[#FF7836] text-[#342421] text-[10px] font-black w-5 h-5 rounded-full flex items-center justify-center border-2 border-[#342421] shadow-[1px_1px_0px_#342421]"
+                >
                   {itemCount}
                 </span>
               )}
             </Link>
 
             {/* Authenticated User Netflix Avatar & Dropdown */}
-            {user ? (
+            {mounted && user ? (
               <div className="relative" ref={accountDropdownRef}>
                 <button
                   type="button"
@@ -370,7 +379,7 @@ export function StorefrontHeader() {
         {/* Mobile Dropdown Menu */}
         {mobileMenuOpen && (
           <div id="mobile-navigation" className="lg:hidden border-t-2 border-[#342421] py-4 px-3 space-y-3 bg-[#FFF7EB]">
-            {role === 'RETAILER' ? (
+            {mounted && role === 'RETAILER' ? (
               <div className="space-y-2">
                 <div className="px-3 py-1 text-[11px] font-black uppercase tracking-wider text-[#342421]/60">
                   Shopkeeper Workspace
@@ -404,7 +413,7 @@ export function StorefrontHeader() {
                   Help & Support
                 </Link>
               </div>
-            ) : role === 'DIRECT_CUSTOMER' ? (
+            ) : mounted && role === 'DIRECT_CUSTOMER' ? (
               <div className="space-y-2">
                 <div className="px-3 py-1 text-[11px] font-black uppercase tracking-wider text-[#342421]/60">
                   Customer Counter

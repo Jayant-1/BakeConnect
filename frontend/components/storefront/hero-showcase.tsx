@@ -8,6 +8,12 @@ import { useAuth } from '../../lib/store/auth-context';
 
 export function HeroShowcase() {
   const { role } = useAuth();
+  const [mounted, setMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
   return (
     <section className="relative min-h-[540px] sm:min-h-[620px] lg:min-h-[680px] flex items-center justify-center bg-[#FFF7EB] border-b-2 border-[#342421] overflow-hidden px-4 sm:px-6 lg:px-8 py-16 sm:py-20 lg:py-24">
       {/* 1. Four Signature Bakery Product Cut-outs Framing Main Text */}
@@ -94,18 +100,18 @@ export function HeroShowcase() {
         {/* Dominant Call-to-Action Controls (WCAG AAA 7.2:1 Contrast) */}
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 w-full max-w-md">
           <Link
-            href={role === 'RETAILER' ? '/retailer' : '/shop'}
+            href={mounted && role === 'RETAILER' ? '/retailer' : '/shop'}
             className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 sm:py-4 rounded-full text-base sm:text-lg font-bold bg-[#FF7836] text-[#342421] border-2 border-[#342421] shadow-[4px_4px_0px_#342421] hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[2px_2px_0px_#342421] active:translate-x-1 active:translate-y-1 active:shadow-none transition-all"
           >
-            <span>{role === 'RETAILER' ? 'Order Wholesale Stock' : 'Explore our bakes'}</span>
+            <span>{mounted && role === 'RETAILER' ? 'Order Wholesale Stock' : 'Explore our bakes'}</span>
             <ArrowRight className="w-5 h-5 text-[#342421]" />
           </Link>
-          {role !== 'DIRECT_CUSTOMER' && (
+          {(!mounted || role !== 'DIRECT_CUSTOMER') && (
             <Link
-              href={role === 'RETAILER' ? '/retailer/orders' : '/wholesale'}
+              href={mounted && role === 'RETAILER' ? '/retailer/orders' : '/wholesale'}
               className="inline-flex items-center gap-1.5 text-sm sm:text-base font-bold text-[#342421] hover:text-[#FF7836] underline decoration-2 underline-offset-4 transition-colors py-2"
             >
-              <span>{role === 'RETAILER' ? 'Standing Wholesale Orders' : 'Buying for your shop?'}</span>
+              <span>{mounted && role === 'RETAILER' ? 'Standing Wholesale Orders' : 'Buying for your shop?'}</span>
               <ArrowRight className="w-4 h-4" />
             </Link>
           )}

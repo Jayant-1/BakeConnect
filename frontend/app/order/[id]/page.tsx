@@ -27,6 +27,7 @@ import {
 
 import { StorefrontLayout } from '../../../components/layout/storefront-layout';
 import { UpiPaymentModal } from '../../../components/payment/upi-payment-modal';
+import { InvoiceModal } from '../../../components/invoice/invoice-modal';
 
 export default function OrderTrackingPage() {
   const params = useParams();
@@ -36,6 +37,7 @@ export default function OrderTrackingPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
   const [isRedirectingToGateway, setIsRedirectingToGateway] = useState(false);
 
   const handlePayViaYouPi = async (targetOrder?: Order | null) => {
@@ -184,7 +186,7 @@ export default function OrderTrackingPage() {
               : 'Order Status & Live Timeline'}
           </h1>
           <p className="text-xs text-crust-muted mt-1">
-            Placed on {formatDate(order.createdAt)} • Email confirmation sent to{' '}
+            Placed on <span suppressHydrationWarning>{formatDate(order.createdAt)}</span> • Email confirmation sent to{' '}
             <strong className="text-crust-dark">{order.customerEmail}</strong>
           </p>
         </div>
@@ -204,7 +206,7 @@ export default function OrderTrackingPage() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => window.print()}
+            onClick={() => setIsInvoiceModalOpen(true)}
             className="flex items-center gap-1.5"
           >
             <Printer className="w-3.5 h-3.5" />
@@ -298,7 +300,7 @@ export default function OrderTrackingPage() {
           </p>
           {order.estimatedDeliveryDate && (
             <div className="font-semibold text-crust-dark pt-1">
-              New Estimated Delivery: {formatDate(order.estimatedDeliveryDate)}
+              New Estimated Delivery: <span suppressHydrationWarning>{formatDate(order.estimatedDeliveryDate)}</span>
             </div>
           )}
         </div>
@@ -336,7 +338,7 @@ export default function OrderTrackingPage() {
                     <span className="text-sm font-bold text-crust-dark">
                       {event.status.replace(/_/g, ' ')}
                     </span>
-                    <span className="text-[11px] text-crust-muted font-mono">
+                    <span suppressHydrationWarning className="text-[11px] text-crust-muted font-mono">
                       {formatDate(event.timestamp)}
                     </span>
                   </div>
@@ -518,6 +520,13 @@ export default function OrderTrackingPage() {
           setIsPaymentModalOpen(false);
           fetchOrder();
         }}
+      />
+
+      <InvoiceModal
+        isOpen={isInvoiceModalOpen}
+        onClose={() => setIsInvoiceModalOpen(false)}
+        order={order}
+        orderId={order.id}
       />
     </StorefrontLayout>
   );

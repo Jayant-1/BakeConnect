@@ -1,4 +1,4 @@
-import { PaymentStatus, ObservationAttributionStatus, TicketStatus, SenderType, isTerminalStatus } from '@youpi/common';
+import { PaymentStatus, ObservationAttributionStatus, TicketStatus, SenderType, isTerminalStatus, calculateObservationFingerprint } from '@youpi/common';
 
 export class AttributionEngine {
   /**
@@ -120,7 +120,12 @@ export class AttributionEngine {
     }
 
     // Tier 1: Check fingerprint for deduplication
-    const existing = this.obsRepo.findByFingerprint(normalizedObs.fingerprintHash);
+    if (!normalizedObs?.fingerprintHash && normalizedObs?.rawPayload) {
+      try {
+        normalizedObs = { ...normalizedObs, fingerprintHash: calculateObservationFingerprint(normalizedObs.source, normalizedObs.rawPayload) };
+      } catch {}
+    }
+    const existing = normalizedObs?.fingerprintHash ? this.obsRepo.findByFingerprint(normalizedObs.fingerprintHash) : null;
     if (existing) {
       // If observation came from the SAME source, drop as redundant duplicate
       if (existing.source === normalizedObs.source) {

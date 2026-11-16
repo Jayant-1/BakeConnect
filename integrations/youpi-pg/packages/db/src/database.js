@@ -106,9 +106,10 @@ export class Database {
    * @returns {{ changes: number, lastInsertRowid: number | bigint }}
    */
   execute(sql, params = []) {
+    const cleanParams = params.map(p => p === undefined ? null : p);
     const normalized = this.normalizeSql(sql);
     const stmt = this.db.prepare(normalized);
-    return stmt.run(...params);
+    return stmt.run(...cleanParams);
   }
 
   run(sql, params = []) {
@@ -122,9 +123,10 @@ export class Database {
    * @returns {any[]}
    */
   query(sql, params = []) {
+    const cleanParams = params.map(p => p === undefined ? null : p);
     const normalized = this.normalizeSql(sql);
     const stmt = this.db.prepare(normalized);
-    return stmt.all(...params);
+    return stmt.all(...cleanParams);
   }
 
   /**
@@ -134,9 +136,10 @@ export class Database {
    * @returns {any | null}
    */
   queryOne(sql, params = []) {
+    const cleanParams = params.map(p => p === undefined ? null : p);
     const normalized = this.normalizeSql(sql);
     const stmt = this.db.prepare(normalized);
-    const res = stmt.get(...params);
+    const res = stmt.get(...cleanParams);
     return res !== undefined ? res : null;
   }
 

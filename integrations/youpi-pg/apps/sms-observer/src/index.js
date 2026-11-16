@@ -3,10 +3,17 @@ import { fileURLToPath } from 'node:url';
 import { SmsObserverServer } from './server.js';
 import { SmsObserverService } from './sms-service.js';
 
-export function startSmsObserver(port = null, options = {}) {
+export async function startSmsObserver(port = null, options = {}) {
   const finalPort = port || Number(process.env.SMS_OBSERVER_PORT || 6002);
   const service = new SmsObserverService(options);
-  const observerServer = new SmsObserverServer({ service, ...options });
+  if (!service.receivingAccountId) {
+    try {
+      await service.resolveActiveReceivingAccount();
+    } catch (err) {
+      console.warn('[SMS Observer] Initial account resolution warning:', err.message);
+    }
+  }
+  const observerServer = new SmsObserverServer({ service, ...options, receivingAccountId: service.receivingAccountId });
   const rawServer = observerServer.createServer();
 
   // Bind to loopback unless explicitly overridden. These services hold admin/observer

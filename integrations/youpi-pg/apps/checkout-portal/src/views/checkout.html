@@ -2057,13 +2057,10 @@
               codApiBox.style.display = 'block';
               codApiUrl.textContent = `${API_BASE}/api/v1/orders/${data.orderId}/cod`;
             }
-          } else if (data.status === 'OBSERVED_SUCCESS') {
-            if (titleEl) titleEl.textContent = 'Payment observed';
-            if (descEl) descEl.textContent = 'A bank alert matched this payment. It is not confirmed against a bank statement yet.';
-            if (codApiBox) codApiBox.style.display = 'none';
           } else if (data.status === 'RECONCILED') {
-            if (titleEl) titleEl.textContent = 'Payment reconciled';
-            if (descEl) descEl.textContent = 'This payment was matched to a bank statement.';
+            if (titleEl) titleEl.textContent = 'Payment Reconciled!';
+            const activeAppName = state?.branding?.appName || '{{APP_NAME}}' || 'YouPI PG';
+            if (descEl) descEl.textContent = `Your payment was automatically verified and matched to bank statement records.`;
             if (codApiBox) codApiBox.style.display = 'none';
           } else {
             if (titleEl) titleEl.textContent = 'Payment Successful!';
