@@ -183,11 +183,35 @@ function mapCategory(c: any): Category {
 }
 
 function mapOrder(dto: any): Order {
+  let shippingAddress: Address | undefined;
+  if (dto.deliveryAddressJson && dto.deliveryAddressJson !== 'STORE_PICKUP') {
+    try {
+      const parsed = typeof dto.deliveryAddressJson === 'string'
+        ? JSON.parse(dto.deliveryAddressJson)
+        : dto.deliveryAddressJson;
+      shippingAddress = {
+        id: parsed.id || 'addr-order',
+        userId: dto.userId || 'usr-client',
+        type: 'SHIPPING',
+        contactName: parsed.contactName || dto.userFullName || 'Direct Customer',
+        contactPhone: parsed.phone || parsed.contactPhone || '',
+        addressLine1: parsed.addressLine1 || '',
+        addressLine2: parsed.addressLine2 || '',
+        city: parsed.city || 'Mumbai',
+        state: parsed.state || 'Maharashtra',
+        postalCode: parsed.postalCode || parsed.pincode || '',
+        isDefault: false,
+      };
+    } catch (e) {
+      console.warn('Failed to parse deliveryAddressJson:', e);
+    }
+  }
+
   return {
     id: dto.id,
     orderNumber: dto.orderNumber,
     userId: dto.userId || 'usr-client',
-    customerName: dto.userFullName || 'Direct Customer',
+    customerName: dto.userFullName || shippingAddress?.contactName || 'Direct Customer',
     customerEmail: dto.userEmail || 'customer1@bakeconnect.com',
     orderType: dto.orderType || 'PERSONAL',
     businessGst: dto.businessGst,
@@ -196,20 +220,24 @@ function mapOrder(dto: any): Order {
     paymentStatus: dto.paymentStatus || 'PENDING',
     paymentMethod: dto.paymentMethod || 'YOUPI_PG',
     fulfillmentType: dto.deliveryType === 'STORE_PICKUP' ? 'PICKUP' : 'DELIVERY',
+    shippingAddress,
     items: (dto.items || []).map((item: any) => ({
       id: item.id,
       productId: item.productId,
       productName: item.productNameSnapshot || 'Artisan Bakery Item',
-      productImage: '/images/products/fresh-ladi-pav.png',
+      productImage: item.productSkuSnapshot
+        ? `/images/products/${PRODUCT_SLUG_ALIASES[item.productSkuSnapshot] || item.productSkuSnapshot}.png`
+        : '/images/products/fresh-ladi-pav.png',
       quantity: item.quantity,
-      unitPrice: Number(item.unitPriceSnapshot || item.unitPrice || 0),
-      lineTotal: Number(item.totalPriceSnapshot || (item.unitPrice * item.quantity) || 0),
+      unitPrice: Number(item.unitPriceSnapshot ?? item.unitPrice ?? 0),
+      lineTotal: Number(item.totalPriceSnapshot ?? (Number(item.unitPrice ?? 0) * Number(item.quantity ?? 1))),
     })),
-    subtotal: Number(dto.subtotalAmount || dto.subtotal || 0),
-    discountAmount: Number(dto.discountAmount || 0),
-    taxAmount: Number(dto.taxAmount || 0),
+    subtotal: Number(dto.subtotalAmount ?? dto.subtotal ?? 0),
+    discountAmount: Number(dto.discountAmount ?? 0),
+    taxAmount: Number(dto.taxAmount ?? 0),
     deliveryFee: 0,
-    totalAmount: Number(dto.totalAmount || 0),
+    totalAmount: Number(dto.totalAmount ?? 0),
+    notes: dto.notes,
     delayReason: dto.delayReason,
     estimatedDeliveryDate: dto.estimatedDeliveryAt || dto.createdAt,
     createdAt: dto.createdAt || new Date().toISOString(),

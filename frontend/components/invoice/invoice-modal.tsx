@@ -1,10 +1,12 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { X, Printer, ExternalLink } from 'lucide-react';
 import { Button } from '../ui/button';
 import { InvoiceDocument, InvoiceDocumentProps } from './invoice-document';
+import { apiClient } from '../../lib/api/client';
+import { Order } from '../../lib/api/types';
 
 export interface InvoiceModalProps extends InvoiceDocumentProps {
   isOpen: boolean;
@@ -18,6 +20,24 @@ export function InvoiceModal({
   orderId,
   ...docProps
 }: InvoiceModalProps) {
+  const [loadedOrder, setLoadedOrder] = useState<Order | null>(null);
+
+  const targetOrderId = orderId || docProps.order?.id || docProps.invoice?.orderId;
+
+  useEffect(() => {
+    let isMounted = true;
+    if (isOpen && targetOrderId && !docProps.order) {
+      apiClient.getOrder(targetOrderId).then((ord) => {
+        if (isMounted && ord) {
+          setLoadedOrder(ord);
+        }
+      }).catch((e) => console.warn('Could not load order for invoice modal:', e));
+    }
+    return () => {
+      isMounted = false;
+    };
+  }, [isOpen, targetOrderId, docProps.order]);
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isOpen) {
@@ -40,7 +60,8 @@ export function InvoiceModal({
     window.print();
   };
 
-  const resolvedOrderId = orderId || docProps.order?.id;
+  const activeOrder = docProps.order || loadedOrder;
+  const resolvedOrderId = targetOrderId;
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 print:p-0 print:bg-transparent print:static print:inset-auto">
@@ -93,7 +114,7 @@ export function InvoiceModal({
 
         {/* Modal Scrollable Body */}
         <div className="p-4 sm:p-8 overflow-y-auto flex-1 print:p-0 print:overflow-visible">
-          <InvoiceDocument {...docProps} />
+          <InvoiceDocument {...docProps} order={activeOrder} />
         </div>
       </div>
     </div>

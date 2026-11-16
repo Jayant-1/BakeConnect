@@ -144,6 +144,7 @@ export interface Order {
   taxAmount: number;
   deliveryFee: number;
   totalAmount: number;
+  notes?: string;
   delayReason?: string;
   delayPreset?: 'STAFF_SHORTAGE' | 'PEAK_WORKLOAD' | 'MATERIAL_SHORTAGE' | 'WEATHER' | 'OTHER';
   estimatedDeliveryDate?: string;
