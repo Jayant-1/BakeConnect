@@ -117,7 +117,8 @@ export interface OrderItem {
 }
 
 export interface OrderTimelineEvent {
-  status: OrderStatus;
+  status: OrderStatus | string;
+  reasonCode?: string;
   timestamp: string;
   note?: string;
 }

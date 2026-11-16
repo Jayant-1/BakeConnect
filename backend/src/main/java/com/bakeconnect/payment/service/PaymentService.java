@@ -626,12 +626,17 @@ public class PaymentService {
                     paymentAttemptRepository.save(attempt);
                 }
 
-                order.setPaymentStatus(PaymentStatus.AUTHORIZED);
+                order.setPaymentStatus(PaymentStatus.PAID);
+                if (order.getStatus() == OrderStatus.PENDING_REVIEW || order.getStatus() == OrderStatus.AWAITING_PAYMENT) {
+                    order.setStatus(OrderStatus.CONFIRMED);
+                    order.setConfirmedAt(Instant.now());
+                }
+
                 OrderStatusHistory history = new OrderStatusHistory(
-                        order.getStatus(),
+                        OrderStatus.PENDING_REVIEW,
                         order.getStatus(),
                         "PAYMENT_OBSERVED",
-                        "Payment observed via UPI SMS (UTR: " + (attempt.getUtr() != null ? attempt.getUtr() : "pending") + "). Awaiting official statement reconciliation.",
+                        "Payment verified via UPI SMS (UTR: " + (attempt.getUtr() != null ? attempt.getUtr() : "pending") + "). Order confirmed & batch scheduled.",
                         order.getUser().getId(),
                         "PAYMENT_OBSERVER"
                 );

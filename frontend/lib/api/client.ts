@@ -176,7 +176,7 @@ function mapOrder(dto: any): Order {
     orderType: dto.orderType || 'PERSONAL',
     businessGst: dto.businessGst,
     businessName: dto.businessName,
-    status: dto.status === 'PENDING_REVIEW' ? 'PENDING' : dto.status,
+    status: dto.status,
     paymentStatus: dto.paymentStatus || 'PENDING',
     paymentMethod: dto.paymentMethod || 'YOUPI_PG',
     fulfillmentType: dto.deliveryType === 'STORE_PICKUP' ? 'PICKUP' : 'DELIVERY',
@@ -198,12 +198,36 @@ function mapOrder(dto: any): Order {
     estimatedDeliveryDate: dto.estimatedDeliveryAt || dto.createdAt,
     createdAt: dto.createdAt || new Date().toISOString(),
     timeline: (dto.statusHistory || []).map((h: any) => ({
-      status: h.toStatus === 'PENDING_REVIEW' ? 'PENDING' : h.toStatus,
+      status: h.toStatus,
+      reasonCode: h.reasonCode,
       timestamp: h.createdAt || new Date().toISOString(),
       note: h.customerMessage || h.reasonCode || 'Order event recorded',
     })),
   };
 }
+
+export const PRODUCT_SLUG_ALIASES: Record<string, string> = {
+  'crispy-pure-butter-khari': 'pure-butter-khari',
+  'butter-khari': 'pure-butter-khari',
+  'khari': 'pure-butter-khari',
+  'ladi-pav': 'fresh-ladi-pav',
+  'milk-bread': 'classic-milk-bread',
+  'whole-wheat-bread': 'whole-wheat-bread',
+  'baguette': 'french-artisan-baguette',
+  'saunf-rusk': 'double-baked-saunf-rusk',
+  'nankhatai': 'desi-ghee-nankhatai',
+  'jeera-biscuits': 'jeera-butter-biscuits',
+  'veg-puff': 'spiced-veg-puff',
+  'egg-puff': 'classic-egg-puff',
+  'burger-buns': 'soft-burger-buns',
+  'fruit-bun': 'tutti-frutti-fruit-bun',
+  'cream-roll': 'crispy-cream-roll',
+  'dutch-chocolate-pastry': 'dutch-truffle-pastry',
+  'chocolate-pastry': 'dutch-truffle-pastry',
+  'mawa-cake': 'irani-mawa-cake',
+  'chocolate-cake': 'eggless-chocolate-cake',
+  'dark-chocolate-cake': 'eggless-chocolate-cake',
+};
 
 export const apiClient = {
   // 1. Catalog & Discovery
@@ -261,8 +285,12 @@ export const apiClient = {
   },
 
   async getProduct(slugOrId: string): Promise<Product | null> {
+    const raw = (slugOrId || '').trim();
+    const resolved = PRODUCT_SLUG_ALIASES[raw.toLowerCase()] || raw;
+
+    // 1. Try fetching with resolved alias
     try {
-      const res = await fetch(`${getBaseUrl()}/api/v1/catalog/products/${slugOrId}`, {
+      const res = await fetch(`${getBaseUrl()}/api/v1/catalog/products/${resolved}`, {
         signal: AbortSignal.timeout(5000),
       });
       if (res.ok) {
@@ -270,9 +298,37 @@ export const apiClient = {
         if (json.data) return mapProduct(json.data);
       }
     } catch (e) {
-      console.warn(`[API] Backend getProduct(${slugOrId}) fallback:`, e);
+      console.warn(`[API] Backend getProduct(${resolved}) fallback:`, e);
     }
-    return localProducts.find((p) => p.slug === slugOrId || p.id === slugOrId) || null;
+
+    // 2. Try fetching with original if different
+    if (resolved !== raw) {
+      try {
+        const res = await fetch(`${getBaseUrl()}/api/v1/catalog/products/${raw}`, {
+          signal: AbortSignal.timeout(5000),
+        });
+        if (res.ok) {
+          const json = await res.json();
+          if (json.data) return mapProduct(json.data);
+        }
+      } catch (e) {
+        // silent fallback
+      }
+    }
+
+    // 3. Fallback to localProducts with slug/alias/name matching
+    return (
+      localProducts.find(
+        (p) =>
+          p.slug === resolved ||
+          p.slug === raw ||
+          p.id === raw ||
+          p.id === resolved ||
+          p.slug.includes(resolved) ||
+          resolved.includes(p.slug) ||
+          p.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '').includes(resolved.toLowerCase())
+      ) || null
+    );
   },
 
   async getCategories(): Promise<Category[]> {

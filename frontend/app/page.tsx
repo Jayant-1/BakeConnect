@@ -231,15 +231,19 @@ export default function HomePage() {
           <div className="bg-[#D9EAF3] rounded-3xl border-2 border-[#342421] p-8 sm:p-12 shadow-[6px_6px_0px_#342421] grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
             {/* Clean, Art-Directed Product Image */}
             <div className="lg:col-span-5 flex justify-center">
-              <div className="relative w-64 h-64 sm:w-80 sm:h-80">
+              <Link
+                href={khariProduct ? `/products/${khariProduct.slug}` : '/products/pure-butter-khari'}
+                className="relative w-64 h-64 sm:w-80 sm:h-80 block group cursor-pointer"
+                title="View Crispy Pure Butter Khari"
+              >
                 <Image
                   src="/images/cutouts/khari-cutout.png"
                   alt="Pure Butter Khari Stack"
                   fill
-                  className="object-contain drop-shadow-[0_16px_32px_rgba(52,36,33,0.14)]"
+                  className="object-contain drop-shadow-[0_16px_32px_rgba(52,36,33,0.14)] group-hover:scale-105 transition-transform duration-300"
                   sizes="(max-width: 768px) 256px, 320px"
                 />
-              </div>
+              </Link>
             </div>
 
             {/* Editorial Copy & Product Binding */}
@@ -261,7 +265,7 @@ export default function HomePage() {
                   {khariProduct?.packDetails || '250g airtight sealed box (~18 pieces)'} • 100% Eggless
                 </span>
                 <Link
-                  href="/products/crispy-pure-butter-khari"
+                  href={khariProduct ? `/products/${khariProduct.slug}` : '/products/pure-butter-khari'}
                   className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-[#FF7836] hover:bg-[#FF6A1F] text-[#342421] font-bold text-xs uppercase tracking-wider border-2 border-[#342421] shadow-[2px_2px_0px_#342421] active:translate-x-0.5 active:translate-y-0.5 transition-all"
                 >
                   <span>Order Butter Khari</span>
@@ -276,8 +280,9 @@ export default function HomePage() {
       {/* 4. Authentic Bakery Craft Story (Concise & Human) */}
       <section
         id="story"
-        className="scroll-mt-24 py-16 sm:py-20 bg-[#FFF7EB] border-b-2 border-[#342421]"
+        className="scroll-mt-24 py-16 sm:py-20 bg-[#FFF7EB] border-b-2 border-[#342421] relative"
       >
+        <span id="about" className="absolute -top-24" aria-hidden="true" />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-2xl mx-auto mb-12">
             <span className="text-xs uppercase tracking-widest text-[#FF7836] font-bold">

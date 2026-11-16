@@ -60,13 +60,13 @@ export function Navbar() {
                 <span>Fresh Catalog</span>
               </Link>
               <Link
-                href="/shop?category=cat-sourdough"
+                href="/shop?category=artisan-breads"
                 className="hover:text-berry-jam transition-colors"
               >
                 Sourdough Loaves
               </Link>
               <Link
-                href="/shop?category=cat-viennoiserie"
+                href="/shop?category=pastries"
                 className="hover:text-berry-jam transition-colors"
               >
                 Viennoiserie
@@ -197,14 +197,14 @@ export function Navbar() {
               <Compass className="w-4 h-4 text-crust-muted" />
             </Link>
             <Link
-              href="/shop?category=cat-sourdough"
+              href="/shop?category=artisan-breads"
               onClick={() => setMobileMenuOpen(false)}
               className="hover:text-berry-jam py-1 text-sm text-crust-muted"
             >
               Sourdough Loaves
             </Link>
             <Link
-              href="/shop?category=cat-viennoiserie"
+              href="/shop?category=pastries"
               onClick={() => setMobileMenuOpen(false)}
               className="hover:text-berry-jam py-1 text-sm text-crust-muted"
             >

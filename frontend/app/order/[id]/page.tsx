@@ -157,10 +157,62 @@ export default function OrderTrackingPage() {
       case 'DELIVERED':
         return <Badge variant="success">Delivered</Badge>;
       case 'PENDING_REVIEW':
-        return <Badge variant="warning">Payment Verified · In Queue</Badge>;
+      case 'PENDING':
+        return order?.paymentStatus === 'PAID' || order?.paymentStatus === 'AUTHORIZED'
+          ? <Badge variant="success">Payment Verified · In Queue</Badge>
+          : <Badge variant="default">Awaiting Payment Confirmation</Badge>;
       default:
         return <Badge variant="default">Pending Bakery Review</Badge>;
     }
+  };
+
+  const getTimelineEventTitle = (event: { status: string; reasonCode?: string; note?: string }) => {
+    const note = (event.note || '').toLowerCase();
+    const reason = (event.reasonCode || '').toUpperCase();
+    const status = (event.status || '').toUpperCase();
+
+    if (
+      reason === 'PAYMENT_OBSERVED' ||
+      reason === 'PAYMENT_VERIFIED_SMS' ||
+      reason === 'PAYMENT_CONFIRMED' ||
+      reason === 'PAYMENT_RECONCILED_STATEMENT' ||
+      note.includes('payment observed') ||
+      note.includes('payment verified') ||
+      note.includes('payment confirmed') ||
+      note.includes('utr:')
+    ) {
+      return 'Payment Received & Verified';
+    }
+    if (
+      reason === 'ORDER_CREATED' ||
+      note.includes('order submitted') ||
+      note.includes('order received') ||
+      note.includes('order placed')
+    ) {
+      return 'Order Placed';
+    }
+    if (status === 'CONFIRMED' || note.includes('confirmed') || note.includes('scheduled')) {
+      return 'Hearth Batch Scheduled';
+    }
+    if (status === 'PROCESSING' || note.includes('baking') || note.includes('oven')) {
+      return 'Hearth Baking in Progress';
+    }
+    if (status === 'OUT_FOR_DELIVERY' || note.includes('out for delivery')) {
+      return 'Out for Morning Delivery';
+    }
+    if (status === 'READY_FOR_PICKUP' || note.includes('pickup')) {
+      return 'Ready for Counter Pickup';
+    }
+    if (status === 'DELIVERED' || note.includes('delivered')) {
+      return 'Delivered Successfully';
+    }
+    if (status === 'DELAYED' || note.includes('rescheduled') || note.includes('delay')) {
+      return 'Dispatch Schedule Update';
+    }
+    if (status === 'PENDING' || status === 'PENDING_REVIEW') {
+      return 'Order Placed';
+    }
+    return status.replace(/_/g, ' ');
   };
 
   return (
@@ -321,14 +373,20 @@ export default function OrderTrackingPage() {
                 {/* Timeline node */}
                 <div
                   className={`absolute -left-6 top-1 w-5 h-5 rounded-full border-2 flex items-center justify-center bg-cream-surface ${
-                    idx === order.timeline.length - 1
+                    getTimelineEventTitle(event) === 'Payment Received & Verified' || event.status === 'CONFIRMED'
+                      ? 'border-[#15803D] text-[#15803D] shadow-xs'
+                      : idx === order.timeline.length - 1
                       ? 'border-berry-jam text-berry-jam shadow-xs'
                       : 'border-status-success text-status-success'
                   }`}
                 >
                   <div
                     className={`w-2 h-2 rounded-full ${
-                      idx === order.timeline.length - 1 ? 'bg-berry-jam' : 'bg-status-success'
+                      getTimelineEventTitle(event) === 'Payment Received & Verified' || event.status === 'CONFIRMED'
+                        ? 'bg-[#15803D]'
+                        : idx === order.timeline.length - 1
+                        ? 'bg-berry-jam'
+                        : 'bg-status-success'
                     }`}
                   />
                 </div>
@@ -336,7 +394,7 @@ export default function OrderTrackingPage() {
                 <div>
                   <div className="flex items-baseline justify-between gap-2">
                     <span className="text-sm font-bold text-crust-dark">
-                      {event.status.replace(/_/g, ' ')}
+                      {getTimelineEventTitle(event)}
                     </span>
                     <span suppressHydrationWarning className="text-[11px] text-crust-muted font-mono">
                       {formatDate(event.timestamp)}

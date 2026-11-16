@@ -77,6 +77,9 @@ export default function ProductDetailPage() {
         if (prod) {
           setImgSrc(prod.imageUrl || '/images/products/fresh-ladi-pav.png');
           setQuantity(channel === 'B2B' ? prod.moq : 1);
+          if (typeof window !== 'undefined' && prod.slug && prod.slug !== slug) {
+            window.history.replaceState(null, '', `/products/${prod.slug}`);
+          }
         }
       } catch (err) {
         console.error('Failed to fetch product detail:', err);

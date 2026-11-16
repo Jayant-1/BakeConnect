@@ -251,7 +251,7 @@ export default function CustomerOrdersPage() {
                     </Link>
 
                     <Link
-                      href="/#about"
+                      href="/#story"
                       className="inline-flex items-center gap-2 px-5 py-3 rounded-full text-xs font-bold bg-[#D9EAF3] text-[#342421] border-2 border-[#342421] shadow-[2px_2px_0px_#342421] hover:translate-x-0.5 hover:translate-y-0.5 transition-all"
                     >
                       <span>Our Bakery Story</span>

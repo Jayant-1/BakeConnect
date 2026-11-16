@@ -22,10 +22,33 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
 public class CatalogService {
+
+    private static final Map<String, String> PRODUCT_SLUG_ALIASES = Map.ofEntries(
+            Map.entry("crispy-pure-butter-khari", "pure-butter-khari"),
+            Map.entry("butter-khari", "pure-butter-khari"),
+            Map.entry("khari", "pure-butter-khari"),
+            Map.entry("ladi-pav", "fresh-ladi-pav"),
+            Map.entry("milk-bread", "classic-milk-bread"),
+            Map.entry("whole-wheat-bread", "whole-wheat-bread"),
+            Map.entry("baguette", "french-artisan-baguette"),
+            Map.entry("saunf-rusk", "double-baked-saunf-rusk"),
+            Map.entry("nankhatai", "desi-ghee-nankhatai"),
+            Map.entry("veg-puff", "spiced-veg-puff"),
+            Map.entry("egg-puff", "classic-egg-puff"),
+            Map.entry("burger-buns", "soft-burger-buns"),
+            Map.entry("fruit-bun", "tutti-frutti-fruit-bun"),
+            Map.entry("cream-roll", "crispy-cream-roll"),
+            Map.entry("dutch-chocolate-pastry", "dutch-truffle-pastry"),
+            Map.entry("chocolate-pastry", "dutch-truffle-pastry"),
+            Map.entry("mawa-cake", "irani-mawa-cake"),
+            Map.entry("chocolate-cake", "eggless-chocolate-cake")
+    );
 
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
@@ -78,7 +101,14 @@ public class CatalogService {
             product = productRepository.findActiveByIdWithCategory(id)
                     .orElseThrow(() -> new ResourceNotFoundException("Product", id));
         } catch (IllegalArgumentException e) {
-            product = productRepository.findActiveBySlugWithCategory(identifier)
+            String targetSlug = PRODUCT_SLUG_ALIASES.getOrDefault(identifier.toLowerCase(), identifier);
+            product = productRepository.findActiveBySlugWithCategory(targetSlug)
+                    .or(() -> {
+                        if (!targetSlug.equals(identifier)) {
+                            return productRepository.findActiveBySlugWithCategory(identifier);
+                        }
+                        return Optional.empty();
+                    })
                     .orElseThrow(() -> new ResourceNotFoundException("Product", identifier));
         }
 

@@ -21,6 +21,7 @@ import {
   TopProductItem,
   CustomerIssue,
 } from './types-v2';
+import { PRODUCT_SLUG_ALIASES } from './client';
 
 export function getApiBase(): string {
   if (typeof window !== 'undefined') {
@@ -221,7 +222,16 @@ export const backendClient = {
   },
 
   async getProduct(slugOrId: string): Promise<Product> {
-    return request(`/api/v1/catalog/products/${slugOrId}`);
+    const raw = (slugOrId || '').trim();
+    const resolved = PRODUCT_SLUG_ALIASES[raw.toLowerCase()] || raw;
+    try {
+      return await request(`/api/v1/catalog/products/${resolved}`);
+    } catch (err) {
+      if (resolved !== raw) {
+        return await request(`/api/v1/catalog/products/${raw}`);
+      }
+      throw err;
+    }
   },
 
   // Cart & Quotation
