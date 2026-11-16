@@ -37,7 +37,11 @@ import {
 
 export default function RetailerPortalPage() {
   const router = useRouter();
-  const { addItem, setChannel, items } = useCart();
+  const { addItem, setChannel, items, itemCount } = useCart();
+
+  const cartSubtotal = React.useMemo(() => {
+    return items.reduce((sum, i) => sum + (i.product?.wholesalePrice || 0) * i.quantity, 0);
+  }, [items]);
 
   const [products, setProducts] = useState<Product[]>([]);
   const [profile, setProfile] = useState<RetailerProfile | null>(null);
@@ -275,6 +279,15 @@ export default function RetailerPortalPage() {
             </p>
           </div>
           <div className="flex items-center gap-3">
+            {items.length > 0 && (
+              <Link
+                href="/cart"
+                className="px-3.5 py-1.5 rounded-full bg-[#FF7836] text-white border-2 border-[#342421] shadow-[2px_2px_0px_#342421] text-xs font-bold hover:bg-[#FF6A1F] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all flex items-center gap-1.5"
+              >
+                <ShoppingBag className="w-3.5 h-3.5" />
+                <span>View Basket ({itemCount})</span>
+              </Link>
+            )}
             <span className="px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300 text-xs font-bold">
               All Pune Bakery Lines Active
             </span>
@@ -624,6 +637,38 @@ export default function RetailerPortalPage() {
           </div>
         )}
       </div>
+
+      {/* Floating Wholesale Basket Bar */}
+      {items.length > 0 && (
+        <aside aria-label="Wholesale Basket Summary" className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 w-11/12 max-w-2xl animate-in slide-in-from-bottom-4 duration-200">
+          <div className="bg-[#342421] text-white rounded-2xl border-2 border-[#342421] p-3.5 sm:px-6 shadow-[4px_4px_0px_rgba(0,0,0,0.3)] flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="relative w-10 h-10 rounded-xl bg-[#FF7836] text-white flex items-center justify-center shrink-0 border border-white/20">
+                <ShoppingBag className="w-5 h-5" />
+                <span className="absolute -top-1.5 -right-1.5 bg-white text-[#342421] text-[10px] font-black rounded-full w-5 h-5 flex items-center justify-center border border-[#342421]">
+                  {itemCount}
+                </span>
+              </div>
+              <div className="flex flex-col">
+                <span className="text-xs font-black uppercase tracking-wider text-[#FFF7EB]">
+                  {items.length} {items.length === 1 ? 'Product' : 'Products'} in Basket
+                </span>
+                <span className="text-sm font-black font-mono text-[#FF7836]" suppressHydrationWarning>
+                  {formatCurrency(cartSubtotal)} Wholesale Total
+                </span>
+              </div>
+            </div>
+
+            <Link
+              href="/cart"
+              className="px-5 py-2.5 rounded-xl bg-[#FF7836] hover:bg-[#FF6A1F] text-white text-xs font-black uppercase tracking-wider border-2 border-white/20 active:scale-95 transition-all flex items-center gap-2 shrink-0 shadow-[2px_2px_0px_rgba(0,0,0,0.2)]"
+            >
+              <span>Review Cart</span>
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
+        </aside>
+      )}
     </div>
   );
 }

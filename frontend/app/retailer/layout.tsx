@@ -30,11 +30,13 @@ import {
 } from 'lucide-react';
 import { formatCurrency } from '../../lib/utils';
 import { NetflixAvatar } from '../../components/layout/storefront-header';
+import { useCart } from '../../lib/store/cart-context';
 
 export default function RetailerLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const { user, role, isAuthenticated, isLoading, logout } = useAuth();
+  const { itemCount } = useCart();
   const [profile, setProfile] = useState<RetailerProfile | null>(null);
   const [billing, setBilling] = useState<BillingSummary | null>(null);
   const [loadingData, setLoadingData] = useState(true);
@@ -192,6 +194,25 @@ export default function RetailerLayout({ children }: { children: React.ReactNode
 
             {/* 3. Right: User Profile & Mobile Controls (Col 10-12) */}
             <div className="col-span-4 lg:col-span-3 flex items-center justify-end gap-3">
+              {/* Wholesale Cart Link with Live Counter Badge */}
+              <Link
+                href="/cart"
+                className="relative p-2 rounded-xl bg-white border-2 border-[#342421] shadow-[2px_2px_0px_#342421] text-[#342421] hover:bg-[#FFF7EB] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all flex items-center justify-center"
+                aria-label={itemCount > 0 ? `Wholesale cart with ${itemCount} items` : 'Wholesale cart'}
+                title="Wholesale Cart & Basket"
+                suppressHydrationWarning
+              >
+                <ShoppingBag className="w-5 h-5 text-[#342421]" />
+                {itemCount > 0 && (
+                  <span
+                    suppressHydrationWarning
+                    className="absolute -top-1.5 -right-1.5 min-w-[20px] h-5 px-1 rounded-full bg-[#FF7836] text-white text-[11px] font-black border border-[#342421] flex items-center justify-center shadow-[1px_1px_0px_#342421]"
+                  >
+                    {itemCount}
+                  </span>
+                )}
+              </Link>
+
               {/* Authenticated Retailer Avatar & Dropdown (Contains Account Details & Tools) */}
               <div className="relative" ref={accountDropdownRef}>
                 <button
@@ -262,6 +283,22 @@ export default function RetailerLayout({ children }: { children: React.ReactNode
 
                     {/* Dropdown Items */}
                     <div className="py-1 space-y-1">
+                      <Link
+                        href="/cart"
+                        onClick={() => setAccountMenuOpen(false)}
+                        className="flex items-center justify-between px-3 py-2 text-xs font-bold text-[#342421] hover:bg-white rounded-xl transition-colors"
+                        role="menuitem"
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <ShoppingBag className="w-4 h-4 text-[#FF7836]" />
+                          <span>Wholesale Cart</span>
+                        </div>
+                        {itemCount > 0 && (
+                          <span className="px-2 py-0.5 rounded-full bg-[#FF7836] text-white text-[10px] font-black border border-[#342421]">
+                            {itemCount}
+                          </span>
+                        )}
+                      </Link>
                       <Link
                         href="/account/addresses"
                         onClick={() => setAccountMenuOpen(false)}
@@ -344,6 +381,25 @@ export default function RetailerLayout({ children }: { children: React.ReactNode
             )}
 
             <div className="flex flex-col gap-1.5">
+              <Link
+                href="/cart"
+                onClick={() => setMobileMenuOpen(false)}
+                className={`flex items-center justify-between px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider border-2 border-[#342421] transition-all ${
+                  pathname === '/cart'
+                    ? 'bg-[#FF7836] text-[#342421] shadow-[2px_2px_0px_#342421]'
+                    : 'bg-white text-[#342421] shadow-[1px_1px_0px_#342421] hover:bg-[#FFF7EB]'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <ShoppingBag className="w-4 h-4 text-[#FF7836]" />
+                  <span>Wholesale Cart</span>
+                </div>
+                {itemCount > 0 && (
+                  <span className="px-2 py-0.5 rounded-full bg-[#FF7836] text-white text-[10px] font-black border border-[#342421]">
+                    {itemCount}
+                  </span>
+                )}
+              </Link>
               {navLinks.map((link) => {
                 const isActive = pathname === link.href;
                 return (

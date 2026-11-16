@@ -57,13 +57,33 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const { user, role, isAuthenticated } = useAuth();
   const router = useRouter();
 
-  const [items, setItems] = useState<CartItem[]>([]);
+  const [items, setItems] = useState<CartItem[]>(() => {
+    if (typeof window === 'undefined') return [];
+    try {
+      const userStr = localStorage.getItem('bakeconnect_user_v1');
+      const u = userStr ? JSON.parse(userStr) : null;
+      const key = u?.id ? `bakeconnect_cart_${u.id}` : 'bakeconnect_cart_guest';
+      const stored = localStorage.getItem(key);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed.items) && parsed.items.length > 0) return parsed.items;
+      }
+      if (u?.id) {
+        const guestStored = localStorage.getItem('bakeconnect_cart_guest');
+        if (guestStored) {
+          const guestParsed = JSON.parse(guestStored);
+          if (Array.isArray(guestParsed.items)) return guestParsed.items;
+        }
+      }
+    } catch {}
+    return [];
+  });
   const mandatedChannel: 'B2C' | 'B2B' = role === 'RETAILER' ? 'B2B' : 'B2C';
   const [channel, setChannelState] = useState<'B2C' | 'B2B'>(mandatedChannel);
   const [couponCode, setCouponCode] = useState<string | null>(null);
   const [quote, setQuote] = useState<CartQuote | null>(null);
   const [isValidating, setIsValidating] = useState(false);
-  const [isLoaded, setIsLoaded] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(true);
 
   // Scoped storage key per authenticated user
   const storageKey = useMemo(() => {
@@ -82,9 +102,31 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       if (stored) {
         const parsed = JSON.parse(stored);
         if (Array.isArray(parsed.items)) {
+          // If we also had guest items and just logged in, merge them
+          if (user?.id) {
+            const guestRaw = localStorage.getItem('bakeconnect_cart_guest');
+            if (guestRaw) {
+              try {
+                const guestParsed = JSON.parse(guestRaw);
+                if (Array.isArray(guestParsed.items) && guestParsed.items.length > 0) {
+                  const merged = [...parsed.items];
+                  for (const gItem of guestParsed.items) {
+                    const idx = merged.findIndex((i) => i.productId === gItem.productId);
+                    if (idx >= 0) {
+                      merged[idx].quantity += gItem.quantity;
+                    } else {
+                      merged.push(gItem);
+                    }
+                  }
+                  setItems(merged);
+                  localStorage.setItem(storageKey, JSON.stringify({ items: merged, channel: parsed.channel || 'B2B', couponCode: parsed.couponCode }));
+                  localStorage.removeItem('bakeconnect_cart_guest');
+                  return;
+                }
+              } catch {}
+            }
+          }
           setItems(parsed.items);
-        } else {
-          setItems([]);
         }
         if (parsed.couponCode) {
           setCouponCode(parsed.couponCode);
@@ -97,17 +139,38 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           setChannelState(parsed.channel);
         }
       } else {
-        setItems([]);
+        // If no stored cart for user yet, check guest cart migration
+        if (user?.id) {
+          const guestRaw = localStorage.getItem('bakeconnect_cart_guest');
+          if (guestRaw) {
+            try {
+              const guestParsed = JSON.parse(guestRaw);
+              if (Array.isArray(guestParsed.items) && guestParsed.items.length > 0) {
+                setItems(guestParsed.items);
+                localStorage.setItem(storageKey, JSON.stringify({ items: guestParsed.items, channel: role === 'RETAILER' ? 'B2B' : 'B2C', couponCode: guestParsed.couponCode || null }));
+                localStorage.removeItem('bakeconnect_cart_guest');
+                return;
+              }
+            } catch {}
+          }
+        }
+        // Don't wipe in-memory items if user already added items
+        setItems((current) => {
+          if (current.length > 0) {
+            localStorage.setItem(storageKey, JSON.stringify({ items: current, channel: role === 'RETAILER' ? 'B2B' : 'B2C', couponCode: null }));
+            return current;
+          }
+          return [];
+        });
         setCouponCode(null);
         setChannelState(role === 'RETAILER' ? 'B2B' : 'B2C');
       }
     } catch {
-      setItems([]);
-      setCouponCode(null);
+      // keep current items on parse error
     } finally {
       setIsLoaded(true);
     }
-  }, [storageKey, role]);
+  }, [storageKey, role, user?.id]);
 
   // Listen for logout events across tabs to immediately clear in-memory cart
   useEffect(() => {
@@ -178,7 +241,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     };
   }, [items, channel, couponCode, isLoaded]);
 
-  const setChannel = (newChannel: 'B2C' | 'B2B') => {
+  const setChannel = useCallback((newChannel: 'B2C' | 'B2B') => {
     if (role === 'RETAILER') {
       setChannelState('B2B');
     } else if (role === 'DIRECT_CUSTOMER') {
@@ -186,15 +249,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     } else {
       setChannelState(newChannel);
     }
-  };
+  }, [role]);
 
   const addItem = (product: any, quantity = 1) => {
-    // Enforce authentication before purchase: prompt and redirect to login
-    if (!isAuthenticated) {
-      const returnUrl = typeof window !== 'undefined' ? window.location.pathname : '/cart';
-      router.push(`/login?redirect=${encodeURIComponent(returnUrl)}&message=${encodeURIComponent('Please log in before adding items to your basket')}`);
-      return;
-    }
+    if (!product || !product.id) return;
 
     setItems((prev) => {
       const existing = prev.find((i) => i.productId === product.id);

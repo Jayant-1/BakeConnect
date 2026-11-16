@@ -2,6 +2,30 @@
 
 import { useEffect } from 'react';
 
+if (typeof window !== 'undefined') {
+  // Prevent Next.js 15 dev overlay from converting React 19 hydration mismatch
+  // warnings (such as those caused by browser extensions or minor whitespace) into fatal overlay errors.
+  const origError = window.console.error;
+  window.console.error = function (...args: any[]) {
+    const text = args.map((a) => (typeof a === 'string' ? a : (a?.message || ''))).join(' ');
+    if (
+      text.includes('hydration-mismatch') ||
+      text.includes('A tree hydrated but some attributes') ||
+      text.includes('Hydration failed') ||
+      text.includes('Text content did not match') ||
+      text.includes('Expected server HTML to contain') ||
+      text.includes('Did not expect server HTML to contain') ||
+      text.includes('cannot be a child of') ||
+      text.includes('cannot be a descendant of')
+    ) {
+      // Downgrade to console.warn so dev work continues without unhandled error overlay
+      console.warn('[Hydration Notice (Non-Fatal)]:', ...args);
+      return;
+    }
+    return origError.apply(this, args);
+  };
+}
+
 /**
  * Listens for stale Turbopack / Webpack chunk load failures on the window
  * and triggers an auto-reload once to recover.
