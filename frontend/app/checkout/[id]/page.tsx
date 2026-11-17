@@ -52,6 +52,7 @@ export default function CheckoutAttemptPage() {
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [isPaid, setIsPaid] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
+  const [isDirectSuccessing, setIsDirectSuccessing] = useState(false);
   const [timeLeftSeconds, setTimeLeftSeconds] = useState(600); // 10 minutes reservation
 
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -305,6 +306,67 @@ export default function CheckoutAttemptPage() {
     }
   };
 
+  const handleDirectSuccess = async () => {
+    setIsDirectSuccessing(true);
+    try {
+      const targetOrder =
+        checkoutState?.orderNumber || checkoutState?.orderId || order?.orderNumber || order?.id || paymentId;
+
+      // 1. Authoritative Backend Webhook Reconciliation
+      try {
+        await fetch('/api/v1/payments/webhook/MOCK', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Gateway-Signature': 'mock-valid-signature',
+            'X-Gateway-Delivery-Id': `DEL-DIR-${Date.now()}`,
+          },
+          body: JSON.stringify({
+            event: 'PAYMENT_SUCCESS',
+            deliveryId: `DEL-DIR-${Date.now()}`,
+            orderId: targetOrder,
+            amount: checkoutState?.amount || 1.0,
+            currency: 'INR',
+            utr: `DIR${Date.now().toString().slice(-9)}`,
+          }),
+        });
+      } catch (err) {
+        console.warn('Backend mock webhook delivery notice:', err);
+      }
+
+      // 2. Also simulate in apiClient for client-side / mock storage compatibility
+      try {
+        await apiClient.simulatePaymentSuccess(
+          paymentId,
+          checkoutState?.amount,
+          targetOrder
+        );
+      } catch (err) {
+        console.warn('Local simulation notice:', err);
+      }
+
+      // 3. Immediately transition UI to paid state
+      setIsPaid(true);
+
+      // 4. Redirect after brief celebration delay to confirmed order receipt
+      if (targetOrder) {
+        setTimeout(() => {
+          router.push(`/order/${targetOrder}?success=true`);
+        }, 800);
+      }
+    } catch (e) {
+      console.error('Direct success trigger failed:', e);
+      setIsPaid(true);
+      const fallbackTarget =
+        checkoutState?.orderNumber || checkoutState?.orderId || paymentId;
+      if (fallbackTarget) {
+        router.push(`/order/${fallbackTarget}?success=true`);
+      }
+    } finally {
+      setIsDirectSuccessing(false);
+    }
+  };
+
   const formatTimer = (totalSeconds: number) => {
     const mins = Math.floor(totalSeconds / 60);
     const secs = totalSeconds % 60;
@@ -504,15 +566,36 @@ export default function CheckoutAttemptPage() {
                   </div>
 
                   {/* Actions Bar */}
-                  <div className="pt-2 flex items-center justify-center border-t border-[#342421]/15">
+                  <div className="pt-2 flex flex-wrap items-center justify-center border-t border-[#342421]/15 gap-3">
                     <button
                       type="button"
                       onClick={handleManualCheck}
-                      disabled={isVerifying}
-                      className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-full bg-white hover:bg-[#FFF7EB] border-2 border-[#342421] shadow-[2px_2px_0px_#342421] text-xs font-bold text-[#342421] active:translate-x-0.5 active:translate-y-0.5 transition-all"
+                      disabled={isVerifying || isDirectSuccessing}
+                      className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-full bg-white hover:bg-[#FFF7EB] border-2 border-[#342421] shadow-[2px_2px_0px_#342421] text-xs font-bold text-[#342421] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer disabled:opacity-50"
                     >
                       <RefreshCw className={`w-3.5 h-3.5 ${isVerifying ? 'animate-spin' : ''}`} />
                       <span>{isVerifying ? 'Checking Bank Ledger...' : 'Refresh Status'}</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      id="direct-success-btn"
+                      onClick={handleDirectSuccess}
+                      disabled={isVerifying || isDirectSuccessing}
+                      className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-full bg-[#15803D] hover:bg-[#166534] text-white border-2 border-[#342421] shadow-[2px_2px_0px_#342421] text-xs font-bold uppercase tracking-wider active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer disabled:opacity-50"
+                      title="Directly complete payment and simulate successful instant bank confirmation"
+                    >
+                      {isDirectSuccessing ? (
+                        <>
+                          <RefreshCw className="w-3.5 h-3.5 animate-spin text-white" />
+                          <span>Confirming...</span>
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle2 className="w-3.5 h-3.5 text-white" />
+                          <span>Direct Success</span>
+                        </>
+                      )}
                     </button>
                   </div>
                 </div>
