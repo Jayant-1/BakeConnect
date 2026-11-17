@@ -21,6 +21,18 @@ async function syncWithVercel(newUrl) {
   isSyncing = true;
   console.log(`[Tunnel Manager] Syncing new URL (${newUrl}) with Vercel...`);
   try {
+    const envLocalFile = path.join(frontendDir, '.env.local');
+    if (fs.existsSync(envLocalFile)) {
+      let content = fs.readFileSync(envLocalFile, 'utf8');
+      if (content.includes('NEXT_PUBLIC_API_URL=')) {
+        content = content.replace(/NEXT_PUBLIC_API_URL=.*/g, `NEXT_PUBLIC_API_URL=${newUrl}`);
+      } else {
+        content = `NEXT_PUBLIC_API_URL=${newUrl}\n` + content;
+      }
+      fs.writeFileSync(envLocalFile, content, 'utf8');
+      console.log(`[Tunnel Manager] Updated frontend/.env.local with ${newUrl}`);
+    }
+
     const cmd = `vercel env add BACKEND_INTERNAL_URL production --value "${newUrl}" --force --yes && ` +
       `vercel env add NEXT_PUBLIC_API_URL production --value "${newUrl}" --force --yes && ` +
       `vercel env add BACKEND_INTERNAL_URL preview --value "${newUrl}" --force --yes && ` +
