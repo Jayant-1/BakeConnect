@@ -33,12 +33,13 @@ async function syncWithVercel(newUrl) {
       console.log(`[Tunnel Manager] Updated frontend/.env.local with ${newUrl}`);
     }
 
-    const cmd = `vercel env add BACKEND_INTERNAL_URL production --value "${newUrl}" --force --yes && ` +
-      `vercel env add NEXT_PUBLIC_API_URL production --value "${newUrl}" --force --yes && ` +
-      `vercel env add BACKEND_INTERNAL_URL preview --value "${newUrl}" --force --yes && ` +
-      `vercel env add NEXT_PUBLIC_API_URL preview --value "${newUrl}" --force --yes && ` +
-      `vercel deploy --prod --yes`;
-    const { stdout } = await execAsync(cmd, { cwd: frontendDir, shell: '/bin/bash' });
+    console.log(`[Tunnel Manager] Updating Vercel environment variables...`);
+    for (const env of ['production', 'preview']) {
+      await execAsync(`vercel env add BACKEND_INTERNAL_URL ${env} --value "${newUrl}" --force --yes </dev/null`, { cwd: frontendDir, shell: '/bin/bash' });
+      await execAsync(`vercel env add NEXT_PUBLIC_API_URL ${env} --value "${newUrl}" --force --yes </dev/null`, { cwd: frontendDir, shell: '/bin/bash' });
+    }
+    console.log(`[Tunnel Manager] Triggering Vercel production deployment...`);
+    const { stdout } = await execAsync(`vercel deploy --prod --yes </dev/null`, { cwd: frontendDir, shell: '/bin/bash' });
     console.log(`[Tunnel Manager] Vercel redeployment complete:\n${stdout}`);
   } catch (err) {
     console.error(`[Tunnel Manager] Error syncing with Vercel:`, err.message || err);
